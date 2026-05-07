@@ -15,6 +15,10 @@ dist-ssr
 # Claude Code per-machine settings
 .claude/settings.local.json
 
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
