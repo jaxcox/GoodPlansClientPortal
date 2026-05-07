@@ -140,14 +140,30 @@ function ClientFirstTimeForm() {
     setError(null)
     setSubmitting(true)
 
-    const { data, error: invokeError } = await supabase.functions.invoke(
-      'activate-client',
-      { body: { code, email, password } }
-    )
+    const { data, error: invokeError } = await supabase.functions.invoke<{
+      ok?: boolean
+      error?: string
+    }>('activate-client', { body: { code, email, password } })
 
-    if (invokeError || !data?.ok) {
-      const msg = data?.error || invokeError?.message || 'Activation failed.'
+    if (invokeError) {
+      // FunctionsHttpError carries the original Response in `context`.
+      let msg = invokeError.message
+      const ctx = (invokeError as { context?: Response }).context
+      if (ctx && typeof ctx.json === 'function') {
+        try {
+          const body = await ctx.json()
+          if (body?.error) msg = body.error
+        } catch {
+          /* fall through to generic message */
+        }
+      }
       setError(msg)
+      setSubmitting(false)
+      return
+    }
+
+    if (!data?.ok) {
+      setError(data?.error || 'Activation failed.')
       setSubmitting(false)
       return
     }
@@ -178,15 +194,15 @@ function ClientFirstTimeForm() {
         value={password}
         onChange={setPassword}
         required
-        hint="At least 8 characters"
       />
+      <PasswordRequirement value={password} />
 
       {error && <ErrorBox>{error}</ErrorBox>}
 
       <button
         type="submit"
-        disabled={submitting}
-        className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
+        disabled={submitting || password.length < 8}
+        className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {submitting ? 'Activating…' : 'Activate Account'}
       </button>
@@ -276,6 +292,21 @@ function Field({
         }
       />
       {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+    </div>
+  )
+}
+
+function PasswordRequirement({ value }: { value: string }) {
+  const ok = value.length >= 8
+  const tooShort = value.length > 0 && !ok
+  return (
+    <div
+      className={`text-xs -mt-2 ${
+        tooShort ? 'text-bad-soft' : ok ? 'text-good' : 'text-mute'
+      }`}
+    >
+      {ok ? '✓ ' : ''}Password must be at least 8 characters
+      {value.length > 0 && !ok && ` (${value.length}/8)`}
     </div>
   )
 }
