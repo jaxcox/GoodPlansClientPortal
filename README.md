@@ -82,6 +82,40 @@ npm run dev
 
 Open <http://localhost:5173> and sign in with the email + password from step 4. You should land on the Coach Admin shell with "The Good Plans Co" in the top bar and an empty clients list.
 
+## Edge Functions
+
+The portal uses Supabase Edge Functions for server-only operations (creating client auth users on activation, sending invite emails). They live under `supabase/functions/`. You deploy them once per function, then they run on Supabase's infrastructure.
+
+### Deploy via CLI (recommended — one setup, easy redeploys)
+
+One-time setup:
+
+```sh
+npx supabase login          # opens browser to authenticate
+npx supabase link --project-ref wpgaxytyqaoxedirzvmq
+```
+
+Deploy (or redeploy) the activation function:
+
+```sh
+npm run functions:deploy:activate
+```
+
+Or deploy all functions in `supabase/functions/`:
+
+```sh
+npm run functions:deploy
+```
+
+### Deploy via Dashboard (no CLI)
+
+1. Supabase Dashboard → **Edge Functions** (left sidebar) → **Deploy a function** → **Via the dashboard**.
+2. **Function name:** `activate-client` (must match exactly).
+3. Copy the contents of `supabase/functions/activate-client/index.ts` into the editor.
+4. Click **Deploy function**.
+
+Repeat for any other function under `supabase/functions/`.
+
 ## Project structure
 
 ```

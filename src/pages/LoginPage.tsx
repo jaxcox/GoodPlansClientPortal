@@ -1,24 +1,12 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
-type Tab = 'coach' | 'client'
+type TopTab = 'coach' | 'client'
+type ClientSubTab = 'existing' | 'firstTime'
 
 export function LoginPage() {
-  const { signInWithPassword } = useAuth()
-  const [tab, setTab] = useState<Tab>('coach')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setSubmitting(true)
-    const result = await signInWithPassword(email.trim(), password)
-    setSubmitting(false)
-    if (result.error) setError(result.error)
-  }
+  const [tab, setTab] = useState<TopTab>('coach')
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#f5f3ec]">
@@ -32,88 +20,270 @@ export function LoginPage() {
 
         <div className="bg-ink rounded-xl p-6 shadow-xl">
           <div className="flex border-b border-line mb-5">
-            <button
-              type="button"
-              onClick={() => {
-                setTab('coach')
-                setError(null)
-              }}
-              className={`flex-1 py-2 text-xs font-bold tracking-wide ${
-                tab === 'coach'
-                  ? 'text-accent border-b-2 border-accent -mb-px'
-                  : 'text-mute'
-              }`}
-            >
+            <TabHead active={tab === 'coach'} onClick={() => setTab('coach')}>
               Coach Login
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTab('client')
-                setError(null)
-              }}
-              className={`flex-1 py-2 text-xs font-bold tracking-wide ${
-                tab === 'client'
-                  ? 'text-accent border-b-2 border-accent -mb-px'
-                  : 'text-mute'
-              }`}
-            >
+            </TabHead>
+            <TabHead active={tab === 'client'} onClick={() => setTab('client')}>
               Client Login
-            </button>
+            </TabHead>
           </div>
 
-          {tab === 'coach' ? (
-            <form onSubmit={onSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
-                />
-              </div>
-
-              {error && (
-                <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
-              >
-                {submitting ? 'Signing in…' : 'Sign In as Coach'}
-              </button>
-            </form>
-          ) : (
-            <div className="text-sm text-mute leading-relaxed">
-              <div className="text-white font-semibold mb-2">Client login coming soon</div>
-              Client invite codes and password reset are part of Phase 2. For now the
-              coach can preview the portal via Coach Admin once it's set up.
-            </div>
-          )}
+          {tab === 'coach' ? <CoachLoginForm /> : <ClientPanel />}
         </div>
       </div>
+    </div>
+  )
+}
+
+function TabHead({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 py-2 text-xs font-bold tracking-wide ${
+        active
+          ? 'text-accent border-b-2 border-accent -mb-px'
+          : 'text-mute'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function CoachLoginForm() {
+  const { signInWithPassword } = useAuth()
+  return (
+    <PasswordSignInForm
+      submitLabel="Sign In as Coach"
+      onSubmit={async (email, password) => {
+        const { error } = await signInWithPassword(email, password)
+        return error
+      }}
+    />
+  )
+}
+
+function ClientPanel() {
+  const [sub, setSub] = useState<ClientSubTab>('existing')
+  return (
+    <>
+      <div className="flex gap-2 mb-4">
+        <SubTab active={sub === 'existing'} onClick={() => setSub('existing')}>
+          Existing User
+        </SubTab>
+        <SubTab active={sub === 'firstTime'} onClick={() => setSub('firstTime')}>
+          First Time? Use Invite Code
+        </SubTab>
+      </div>
+
+      {sub === 'existing' ? <ClientExistingForm /> : <ClientFirstTimeForm />}
+    </>
+  )
+}
+
+function SubTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 px-2 py-1.5 rounded text-[10px] font-bold border ${
+        active
+          ? 'border-accent bg-accent/10 text-accent'
+          : 'border-line bg-transparent text-mute'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ClientExistingForm() {
+  const { signInWithPassword } = useAuth()
+  return (
+    <PasswordSignInForm
+      submitLabel="Sign In"
+      onSubmit={async (email, password) => {
+        const { error } = await signInWithPassword(email, password)
+        return error
+      }}
+    />
+  )
+}
+
+function ClientFirstTimeForm() {
+  const { signInWithPassword } = useAuth()
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+
+    const { data, error: invokeError } = await supabase.functions.invoke(
+      'activate-client',
+      { body: { code, email, password } }
+    )
+
+    if (invokeError || !data?.ok) {
+      const msg = data?.error || invokeError?.message || 'Activation failed.'
+      setError(msg)
+      setSubmitting(false)
+      return
+    }
+
+    // Activation succeeded — sign in normally.
+    const signInResult = await signInWithPassword(email.trim(), password)
+    setSubmitting(false)
+    if (signInResult.error) {
+      setError(
+        'Account activated, but sign-in failed. Try the Existing User tab.'
+      )
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3">
+      <Field label="Email" type="email" value={email} onChange={setEmail} required />
+      <Field
+        label="Invite Code"
+        value={code}
+        onChange={(v) => setCode(v.toUpperCase())}
+        mono
+        required
+      />
+      <Field
+        label="Set a Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        required
+        hint="At least 8 characters"
+      />
+
+      {error && <ErrorBox>{error}</ErrorBox>}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
+      >
+        {submitting ? 'Activating…' : 'Activate Account'}
+      </button>
+    </form>
+  )
+}
+
+function PasswordSignInForm({
+  submitLabel,
+  onSubmit,
+}: {
+  submitLabel: string
+  onSubmit: (email: string, password: string) => Promise<string | null>
+}) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const handle = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    const err = await onSubmit(email.trim(), password)
+    setSubmitting(false)
+    if (err) setError(err)
+  }
+
+  return (
+    <form onSubmit={handle} className="space-y-3">
+      <Field label="Email" type="email" value={email} onChange={setEmail} required />
+      <Field
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        required
+      />
+      {error && <ErrorBox>{error}</ErrorBox>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
+      >
+        {submitting ? 'Signing in…' : submitLabel}
+      </button>
+    </form>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required,
+  hint,
+  mono,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  type?: string
+  required?: boolean
+  hint?: string
+  mono?: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className={`w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent ${
+          mono ? 'font-mono tracking-wider' : ''
+        }`}
+        autoComplete={
+          type === 'password'
+            ? 'new-password'
+            : type === 'email'
+              ? 'email'
+              : 'off'
+        }
+      />
+      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+    </div>
+  )
+}
+
+function ErrorBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+      {children}
     </div>
   )
 }
