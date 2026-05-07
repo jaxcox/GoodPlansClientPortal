@@ -1,0 +1,550 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 08</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Dashboard — Cumulative Modes (MTD / QTD / YTD)</h1>
+  <div style="font-size:14px;color:#555;">Same Dashboard surface as Weekly mode (doc-03), switched into cumulative aggregation. Tiles roll up entries that fall within the current period, compare actuals against pace-adjusted and full-period goals, and add a Gap-to-Goal tile to Financials. MTD, QTD, and YTD share one structure; mode-specific differences are called out inline.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#7ED957;"></span><span>On track / Above pace</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ff3131;"></span><span>Behind pace</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP — MTD example -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map — MTD example</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- Header row with mode selector — MTD active -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:18px;font-weight:700;color:#111;">Performance Dashboard</div>
+        <div style="display:flex;gap:4px;">
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">Weekly</span>
+          <span style="background:#252525;color:#FFF200;border:1px solid #333;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:800;">MTD</span>
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">QTD</span>
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">YTD</span>
+        </div>
+      </div>
+
+      <!-- Color key -->
+      <div style="display:flex;gap:14px;margin-bottom:14px;font-size:11px;">
+        <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#7ED957;"></span><span style="color:#333;">On track / Above pace</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ff3131;"></span><span style="color:#333;">Behind pace</span></div>
+      </div>
+
+      <!-- Period label -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;color:#555;font-weight:700;flex-wrap:wrap;">
+        <span>April MTD</span>
+      </div>
+
+      <!-- ===================== FINANCIALS ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Financials</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+
+          <!-- Revenue tile (cumulative) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Revenue</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Total sales this month</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$129,000</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:4px;"><div style="height:3px;border-radius:2px;background:#7ED957;width:100%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;">
+                <span style="color:#7ED957;">Pace: $115,500</span>
+                <span style="color:#888;">Goal: $166,667</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gross Profit tile -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Gross Profit</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Total gross profit this month</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$67,000</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:4px;"><div style="height:3px;border-radius:2px;background:#7ED957;width:100%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;">
+                <span style="color:#7ED957;">Pace: $57,750</span>
+                <span style="color:#888;">Goal: $83,333</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- GP Margin tile (% — no progress bar) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Gross Profit Margin</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Avg GP margin for period</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">51.9%</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;font-size:9px;color:#7ED957;">+1.9% vs 50.0% goal</div>
+          </div>
+
+          <!-- Gap-to-Goal (Revenue Needed) — CUMULATIVE-ONLY -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(255,49,49,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Revenue Needed This Month</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">To Hit GP Goal</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$32,666</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;font-size:9px;color:#ff3131;">GP remaining: $16,333</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== MARKETING ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Marketing</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Leads Generated</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Total leads this month</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">61</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:4px;"><div style="height:3px;border-radius:2px;background:#7ED957;width:100%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;">
+                <span style="color:#7ED957;">Pace: 60</span>
+                <span style="color:#888;">Goal: 87</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(255,49,49,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">New Clients</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">New clients this month</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">44</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:4px;"><div style="height:3px;border-radius:2px;background:#ff3131;width:97%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;">
+                <span style="color:#ff3131;">Pace: 45</span>
+                <span style="color:#888;">Goal: 65</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:118px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Leads Conversion Rate</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Avg conversion rate</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">72.1%</div>
+            <div style="flex:1;min-height:6px;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:6px;margin-top:6px;font-size:9px;color:#7ED957;">+12.1% vs 60.0% goal</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== SALES (collapsed for brevity) ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Sales</div>
+        <div style="background:#fff;border:1px dashed #aaa;border-radius:6px;padding:12px;font-size:11px;color:#666;font-style:italic;">
+          [Same Sales structure as Weekly mode — Main / Estimating / Pipeline subsections — but with cumulative aggregation. Each tile shows period total with pace/full goal split. Pipeline Value and Pipeline Deals use <strong>last entry's value</strong>, not sum (point-in-time KPIs). Sales Close Rate (Construction) recomputes on the cumulative totals: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">sum(contracts$) ÷ sum(estimates$)</code>.]
+        </div>
+      </div>
+
+      <!-- ===================== OPERATIONS / TEAM ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Operations &amp; Team</div>
+        <div style="background:#fff;border:1px dashed #aaa;border-radius:6px;padding:12px;font-size:11px;color:#666;font-style:italic;">
+          [Same tiles as Weekly mode with cumulative rollups. Notable differences: <strong>Labor Hours Completed is hidden</strong> (in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">SKIP_CUM</code> — cumulative labor hours doesn't read meaningfully). <strong>Employee Utilization is hidden when capacityMethod is non-manual</strong> — auto-calculated util across mixed weeks doesn't aggregate cleanly. Manual util still shows (avg of entered values). Team Capacity rows render as group tiles when teamCapacity is enabled.]
+        </div>
+      </div>
+
+      <!-- Note: no Notes block in cumulative modes -->
+      <div style="background:#fff;border:1px dashed #888;border-radius:6px;padding:10px 14px;font-size:11px;color:#666;font-style:italic;">
+        Note: the per-entry <strong>Notes block</strong> (visible in Weekly mode under the most recent entry) does <em>not</em> render in MTD/QTD/YTD modes. Cumulative views aren't tied to a single entry, so there's no single note to display.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============= MODE-SPECIFIC DIFFERENCES ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Mode-Specific Differences</div>
+
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#f3f1e8;border-bottom:2px solid #ddd;">
+          <th style="padding:10px;text-align:left;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;width:22%;">Aspect</th>
+          <th style="padding:10px;text-align:left;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;width:26%;">MTD</th>
+          <th style="padding:10px;text-align:left;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;width:26%;">QTD</th>
+          <th style="padding:10px;text-align:left;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;width:26%;">YTD</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:10px;color:#222;font-weight:600;">Period definition</td>
+          <td style="padding:10px;color:#444;">Current calendar month, 1st through today.</td>
+          <td style="padding:10px;color:#444;">Current calendar quarter, first day of quarter through today.</td>
+          <td style="padding:10px;color:#444;">Current calendar year, Jan 1 through today.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;">
+          <td style="padding:10px;color:#222;font-weight:600;">Period label</td>
+          <td style="padding:10px;color:#444;"><em>"April MTD"</em> — full month name + MTD.</td>
+          <td style="padding:10px;color:#444;"><em>"Q2 QTD"</em> — Q + quarter number + QTD.</td>
+          <td style="padding:10px;color:#444;"><em>"2026 YTD"</em> — year + YTD. Plus pill: <em>"incl. actuals thru April"</em> when YTD actuals are set.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:10px;color:#222;font-weight:600;">Entries included</td>
+          <td style="padding:10px;color:#444;">Entries whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> month matches current month.</td>
+          <td style="padding:10px;color:#444;">Entries whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> quarter matches current quarter.</td>
+          <td style="padding:10px;color:#444;">Entries whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> year matches current year.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;">
+          <td style="padding:10px;color:#222;font-weight:600;">YTD actuals integration</td>
+          <td style="padding:10px;color:#444;">Not integrated. MTD always reflects only this month's entries.</td>
+          <td style="padding:10px;color:#444;">Integrated <em>only when</em> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> falls in or before this quarter <strong>and</strong> the current month is past <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code>. Adds YTD actuals to revenue/COGS/GP.</td>
+          <td style="padding:10px;color:#444;">Always integrated when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> is set. YTD actuals (revenue + COGS) added to the cumulative roll-up.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:10px;color:#222;font-weight:600;">Revenue goal scale</td>
+          <td style="padding:10px;color:#444;">Month's adjusted goal (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getAdjMonthGoal</code>) — accounts for seasonal % and YTD recovery if applicable.</td>
+          <td style="padding:10px;color:#444;">Sum of three months' adjusted goals (or revGoal × quarter fraction).</td>
+          <td style="padding:10px;color:#444;">Full annual <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">revGoal</code>.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;">
+          <td style="padding:10px;color:#222;font-weight:600;">Other-KPI goal scale</td>
+          <td style="padding:10px;color:#444;">Monthly goal × 1.</td>
+          <td style="padding:10px;color:#444;">Monthly goal × 3.</td>
+          <td style="padding:10px;color:#444;">Monthly goal × 12.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:10px;color:#222;font-weight:600;">Total weeks in period</td>
+          <td style="padding:10px;color:#444;">Days in month ÷ 7.</td>
+          <td style="padding:10px;color:#444;">Days in quarter ÷ 7 (~13).</td>
+          <td style="padding:10px;color:#444;">365 ÷ 7 (or 366 in leap years), ≈ 52.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;">
+          <td style="padding:10px;color:#222;font-weight:600;">Gap-to-Goal tile label</td>
+          <td style="padding:10px;color:#444;"><em>"Revenue Needed This Month"</em></td>
+          <td style="padding:10px;color:#444;"><em>"Revenue Needed This Quarter"</em></td>
+          <td style="padding:10px;color:#444;"><em>"Revenue Needed This Year"</em></td>
+        </tr>
+        <tr>
+          <td style="padding:10px;color:#222;font-weight:600;">Empty state</td>
+          <td style="padding:10px;color:#444;"><em>"No entries for this period yet."</em></td>
+          <td style="padding:10px;color:#444;"><em>"No entries for this period yet."</em></td>
+          <td style="padding:10px;color:#444;"><em>"No entries for this period yet."</em> — unless YTD actuals are set, in which case the actuals alone produce a partial revenue/COGS/GP roll-up.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Coach View</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body is identical to the Client View above — same mode selector, same KPI tiles, same Gap-to-Goal logic, same color rules. Read-only. Coach can switch modes (Weekly / MTD / QTD / YTD) freely; mode selection is local to the session and not persisted.
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Differences from Client View</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        (1) Yellow <strong>COACH VIEW</strong> badge in the top bar.<br/>
+        (2) Logout reads <strong>Back</strong> and returns to the Coach Admin Clients list.<br/>
+        (3) Otherwise identical — same data, same tiles, same goal logic.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Mode selection is per-session, per-client</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Mode (Weekly / MTD / QTD / YTD) lives in component state — resets to Weekly on every page load. Not persisted to the client record. Same behavior in client and coach view. <strong>Coach reviewing multiple clients:</strong> each client portal opens in Weekly regardless of the mode used on the previous client. Coach toggles mode per client. Intentional — keeps the default predictable.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <!-- Mode selector -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Mode selector</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Four-button toggle in the dashboard header: <strong>Weekly · MTD · QTD · YTD</strong>. Active button is highlighted yellow. Default is Weekly. Selection lives in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">useState</code> — resets on page reload, no persistence.</div>
+    </div>
+
+    <!-- Period filter -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Which entries roll up</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Per <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryInPeriod(entry, mode, year, month, quarter)</code>: entry must match the current year, and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> must fall in the current month (MTD) / quarter (QTD) / year (YTD). Future-dated entries (date &gt; today) are also excluded — only "today and earlier" entries count.</div>
+    </div>
+
+    <!-- Aggregation -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Aggregation method per KPI</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Defined per KPI on <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">KPIS[].agg</code>: <strong>sum</strong> (Revenue, Leads, Jobs, etc.), <strong>avg</strong> (On-Time Delivery, Close Rate non-Construction), <strong>last</strong> (Pipeline Value, Pipeline Deals, Accounts Receivable — point-in-time), <strong>derived</strong> (recomputed from raw aggregates: GP, GP%, Conversion, etc.). Custom KPIs sum if format is # or $, average if format is %.</div>
+    </div>
+
+    <!-- Pace fraction -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Pace fraction</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;"><code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">paceFrac = currentWeeks ÷ totalWeeksInPeriod</code>, capped at 1.0. <strong>currentWeeks</strong> = number of saved entries in period, plus YTD-actuals weeks coverage when applicable. <strong>totalWeeksInPeriod</strong>: month days/7, quarter days/7, or 365/7 depending on mode. The pace fraction scales the full goal down to "what should be done by today."</div>
+    </div>
+
+    <!-- Two goals per tile -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Full goal vs pace goal</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each tile carries two numbers: <strong>fullGoal</strong> (the period total target) and <strong>paceGoal</strong> (full × paceFrac). Sum-aggregated KPIs scale; %, avg, last, and derived KPIs use the same value for both (no scaling — a 60% conversion rate is 60% whether you've completed 1 week or 12).</div>
+    </div>
+
+    <!-- Color logic -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Tile color — against pace goal</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Color compares actual to <strong>pace goal</strong>, not full goal. Green when at-or-above pace (or at-or-below for inverted KPIs); red when behind pace; gray when no goal exists. This means a tile turns red the moment the period falls behind, not only when the full target is missed.</div>
+    </div>
+
+    <!-- Achieved badge -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">"Achieved!" badge</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Top-right corner of any tile where <strong>actual ≥ fullGoal</strong> (≤ for inverted). Independent of pace coloring — a tile can be green-on-pace without "Achieved!" until the full goal is met. Range KPIs (Accounts Receivable) never show the badge — they're not "complete-able." <strong>Two signals on purpose:</strong> color answers "are you on pace to hit the goal?", badge answers "have you hit the goal?" Green-without-badge means winning the race but haven't crossed the finish line; green-with-badge means crossed.</div>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Progress bar (cumulative-only)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each non-percent, non-range tile gets a thin progress bar above the goal line. Bar fill = <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">min(actual ÷ paceGoal × 100, 100)%</code>. Bar color matches the tile's pace color. Below the bar: <em>"Pace: X · Goal: Y"</em> with pace in the tile color, full goal in muted gray. Percent KPIs and range KPIs use the simpler "+/− X% vs goal" line instead.</div>
+    </div>
+
+    <!-- Gap-to-Goal -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Gap-to-Goal tile (Financials)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Appears once per cumulative dashboard, in the Financials category. Computes <strong>"how much more revenue is needed to hit the period's GP goal?"</strong> Formula: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">revenueNeeded = (gpGoal − gpActual) ÷ (gpMarginGoal ÷ 100)</code>. When GP is already at-or-above goal, shows <em>"GP Goal Met!"</em> in green. Requires GP goal, GP%, and current GP to compute — silently skipped if any are missing.</div>
+    </div>
+
+    <!-- Cumulative-mode KPI exclusions -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Cumulative-mode KPI exclusions</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;"><strong>SKIP_CUM:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">laborHoursCompleted</code> tile is hidden in cumulative modes. <strong>Employee Utilization:</strong> hidden when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacityMethod !== 'manual'</code> — auto-calculated util across mixed weeks doesn't aggregate cleanly. Manual util still shows. <strong>Healthcare/Wellness employeeUtilization:</strong> always hidden, same as Weekly mode.</div>
+    </div>
+
+    <!-- No deltas -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">No week-over-week deltas</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">The ▲/▼ delta line under each tile value is Weekly-mode only. In cumulative modes there's no analogous "previous period" to compare against (last month's MTD doesn't have a clean meaning at any point mid-month).</div>
+    </div>
+
+    <!-- YTD actuals integration -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">YTD actuals integration</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.ytdRevenue</code> &gt; 0 and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.ytdThruMonth</code> is set, pre-coaching actuals get folded in. <strong>YTD mode:</strong> always added. <strong>QTD mode:</strong> added only if ytdThruMonth is in or before this quarter <em>and</em> the current month is after ytdThruMonth (i.e. the actuals overlap with this quarter). <strong>MTD mode:</strong> never. Affects only Revenue, COGS, GP, GP% — KPIs we don't have monthly historic actuals for. Pace weeks adjust accordingly: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdActualWeeksCovered</code> is added to currentWeeks.</div>
+    </div>
+
+    <!-- Period label -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Period label &amp; YTD-actuals pill</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Above the KPI grid: a single bold line showing <em>"April MTD"</em> / <em>"Q2 QTD"</em> / <em>"2026 YTD"</em>. In YTD mode with actuals integrated, an additional small gray pill follows: <em>"incl. actuals thru April"</em>.</div>
+    </div>
+
+    <!-- KPI eligibility same as Weekly -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Tile eligibility otherwise matches Weekly</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Aside from the cumulative-mode exclusions above, the tile set comes from the same <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEnabledKpis(client)</code> source as Weekly. Industry relabels (Healthcare, Construction) apply identically. Sales is split into Main / Estimating / Pipeline subsections identically. Custom KPI tiles render in their assigned categories. Capacity group tiles (when present) replace the global Employee Utilization tile in Team.</div>
+    </div>
+
+    <!-- Empty state -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Empty state</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When no entries fall in the period, the KPI grid is replaced with a centered card reading <em>"No entries for this period yet."</em> Exception: in YTD mode with YTD actuals set, the actuals alone produce a partial revenue/COGS/GP roll-up — the grid renders, just sparsely.</div>
+    </div>
+
+    <!-- Goal coloring source -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Where goals come from</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;"><code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getPeriodGoalFull(id, budget, mode, month, quarter)</code> resolves to: Revenue → adjusted monthly goal × month/quarter/year scaling; COGS → derived via <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsTargetPct</code>; GP and GP% → derived from Revenue and COGS goals; everything else → <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.goals[id]</code> (monthly value) × scaling factor (1, 3, or 12). All sourced from Budget &amp; Goals (doc-05).</div>
+    </div>
+
+    <!-- Range KPIs in cumulative -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Range KPIs (Accounts Receivable) in cumulative modes</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Range KPIs use <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">agg:'last'</code> — cumulative modes show the most recent entry's value, identical to Weekly mode. Technically point-in-time data doesn't have a "YTD AR" meaning, but coaches read AR as "current balance" regardless of mode, so the tile stays visible across all four modes. Same number, same color logic (within ±10% of target = green). Intentional redundancy — keeping the financial snapshot present in every view is more useful than the strict period-purity of hiding it.</div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Custom KPI direction handling</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Custom KPIs with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">dir:'lo'</code> (lower-is-better) invert color logic against the pace goal — green when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">actual ≤ paceGoal</code>, red when above. Same as Cancellations and Warranty/Returns. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">isKpiInv()</code> handles both built-in and custom inverted KPIs uniformly. "Achieved!" badge inverts the same way. Pace-goal scaling is correct: a monthly goal of 5 scales to 15 (QTD) or 60 (YTD), pace fraction applied normally.</div>
+    </div>
+
+    <!-- Capacity group aggregation -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Capacity group tile aggregation</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.kpis.teamCapacity</code> is on, per-group tiles render in the Team category. Cumulative aggregation: <strong>raw values are summed across in-period entries</strong> regardless of the group's metric (working hours, labor hours, revenue $). Tile displays the summed value (e.g. <em>"1,800 hrs"</em>, <em>"$47,000"</em>). Full goal scales as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacity × totalWeeksInPeriod</code>; pace goal uses elapsed weeks. Same color logic as other tiles — green when at-or-above pace, red when behind. Intentionally raw rather than averaged so a coach reading the tile sees actual produced hours / dollars instead of a derived percentage. Revenue-metric groups overlap with the company-wide Revenue tile by design — group tile is a sub-view of the same revenue.</div>
+    </div>
+
+    <!-- Notes block hidden -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">No Notes block in cumulative modes</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">The per-entry Notes block (visible on Weekly mode under the most recent entry) doesn't render here. Cumulative views aren't tied to a single entry, so there's no single note to surface.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Pace fraction is time-based, not entry-based</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today's pace tells the user where they should be in the period regardless of whether entries exist. A client 3 weeks into a month who has only entered 2 of those weeks still has pace at 3 weeks, not 2. Separates "business performance" from "entry discipline" — the latter is handled by the Entry Overdue indicator (Doc 03 planned change).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Formula change:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">paceFrac = weeksElapsedInPeriod / totalWeeksInPeriod</code>. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">weeksElapsedInPeriod</code> is calendar-based, not entry-based.<br/>
+      <strong>Pace updates weekly, not daily.</strong> The "weeks elapsed" counter advances by 1 each time a new week begins. Pace is stable for 7 days at a stretch, then steps up. Cleaner read for the dashboard, no daily drift.<br/>
+      <strong>Low-coverage neutral state:</strong> when entries cover less than ~50% of elapsed weeks, suppress pace coloring on tiles and show a neutral state with a small note — <em>"Low entry coverage — pace not meaningful."</em> Prevents the false-catastrophe reading when a client is mostly missing entries. Threshold to be tuned.<br/>
+      <strong>YTD actuals:</strong> still contribute their week-coverage to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">weeksElapsedInPeriod</code> in YTD/QTD modes the same way they do today.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Week definition changes — Sun–Sat instead of Mon–Sun</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Switch the portal's week boundary from Monday-anchored (Mon–Sun) to Sunday-anchored (Sun–Sat). Affects every page that touches a week — entry dates, default ranges, "current week" logic, week-over-week comparisons, period-boundary partial entries.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Cross-doc impact — all of these need a corresponding update:</strong><br/>
+      <strong>Doc 02 (Coach Admin):</strong> per-client current-week entry status pill on the Clients list — "current week" becomes Sun–Sat.<br/>
+      <strong>Doc 03 (Dashboard — Weekly):</strong> Most Recent Entry indicator anchor; week-over-week delta lookup (currently <em>"exactly 7 days earlier than today's Monday"</em> → "exactly 7 days earlier than today's Sunday").<br/>
+      <strong>Doc 05 (Budget &amp; Goals):</strong> any goal-pro-rating math that assumes Mon-anchored weeks.<br/>
+      <strong>Doc 06 (Weekly Entry):</strong> date picker default, "current week" highlighting, partial-entry boundary logic when calendar period boundaries cut a week.<br/>
+      <strong>Doc 07 (History):</strong> default date range — <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code> becomes <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentSunday()</code>; <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">nWeeksBack(11)</code> recalculated against Sunday.<br/>
+      <strong>Doc 08 (this doc):</strong> pace fraction's "weeks elapsed" counter increments at Sunday transitions, not Monday.<br/>
+      <strong>Existing data migration:</strong> entries already saved with Monday <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> values need either a re-anchor (subtract one day from each existing <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code>) or a cutover date where new entries use the new week and old entries are read-only as-is. Migration approach to be decided when the rebuild lands.<br/>
+      <strong>Cross-doc updates will be applied as a single coordinated pass after this Doc 08 review wraps</strong> — captured here as the source-of-truth decision; the affected docs will get matching planned-change cards in that pass.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Period-boundary partial entries — confirm behavior for all future years</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Weeks that cross a month, quarter, or year boundary are already split into two partial entries (per Doc 06). Each partial belongs to its own period and is filtered/aggregated based on its own <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code>. This logic derives period membership from the entry's actual date (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getMonth()</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getFullYear()</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">Math.floor(month/3)</code>) and works for any year — no per-year configuration. Document and verify the behavior so it's clear it's intentional.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Month boundary (e.g. Mar 30 – Apr 5):</strong> splits into a 2-day March entry and a 5-day April entry. March MTD includes the 2-day partial; April MTD includes the 5-day partial. Confirmed correct.<br/>
+      <strong>Quarter boundary (e.g. Mar 30 – Apr 5):</strong> same split. Q1 QTD picks up the 2-day partial via its March <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code>; Q2 QTD picks up the 5-day partial via April. Confirmed correct.<br/>
+      <strong>Year boundary (e.g. Dec 27, 2026 – Jan 2, 2027 under Sun–Sat weeks):</strong> splits into a 5-day December 2026 entry and a 2-day January 2027 entry. 2026 YTD includes the 5-day; 2027 YTD includes the 2-day. <strong>Verify:</strong> coach-facing labels and totals read sensibly — a year-end review should clearly show "the last 5 days of 2026 are in this YTD" without confusing the reader.<br/>
+      <strong>Leap years:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">totalWeeksInPeriod</code> already handles leap years (366/7 vs 365/7). MTD uses actual days in month (handles February's 28 vs 29 correctly). QTD uses millisecond math between quarter start/end. Confirmed year-agnostic.<br/>
+      <strong>Calendar shift across years:</strong> with Sun–Sat weeks, 2026 and 2027 have different days-of-week on Jan 1, so partial-entry day counts shift. The split logic produces the right entries every year because it's driven by the calendar, not by hard-coded dates.<br/>
+      <strong>Action:</strong> no code change needed in current behavior. The rebuild should preserve this date-driven approach. Add a year-end test to the QA pass that confirms a Dec/Jan boundary week renders correctly on both years' YTD dashboards.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">YTD actuals + entries overlap — warn the coach</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> is set and weekly entries also exist within that same window (e.g. actuals through March + weekly entries dated in Jan/Feb/Mar), the cumulative rollup adds both — potentially double-counting revenue and COGS. Surface a warning on Budget &amp; Goals so the coach can resolve it manually (delete the duplicate entries, shorten the actuals window, or leave it intentionally if they understand the trade-off).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>No automatic exclusion:</strong> the system does not drop entries from the rollup. Coach decides.<br/>
+      <strong>Where the warning appears:</strong> on Budget &amp; Goals, near the YTD Actuals card. Inline, not a blocking modal.<br/>
+      <strong>Trigger:</strong> any weekly entry with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> on or before the last day of <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> in the same year as the budget.<br/>
+      <strong>Wording (draft):</strong> <em>"Heads up — N weekly entries exist within the YTD actuals window ([Jan–Mar]). The cumulative dashboard will add both these entries and the actuals total, which may double-count revenue. If that's not intentional, delete the entries or shorten the actuals window."</em><br/>
+      <strong>Cross-doc note:</strong> this is a Doc 05 (Budget &amp; Goals) UI change driven by Doc 08 cumulative-mode behavior. When Doc 05 gets its next pass, add the corresponding planned-change card there.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">YTD actuals stored month-by-month — hybrid entry on Budget &amp; Goals</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Replace single-bucket YTD actuals (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenue</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdCogs</code>) with month-by-month arrays. Solves the QTD-accuracy problem for clients starting mid-quarter (e.g. coach takes on a client in May with YTD actuals through April — Q2 QTD needs April's actuals separated from Jan–Mar). Keeps the fast-entry path coaches expect via auto-distribution.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Storage:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenueByMonth: [num|null × 12]</code> and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdCogsByMonth: [num|null × 12]</code> on the budget record. Indices 0–11 = Jan–Dec. Months past <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> are null. Migration: existing single-total values get auto-distributed and saved into the array on first load.<br/>
+      <strong>Default UI — single-total entry:</strong> coach sees the same two fields they see today (Revenue, COGS) plus the existing <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> dropdown. Fast path stays fast.<br/>
+      <strong>Auto-distribution on save:</strong> when only the single total is entered, the system splits it across the covered months. Even split (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">total / monthsCovered</code>) when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">seasonType='even'</code>; weighted by <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">seasonPct</code> when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">seasonType='seasonal'</code>. Same for COGS.<br/>
+      <strong>Optional detail entry:</strong> a "Show monthly breakdown" toggle (or expand control) opens a per-month grid below the single-total fields. One row per covered month with revenue + COGS columns. Coach can override any month inline. Edited months stay edited; un-edited months continue to track auto-distribution.<br/>
+      <strong>Sync rule:</strong> editing the single total re-runs auto-distribution, overwriting any prior overrides (with a warning). Editing a month's value updates that month and recomputes the single total as the sum. Two-way binding, with auto-distribution as the default direction.<br/>
+      <strong>QTD calculation:</strong> sum the months in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenueByMonth</code> that fall in the current quarter. No more "is ytdThruMonth in or before this quarter and is current month past it" condition — replaced with a clean per-month sum.<br/>
+      <strong>YTD calculation:</strong> sum the entire <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenueByMonth</code> array (all non-null entries). Behavior unchanged from coach's perspective.<br/>
+      <strong>MTD calculation:</strong> if the current month falls inside the YTD-actuals window (rare — coach would only see this in their first few days before any current-month entries exist), MTD reads from the month's actual value. Otherwise unaffected.<br/>
+      <strong>Mid-quarter starts:</strong> a coach starting an August client only needs to override one month to get accurate QTD (Q3 = Jul + Aug + Sep; Jul falls in the YTD window). Five seconds of override work for accurate QTD, vs. zero seconds with auto-distribution that's "close enough."<br/>
+      <strong>Cross-doc note:</strong> this is a Doc 05 (Budget &amp; Goals) UI and storage change driven by Doc 08 cumulative-mode behavior. Add the matching planned-change card on Doc 05 in the cross-doc pass. Also affects YtdStatusBanners math (Doc 05) — same total, just sourced from the array sum.<br/>
+      <strong>Pairs with the overlap warning above:</strong> when month-level actuals exist and a weekly entry also lands in the same month, the warning still fires. Resolution path is the same.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Day-weighted averaging for avg-aggregated KPIs + Close Rate derivation fix</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Two related accuracy improvements to cumulative aggregation. Currently <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">avg</code>-aggregated KPIs use a simple mean across entries — a 3-day partial weights the same as a 7-day full week. And non-Construction Close Rate uses a simple-mean of weekly close rates, even though the underlying contract and estimate dollars are already collected per entry.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Day-weighted avg:</strong> replace simple mean with day-weighted mean for all <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">agg:'avg'</code> KPIs. Formula: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">Σ(value × days) / Σ(days)</code>. A 3-day entry at 100% and a 7-day entry at 80% averages to 86% (1060 / 10) instead of 90%. Affects: On-Time Delivery, Employee Utilization (manual mode), Labor Efficiency.<br/>
+      <strong>Close Rate derivation fix:</strong> non-Construction Close Rate currently aggregates as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">avg</code>. Switch to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">derived</code>: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">sum(newContractsDollars) / sum(proposalsDollars)</code> — same formula Construction already uses. The underlying inputs are collected on every entry already; no new fields required. One-line code change.<br/>
+      <strong>KPIs that already aggregate correctly (no change):</strong> Gross Profit Margin (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">GP / Revenue</code> recomputed), Conversion Rate (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">newClients / leads</code> recomputed), all other auto/derived KPIs.<br/>
+      <strong>Custom KPIs:</strong> day-weighted treatment applies to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">fmt:'%'</code> custom KPIs (currently simple mean). Sum-aggregated custom KPIs (Count, Dollar) unchanged.<br/>
+      <strong>Edge case — full-week-only client:</strong> when every entry is 7 days, day-weighted equals simple mean. No visible change for clients who never log partial weeks.<br/>
+      <strong>Capacity group aggregation:</strong> separate code path, sum-based, not affected.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• Doc just created. Gaps to be identified during review.</div>
+  </div>
+</div>
+
+</div>

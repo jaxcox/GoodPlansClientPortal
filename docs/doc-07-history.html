@@ -1,0 +1,416 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 07</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">History</h1>
+  <div style="font-size:14px;color:#555;">Tabular view of all weekly entries in a selectable date range. Read-only — rows are KPIs, columns are entries (oldest → newest). Each cell shows the entry's value for that KPI, colored against the per-entry pro-rated goal.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- Header row + color key -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:18px;font-weight:700;color:#111;">Weekly History</div>
+        <div style="display:flex;gap:14px;align-items:center;font-size:11px;">
+          <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#7ED957;"></span><span style="color:#333;">On track / Above goal</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ff3131;"></span><span style="color:#333;">Behind / Below goal</span></div>
+        </div>
+      </div>
+
+      <!-- Date range card -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">From Date</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:8px 10px;color:#fff;font-size:12px;">2026-02-02</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">To Date</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:8px 10px;color:#fff;font-size:12px;">2026-04-20</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#fff;margin-top:10px;">8 entries in range.</div>
+      </div>
+
+      <!-- History table -->
+      <div style="border:1px solid #2e2e2e;border-radius:10px;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table style="border-collapse:collapse;width:100%;background:#252525;font-size:11px;">
+            <thead>
+              <tr style="border-bottom:2px solid #2e2e2e;">
+                <th style="padding:8px 10px;text-align:left;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;min-width:110px;">KPI</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Feb 2</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Feb 9</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Mar 9 (3d)</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Mar 16</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Apr 6</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Apr 13</th>
+                <th style="padding:8px 10px;text-align:right;color:#FFF200;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;border-right:1px solid #2e2e2e;background:#1a1a1a;font-weight:700;">Apr 20</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">Revenue</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$18,900</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$17,100</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$8,200</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$41,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">$40,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$42,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$47,000</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">Gross Profit</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$8,505</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$7,695</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$3,690</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$20,500</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">$20,500</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$22,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$24,500</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">GP Margin</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">45.0%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">45.0%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">45.0%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">50.0%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">51.3%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">52.4%</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">52.1%</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">Accounts Receivable</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$21,500</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">$22,500</td>
+                <td style="padding:7px 10px;text-align:right;background:#252525;color:#fff;border-right:1px solid #2e2e2e;">—</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$51,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$53,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$52,000</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">$48,000</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">Leads Generated</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">17</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">14</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">5</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">20</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">17</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">21</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">23</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2e2e2e;">
+                <td style="padding:6px 10px;color:#fff;font-weight:700;border-right:1px solid #2e2e2e;background:#1a1a1a;">Warranty / Returns</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">0</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">1</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">0</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">0</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(255,49,49,0.7);color:#fff;border-right:1px solid #2e2e2e;">2</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">1</td>
+                <td style="padding:7px 10px;text-align:right;background:rgba(126,217,87,0.7);color:#fff;border-right:1px solid #2e2e2e;">0</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 10px;color:#888;font-style:italic;border-right:1px solid #2e2e2e;background:#1a1a1a;font-size:10px;" colspan="8">[Additional rows: Conversion Rate, Revenue per New Client, Estimates Written $, # of Estimates, Pipeline Value, Pipeline Deals, Sales Close Rate, Jobs Completed, On-Time Delivery, Employee Utilization, plus any custom KPIs — one row per enabled KPI.]</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:#fff;margin-top:8px;font-style:italic;">KPI column is sticky-left during horizontal scroll. Date columns are not sticky.</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Coach View</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body is identical to the Client View above — same date range card, same table, same color logic. History is read-only for both client and coach; entries can only be edited via the Weekly Entry page.
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Differences from Client View</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        (1) Yellow <strong>COACH VIEW</strong> badge in the top bar.<br/>
+        (2) Logout button reads <strong>Back</strong> and returns to the Coach Admin Clients list.<br/>
+        (3) Everything else identical — same data, same filters, same color logic. No edit affordances on either side.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Why History is read-only</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">History is a review surface, not an edit surface. To change a value, the coach (or client) navigates to Weekly Entry, picks the date, and edits it there. Keeps the data-entry path single and unambiguous.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <!-- Default date range -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Default date range</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">On page load, <strong>From Date</strong> defaults to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">nWeeksBack(11)</code> — the Monday 11 weeks before today. <strong>To Date</strong> defaults to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code>. Together that's the last 12 weeks (today's Monday and the 11 prior Mondays). Both pickers accept any date — past or future — with no constraints. Future dates that don't yet have entries simply produce empty columns; the page handles that gracefully.</div>
+    </div>
+
+    <!-- Filter logic -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Date range filter</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">An entry is included if its <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> is between From and To, inclusive (string comparison on YYYY-MM-DD). Filter is by entry start date only — the entry's full span (e.g. a 7-day entry starting near the From boundary) is not considered.</div>
+    </div>
+
+    <!-- Sort order -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Column sort order</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Date columns are sorted <strong>ascending</strong> by <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> — oldest on the left, newest on the right. Reads naturally as a timeline.</div>
+    </div>
+
+    <!-- Which KPIs appear -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Which KPI rows appear</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">One row per enabled KPI, plus one row per custom KPI. Starts from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEnabledKpis(client)</code> and excludes: <strong>cogs</strong> (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">HIDE_TILE_IDS</code>), <strong>laborHoursCompleted</strong> (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">SKIP_CUM</code>), and <strong>employeeUtilization</strong> when the industry is Healthcare / Wellness. Always-on auto KPIs (Gross Profit, GP Margin, Conversion Rate, etc.) appear with their calculated values.</div>
+    </div>
+
+    <!-- Cell value -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Cell value</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each cell shows the entry's value for that KPI, computed via <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">calcEntry(entry, client)</code> and formatted to the KPI's format (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">$</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">%</code>, or <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">#</code>). Missing or non-numeric values render as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">—</code> with no background color.</div>
+    </div>
+
+    <!-- Cell color logic -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Cell color logic</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each cell is compared to its <strong>per-entry weekly goal</strong> via <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEntryGoal(id, entry, budget)</code>. If a goal exists: green (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">#7ED957</code>) when at-or-above goal, red (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">#ff3131</code>) when below. Inverted KPIs (cogs-flagged + custom <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">dir:'lo'</code>) flip — lower is green. Range KPIs (Accounts Receivable) are green when within ±10% of goal, red otherwise. No goal → transparent cell, no color.</div>
+    </div>
+
+    <!-- Per-entry goal pro-rating -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">How weekly goals are derived</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;"><strong>Revenue:</strong> monthly goal (or YTD-adjusted monthly goal) × (entry days ÷ days in that month). <strong>COGS / GP / GP Margin:</strong> derived from revenue goal × <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsTargetPct</code> when set, else null. <strong>Other KPIs:</strong> monthly goal × (entry days ÷ 30), except %-format and avg/last-aggregation KPIs which use the monthly goal directly. Partial entries get smaller goals proportional to their day count.</div>
+    </div>
+
+    <!-- Color key visibility -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Color key visibility</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">The green/red legend in the header only appears when the budget has goals defined — i.e. has a revenue goal, a COGS target %, or any entries in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.goals</code>. Without goals every cell is transparent, so the legend would be misleading.</div>
+    </div>
+
+    <!-- Sticky KPI column -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Sticky KPI column</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">The leftmost <strong>KPI</strong> column is sticky-positioned (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">position: sticky; left: 0;</code>) so KPI labels stay visible during horizontal scroll. Date column headers do <em>not</em> stick on vertical scroll — only the KPI column on horizontal scroll.</div>
+    </div>
+
+    <!-- Partial-entry header -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Partial-entry column headers</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Full-week columns show just the short date — e.g. <em>"Apr 20"</em>. Partial-period entries append day count — e.g. <em>"Mar 9 (3d)"</em>. Helps the reviewer understand why a column's numbers are smaller without having to mentally lookup the entry.</div>
+    </div>
+
+    <!-- Empty state -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Empty state</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When the date range contains zero entries, the table is replaced by a centered card reading <em>"No entries in this date range."</em> The date range card and entry count line stay visible above so the user can adjust the range.</div>
+    </div>
+
+    <!-- Read-only -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Read-only — no inline edit</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">No cell or row is editable. No save button. No row click handlers. Cells are display-only spans with background colors. To modify an entry, navigate to <strong>Weekly Entry</strong> and pick the corresponding date.</div>
+    </div>
+
+    <!-- Notes are not shown -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Notes not shown</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Per-entry notes (the free-text field on Weekly Entry) are <em>not</em> rendered on History. The page is purely numeric. Notes only surface on the Dashboard (Weekly mode, most-recent entry) and on the Weekly Entry form itself.</div>
+    </div>
+
+    <!-- No aggregation -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">No totals row, no aggregation</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each cell shows that single entry's value. There's no sum, average, or "total" column. For period-level views (MTD / QTD / YTD totals) the user goes to the Dashboard and switches modes — that's the cumulative-modes surface. History is per-entry only.</div>
+    </div>
+
+    <!-- Team capacity rows -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Team Capacity rows excluded</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Per-person / per-team Team Capacity entries (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">teamCapacityRows</code>) do <em>not</em> appear as rows on History. Only standard KPIs and custom KPIs are rendered. The teamCapacity master toggle, if enabled, contributes only the aggregate row.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Match Dashboard KPI rows</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      History currently applies cumulative-mode exclusion filters that don't belong on a per-entry view — <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">laborHoursCompleted</code> is dropped via <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">SKIP_CUM</code>; <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">employeeUtilization</code> is hidden when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacityMethod</code> is non-manual. Align the History row set to match the Dashboard's <strong>Weekly-mode</strong> tile set: every KPI that renders as a tile on the Weekly Dashboard renders as a row here.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Drop SKIP_CUM exclusion:</strong> Labor Hours Completed becomes a row when the KPI is enabled — it's a per-week metric and belongs in a per-week view.<br/>
+      <strong>Drop the cumulative-mode <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">employeeUtilization</code> exclusion:</strong> that filter exists because cumulative util is meaningless across mixed-method weeks. Per-entry, it's just the week's number.<br/>
+      <strong>Keep:</strong> Healthcare/Wellness <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">employeeUtilization</code> exclusion (industry-level, applies on Dashboard too); <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">HIDE_TILE_IDS</code> exclusion of <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogs</code> (cogs is a behind-the-scenes input on Dashboard too).<br/>
+      <strong>Include Team Capacity rows:</strong> when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.kpis.teamCapacity</code> is on, render one row per <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">teamCapacityRow</code> (person or team), formatted to the team capacity metric. Matches how the Dashboard renders these as group tiles in the Team category.<br/>
+      <strong>Custom KPIs:</strong> unchanged — one row each, ordered after standard KPIs in their category.<br/>
+      <strong>Why this matters:</strong> a coach reviewing weekly performance shouldn't see a different KPI list on Dashboard vs History — same data, same set, same labels.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sticky headers — date row and KPI column</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The KPI column sticks left during horizontal scroll, but the date header row scrolls out of view vertically once the table has more than a screen of rows. Make the date header row sticky-top in addition to the existing sticky-left KPI column. Both stay anchored during any scroll direction.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Date header row:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">position: sticky; top: 0;</code>. Stays anchored as the table body scrolls vertically.<br/>
+      <strong>KPI column:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">position: sticky; left: 0;</code> (already current).<br/>
+      <strong>Top-left "KPI" header cell:</strong> sticky in both directions, with a higher <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">z-index</code> than the row header and column header so it sits cleanly above both during diagonal scroll.<br/>
+      <strong>Backgrounds:</strong> all sticky cells get opaque backgrounds (matching the existing dark fill) so scrolling content doesn't bleed through.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Quick range preset buttons</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Add a row of preset buttons next to the date pickers — one click sets both From and To. Saves manual date entry for the common review windows and makes the page faster for coaches reviewing many clients in sequence.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Presets:</strong> Last 4 Weeks · Last 12 Weeks (default) · MTD · Last Quarter (last full calendar quarter, not QTD) · YTD.<br/>
+      <strong>Behavior:</strong> clicking a preset sets both date fields and immediately re-renders the table.<br/>
+      <strong>Custom range still allowed:</strong> the date pickers stay editable. Once the user picks a date that doesn't match any preset, no preset is highlighted — it's a custom range.<br/>
+      <strong>Active preset:</strong> highlighted yellow when current From/To exactly matches that preset's range.<br/>
+      <strong>Default load:</strong> "Last 12 Weeks" is the active preset on page load.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Export to CSV / Excel</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Add an export button that downloads the currently-filtered table data. Same row/column layout as the on-screen table — KPIs as rows, dates as columns. Useful for coaches assembling external reports and clients keeping their own records.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Default format:</strong> CSV. Opens cleanly in Excel, Numbers, Google Sheets.<br/>
+      <strong>Optional .xlsx:</strong> a second button if straightforward to add; not blocking. CSV alone covers the use case.<br/>
+      <strong>Filename:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">[Company] - History - [from] to [to].csv</code> — e.g. <em>"ABC Autobody - History - 2026-02-02 to 2026-04-20.csv"</em>.<br/>
+      <strong>Includes:</strong> all visible KPI rows in current filter state, all date columns in current range, raw values formatted to the KPI's format ($, %, #).<br/>
+      <strong>Excludes:</strong> color cells, the legend, page chrome. A separate column for goal value or pass/fail status — out of scope for v1, can be added later.<br/>
+      <strong>Notes:</strong> not exported in v1. Notes intentionally aren't on this page; if/when they're added, exporting them is a separate decision.<br/>
+      <strong>Coach view:</strong> available, identical output. Exported file is identical regardless of which view triggered it.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Hover tooltip — magnitude vs goal</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Cell color tells direction (above/below) but not magnitude. A reviewer sees "off goal" but has to switch to Budget &amp; Goals to know by how much. Add a hover tooltip showing the goal value and the gap, so the magnitude is one mouse-hover away.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Standard KPIs:</strong> tooltip reads <em>"Goal: [value] · [+/−] [diff] ([+/−]X%)"</em> — e.g. <em>"Goal: $42,000 · −$2,000 (−4.8%)"</em>.<br/>
+      <strong>Range KPIs (Accounts Receivable):</strong> <em>"Target: [value] ±10% · actual is [+/−]X% of target"</em> — e.g. <em>"Target: $20,000 ±10% · actual is +12.5%"</em>.<br/>
+      <strong>Inverted KPIs (cogs / warranty / cancellations / custom <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">dir:'lo'</code>):</strong> sign-flip the gap so positive always means "better than goal" — e.g. for Warranty/Returns "Goal: 1 · −1 (under by 1)" reads as a positive outcome.<br/>
+      <strong>Cells with no goal:</strong> no tooltip. Transparent cells stay quiet.<br/>
+      <strong>Touch devices:</strong> tap-to-show, tap-elsewhere to dismiss. Don't block table scroll.<br/>
+      <strong>Coach view:</strong> identical behavior.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sun–Sat week change (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Portal-wide week boundary changes from Mon–Sun to Sun–Sat. See Doc 08 for the source-of-truth decision and full cross-doc impact list.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Default date range:</strong> the existing 12-week default re-anchors to Sunday. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code> in the To Date default becomes <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentSunday()</code>; <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">nWeeksBack(11)</code> still computes correctly (it's pure date math from today, week-anchor agnostic).<br/>
+      <strong>Quick range presets:</strong> the planned-change preset buttons (Last 4 Weeks, Last 12 Weeks, MTD, Last Quarter, YTD) all key off Sunday week boundaries instead of Monday.<br/>
+      <strong>Column headers and labels:</strong> short-date column headers (e.g. <em>"Apr 20"</em>) display the entry's Sunday <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code>. Partial-entry indicators (e.g. <em>"Mar 9 (3d)"</em>) unchanged in form.<br/>
+      <strong>Per-entry weekly goal pro-rating:</strong> driven by entry day count, not week anchor. No change.<br/>
+      <strong>CSV export filename:</strong> the date range in the filename uses the Sunday-anchored dates from the current filter.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Re-balance the top bar — client first, branding to footer (carry-forward from Doc 03)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Top bar across all client-facing pages flips visual hierarchy: client company name becomes the primary title, "The Good Plans Co" branding moves to a small footer/corner mark. See Doc 03 for the source-of-truth decision.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Doc 07 impact:</strong> History top bar shows the client company name as primary. Coach View combines the COACH VIEW badge with the client name. No structural changes to the table or controls.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>

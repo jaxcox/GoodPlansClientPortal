@@ -1,0 +1,614 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 06</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Weekly Entry</h1>
+  <div style="font-size:14px;color:#555;">Where the client logs each week's numbers. Date-keyed: saving with an existing date overwrites that entry. Auto-calculated KPIs (GP, GP%, Conversion, etc.) update live as the user types raw inputs.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#111;">Weekly Entry</div>
+        <div style="display:flex;gap:6px;">
+          <button style="background:transparent;color:#333;border:1px solid #aaa;padding:7px 16px;border-radius:5px;font-size:12px;cursor:default;">Cancel</button>
+          <button style="background:#FFF200;color:#000;border:none;padding:7px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:default;">Save Entry</button>
+        </div>
+      </div>
+
+      <!-- Reporting Period card -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">Reporting Period</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">Period Starting Date</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:8px 10px;color:#fff;font-size:12px;">2026-04-20</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">Period Type</div>
+            <div style="display:flex;gap:6px;">
+              <span style="flex:1;padding:7px;border-radius:5px;border:1px solid #FFF200;background:rgba(255,242,0,0.13);color:#FFF200;text-align:center;font-size:11px;font-weight:700;">Full Week</span>
+              <span style="flex:1;padding:7px;border-radius:5px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:11px;">Partial Period</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent entries quick-select -->
+        <div style="margin-top:10px;">
+          <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:5px;">Recent entries — click to view/edit</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #FFF200;background:rgba(255,242,0,0.13);color:#FFF200;font-size:10px;font-weight:700;">Apr 20</span>
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:10px;">Apr 13</span>
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:10px;">Apr 6</span>
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:10px;">Mar 23</span>
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:10px;">Mar 16</span>
+            <span style="padding:3px 9px;border-radius:3px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:10px;">Mar 9 (3d)</span>
+          </div>
+        </div>
+
+        <!-- Reporting confirmation line -->
+        <div style="font-size:11px;color:#FFF200;margin-top:10px;">Reporting: Full week starting Apr 20, 2026</div>
+      </div>
+
+      <!-- KPI section: Financials -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">Financials</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <!-- Revenue -->
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Revenue</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;padding-left:20px;color:#fff;font-size:12px;position:relative;"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#888;font-size:11px;">$</span>20,100</div>
+          </div>
+          <!-- COGS -->
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">COGS</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;padding-left:20px;color:#fff;font-size:12px;position:relative;"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#888;font-size:11px;">$</span>11,055</div>
+          </div>
+          <!-- Gross Profit (AUTO) -->
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Gross Profit <span style="color:#FFF200;font-size:8px;font-weight:700;background:rgba(255,242,0,0.13);padding:1px 4px;border-radius:2px;margin-left:3px;">AUTO</span></div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#FFF200;font-size:12px;font-weight:700;">$9,045</div>
+          </div>
+          <!-- GP Margin (AUTO) -->
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Gross Profit Margin <span style="color:#FFF200;font-size:8px;font-weight:700;background:rgba(255,242,0,0.13);padding:1px 4px;border-radius:2px;margin-left:3px;">AUTO</span></div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#FFF200;font-size:12px;font-weight:700;">45.0%</div>
+          </div>
+          <!-- Accounts Receivable -->
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Accounts Receivable</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;padding-left:20px;color:#fff;font-size:12px;position:relative;"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#888;font-size:11px;">$</span>19,500</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI section: Marketing -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">Marketing</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Leads Generated (#)</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#fff;font-size:12px;">19</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">New Contracts (#)</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#fff;font-size:12px;">11</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Leads Conversion Rate <span style="color:#FFF200;font-size:8px;font-weight:700;background:rgba(255,242,0,0.13);padding:1px 4px;border-radius:2px;margin-left:3px;">AUTO</span></div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#FFF200;font-size:12px;font-weight:700;">57.9%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI section: Sales (collapsed view) -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;">Sales</div>
+        <div style="font-size:11px;color:#888;font-style:italic;">[Estimates / Contracts Won, Estimates Written ($), # of Estimates Written, Pipeline Value, Pipeline Deals, Sales Close Rate (AUTO for Construction), and derived auto-fields appear here in a 2-column grid. No subsection headers — Sales fields render flat in this form.]</div>
+      </div>
+
+      <!-- KPI section: Operations -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;">Operations</div>
+        <div style="font-size:11px;color:#888;font-style:italic;">[Jobs Completed (#), On-Time Delivery (%), Warranty / Returns (#), Cancellations (#), and any auto-fields like Avg Repair Order in a 2-column grid. Inverted KPIs are still entered as positive numbers — color/inversion logic applies on display, not entry.]</div>
+      </div>
+
+      <!-- KPI section: Team — with capacity group entry block -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">Team</div>
+
+        <!-- Cap group entry block: Production Crew (labor_hours) -->
+        <div style="background:#1e1e1e;border:1px solid rgba(46,46,46,0.55);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:11px;color:#FFF200;font-weight:700;">Production Crew</div>
+            <div style="font-size:11px;color:#888;font-weight:600;">78.0%</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Labor Hours Completed (#)</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;color:#fff;font-size:12px;">156</div>
+          </div>
+        </div>
+
+        <!-- Cap group entry block: Sales Team (by_dollars) -->
+        <div style="background:#1e1e1e;border:1px solid rgba(46,46,46,0.55);border-radius:8px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:11px;color:#FFF200;font-weight:700;">Sales Team</div>
+            <div style="font-size:11px;color:#888;font-weight:600;">85.5%</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:3px;">Revenue</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:7px 10px;padding-left:20px;color:#fff;font-size:12px;position:relative;"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#888;font-size:11px;">$</span>47,000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes card -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:10px;">Notes</div>
+        <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:10px 12px;color:#888;font-size:12px;font-style:italic;height:60px;">Add any notes, context, or highlights...</div>
+      </div>
+
+      <!-- Bottom save -->
+      <div style="display:flex;justify-content:flex-end;gap:6px;">
+        <button style="background:transparent;color:#333;border:1px solid #aaa;padding:8px 18px;border-radius:5px;font-size:12px;cursor:default;">Cancel</button>
+        <button style="background:#FFF200;color:#000;border:none;padding:8px 18px;border-radius:5px;font-size:12px;font-weight:700;cursor:default;">Save Entry</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: SAVED CONFIRMATION -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · After Save</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#fff;border:1px solid #ccc;border-radius:8px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:13px;color:#222;">Save button shows <strong>Saved ✓</strong> in green for 2 seconds, then reverts to <strong>Save Entry</strong>.</div>
+      <button style="background:#7ED957;color:#000;border:none;padding:7px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:default;">Saved ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: PARTIAL PERIOD -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Partial Period Selected</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">Period Starting Date</div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:8px 10px;color:#fff;font-size:12px;">2026-04-20</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">Period Type</div>
+          <div style="display:flex;gap:6px;">
+            <span style="flex:1;padding:7px;border-radius:5px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:11px;">Full Week</span>
+            <span style="flex:1;padding:7px;border-radius:5px;border:1px solid #FFF200;background:rgba(255,242,0,0.13);color:#FFF200;text-align:center;font-size:11px;font-weight:700;">Partial Period</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;">Number of Days (1-6)</div>
+        <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:8px 10px;color:#fff;font-size:12px;width:80px;">3</div>
+      </div>
+      <div style="font-size:11px;color:#FFF200;">Reporting: 3-day partial starting Apr 20, 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Coach View (accessed via "View Portal")</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body is identical to the Client View above — same Reporting Period card, same KPI sections, same capacity group entry blocks, same Notes, same Save button. Coach has full read/write access — can create new entries, edit existing ones, and overwrite by date.
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Differences from Client View</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        (1) Yellow <strong>COACH VIEW</strong> badge in the top bar.<br/>
+        (2) Logout button reads <strong>Back</strong> and returns to the Coach Admin Clients list.<br/>
+        (3) Everything else identical — same data, same controls, full write access. Coach can backfill missed weeks, fix typos, or enter on the client's behalf when needed.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Why coach has write access</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Intentional. Use cases include backfilling missed weeks during a coaching session, fixing data-entry mistakes, or capturing numbers in real-time during a 1:1. The coach is a trusted second pair of hands on this page, not a passive observer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <!-- Default starting date -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Default starting date</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">On page load, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code> defaults to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code> — the Monday of the current week. The date picker accepts any date though; the user can change it freely.</div>
+    </div>
+
+    <!-- Load existing or new -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Existing-vs-new behavior</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code> changes, the page looks for an entry with matching <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code>. If found, all fields populate from that entry (including isPartial flag and days). If not, the form resets to a fresh entry with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">{startDate, days:7}</code>.</div>
+    </div>
+
+    <!-- Recent entries pills -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Recent entries pills</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Shows the 8 most-recent entries (sorted by date desc) as clickable pills. Active pill is highlighted yellow. Partial entries display their day count: <em>"Mar 9 (3d)"</em>. Hardcoded to 8 — no pagination.</div>
+    </div>
+
+    <!-- Auto-calc fields -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Auto-calc fields update live</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">As the user types in raw inputs, auto-calc fields (Gross Profit, GP%, Conversion, Avg Transaction, etc.) recalculate immediately and display in yellow with the <strong>AUTO</strong> badge. They're read-only — no input. The values aren't stored — only raw inputs are saved; auto-calcs are recomputed on every render.</div>
+    </div>
+
+    <!-- Inclusion rules -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Which fields appear</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Per category, fields appear if (a) the KPI is <em>always-on</em>, OR (b) it's toggled in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.kpis</code>, OR (c) it's an auto-calc whose dependencies are toggled. Inclusion rules differ slightly from the dashboard's <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEnabledKpis()</code> — see "Inclusion Reference" table below.</div>
+    </div>
+
+    <!-- Sales is flat here -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">No subsections in Sales</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Unlike the Dashboard (where Sales is split into Main / Estimating / Pipeline), this form renders all Sales fields flat in one 2-column grid. Pipeline Value, Estimates Written, etc. all sit side-by-side without subsection headers.</div>
+    </div>
+
+    <!-- Capacity group entry blocks -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Capacity group blocks (Team)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each capacity group renders a sub-block in the Team category. Block header shows group name + live-calculated utilization %. Inputs vary by method:<br/>
+      <strong>Manual:</strong> single Utilization % field.<br/>
+      <strong>Slots:</strong> Total Slots + Filled Slots (2 cols).<br/>
+      <strong>Labor Hours / Working Hours / Headcount:</strong> Labor Hours Completed.<br/>
+      <strong>By Dollars:</strong> Revenue ($).<br/>
+      Stored in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entry.cgData[groupId]</code>.</div>
+    </div>
+
+    <!-- Notes is plain text -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Notes block</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Free-text textarea, multi-line. Plain text only — no rich formatting. Placeholder: <em>"Add any notes, context, or highlights..."</em>. Whatever the client types here surfaces on the dashboard's notes display when this entry is the displayed week.</div>
+    </div>
+
+    <!-- Save shape and key -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Save behavior</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">On Save: filters out any existing entry whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> matches the current <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code>, then appends the new record. Result: <strong>date is the unique key</strong>. Saving over an existing entry overwrites it silently — no confirmation. Only raw inputs are saved (no auto-calc values, no pre-computed numbers). Storage path: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:e:{clientId}</code>.</div>
+    </div>
+
+    <!-- Partial period rules -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Partial period rules</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Partial Period toggle exposes a <em>"Number of Days (1-6)"</em> field, clamped to 1–6. The day count is stored as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entry.days</code> and flagged with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">isPartial:true</code>. Downstream goals scale proportionally — e.g. weekly revenue goal becomes <em>monthlyGoal × (days ÷ daysInMonth)</em> instead of full-week. Used for opening/closing weeks, holiday breaks, or mid-week starts.</div>
+    </div>
+
+    <!-- Healthcare/Construction relabels -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Industry relabels apply</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Same relabeling rules as the Dashboard apply to field labels here:<br/>
+      <strong>Healthcare:</strong> "Leads" → "New Clients Scheduled", Util tile suppressed.<br/>
+      <strong>Construction:</strong> "New Clients" → "New Contracts (#)", Sales Close Rate becomes auto-calc (read-only) since it's derived from contracts $ ÷ proposals $.</div>
+    </div>
+
+    <!-- Empty categories -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Empty categories hide</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">If a category has no enabled standard KPIs, no custom KPIs, and no capacity groups (for Team), the entire category card is hidden — no header, no empty state. Keeps the form focused on what the client actually tracks.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INCLUSION REFERENCE TABLE -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Field Inclusion Reference</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead>
+        <tr style="background:#f3f1e8;border-bottom:1px solid #ddd;">
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Field</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Category</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Type</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Appears when…</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Financials</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Revenue</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Always</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">COGS</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Always</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Gross Profit</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">Always (= Revenue − COGS)</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Gross Profit Margin</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">% · AUTO</td><td style="padding:7px 10px;color:#666;">Always (= GP ÷ Revenue)</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Accounts Receivable</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Marketing</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Leads Generated</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on · relabeled in Healthcare</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">New Clients</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on · relabeled in Construction</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Leads Conversion Rate</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">% · AUTO</td><td style="padding:7px 10px;color:#666;">Both Leads + New Clients on</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Sales</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Estimates / Contracts Won</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Estimates Written – Target $</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;"># of Estimates Written</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Estimate Value</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">Both Estimates # + $ on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Pipeline Value</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Pipeline Deals</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Sales Close Rate</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">% (or AUTO)</td><td style="padding:7px 10px;color:#666;">Toggled on · AUTO if Construction</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;"># of Transactions</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Transaction Value</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">Transactions on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Pipeline Deal</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">Both Pipeline V + # on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Revenue per New Client</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">New Clients on</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Operations</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Jobs Completed</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">On-Time Delivery</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Repair Order</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">$ · AUTO</td><td style="padding:7px 10px;color:#666;">Construction + Jobs on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Warranty / Returns</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Cancellations</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Team</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Labor Hours Completed</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#666;">Toggled on · suppressed if capacity method is working_hours / labor_hours / headcount</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Employee Utilization</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#666;">Toggled on · suppressed if capacity groups exist, or method ≠ manual, or Healthcare</td></tr>
+        <tr><td style="padding:7px 10px;color:#222;font-weight:600;">Capacity Group Inputs</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">varies</td><td style="padding:7px 10px;color:#666;">One block per group · field set depends on group's method</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:11px;color:#888;margin-top:8px;font-style:italic;">Custom KPIs render alongside standard ones in their assigned category. Always-on, always editable (or % auto-aggregated for display only — but on this entry form, all custom KPIs are user-input).</div>
+</div>
+
+<!-- ENTRY DATA SHAPE -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Saved Entry Shape</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+    <div style="font-size:12px;color:#444;line-height:1.7;">
+      Each saved entry is a flat object on the array stored at <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:e:{clientId}</code>:
+    </div>
+    <pre style="background:#f3f1e8;border:1px solid #ddd;border-radius:6px;padding:12px;font-size:11px;color:#222;line-height:1.5;margin-top:10px;overflow-x:auto;">{
+  startDate: "2026-04-20",     // unique key
+  days: 7,                      // 1-7
+  isPartial: false,
+  revenue: "20100",             // raw user input — strings, not numbers
+  cogs: "11055",
+  leads: "19",
+  newClients: "11",
+  newContractsDollars: "18000",
+  // ... other toggled-on KPI fields
+  notes: "Strong week — closed two big jobs.",
+  cgData: {                     // capacity group inputs, keyed by group id
+    cg_prod: { laborHoursCompleted: "156" },
+    cg_sales: { revenue: "47000" }
+  }
+}</pre>
+    <div style="font-size:12px;color:#444;line-height:1.7;margin-top:10px;">
+      <strong>Auto-calc fields are not stored.</strong> GP, GP%, conversion rates, etc. are recomputed every render via <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">calcEntry(entry, client)</code>. This means raw inputs are the source of truth — if a formula changes in code, all historical entries reflect the new formula immediately.
+    </div>
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Snap Period Starting Date to Monday</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The date picker currently accepts any date. Since entries are conceptually weekly, snap any picked date to the Monday of that week — so picking Wednesday Apr 22 silently becomes Monday Apr 20. Removes the case where two entries land in the same week with mismatched start days, which would break weekly comparisons silently.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Exception:</strong> Partial Period entries can start mid-week (that's the point — opening or closing weeks, holiday breaks). Snap-to-Monday only applies to Full Week.<br/>
+      <strong>UX:</strong> Show a brief inline note when the snap happens: <em>"Adjusted to Monday Apr 20"</em>, so it's not a silent change.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Carryover from Doc 04 / 05 — Sales structure</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Doc 04 and Doc 05 carry the planned change to flatten the Sales card and drop the Estimating subsection on the Dashboard. On Weekly Entry, Sales is already flat — no subsection headers — so no visual change is needed here. <strong>If</strong> the Estimating-related KPIs themselves are removed (estimatesWritten, proposalsDollars, avgEstimateValue), they'd disappear from this entry form's Sales section accordingly. Tracking here so it's not forgotten when the Sales decision lands.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">No-entry banner lands here</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Per Doc 03's planned change for the no-entry indicator: when a client logs in and the current week's entry is missing, a red banner appears on the Dashboard with a "Go to Weekly Entry" button. That button lands the user here, with the date pre-set to the current Monday and a fresh form. No special treatment needed on this page — the existing default-to-currentMonday behavior already handles it. Noting for cross-doc traceability.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Cancel button on Weekly Entry</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Add a Cancel button next to each Save Entry button (both the top-right and bottom-right placements). Always active on any entry screen — whether the user is editing an existing entry or starting a fresh one.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>What it does:</strong> reloads the form from whatever's saved at the current <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code>. If a saved entry exists for that date, the form reverts to its saved state — any in-progress edits are discarded. If no saved entry exists, the form clears back to the default empty state (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">{startDate, days:7}</code>).<br/>
+      <strong>Confirmation:</strong> if there are unsaved changes, show a confirm dialog — <em>"Discard your changes?"</em> with Cancel / Discard buttons. If nothing has changed, Cancel is a silent no-op.<br/>
+      <strong>Styling:</strong> secondary/grey button so Save Entry remains the primary action. Cancel sits to the left of Save in both placements.<br/>
+      <strong>Coach view:</strong> same — Cancel works identically when the coach is editing on a client's behalf.<br/>
+      <strong>Resolves:</strong> the silent-overwrite scenario where a client opens an existing entry, accidentally clears or alters fields, then saves before noticing — Cancel gives them an explicit way to revert before saving.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Delete entry capability</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Currently no way to remove a saved entry from anywhere in the portal — once saved, an entry persists until storage is edited manually. Add a delete affordance so a client (or coach) can remove a bad entry — wrong date, duplicate, test data, etc.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Where it lives:</strong> Weekly Entry only. When a saved entry is loaded (i.e. the current <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code> matches an existing entry), show a small <em>"Delete this entry"</em> link below the Cancel/Save buttons. When a fresh entry is loaded (no match), the link is hidden — there's nothing to delete.<br/>
+      <strong>Not on History:</strong> History stays read-only. The KPIs-as-rows / dates-as-columns layout doesn't lend itself to a row-level delete anyway — the deletable thing is a column, not a row. Single delete path keeps the UX unambiguous.<br/>
+      <strong>Confirmation:</strong> required. <em>"Delete the entry for [date]? This can't be undone."</em> with Cancel / Delete buttons. Delete is destructive and irreversible — no soft-delete or undo in v1.<br/>
+      <strong>What gets deleted:</strong> the entry record at that date. All raw inputs and capacity-group data for that date. Auto-calculated values aren't stored, so nothing else cascades.<br/>
+      <strong>After delete:</strong> form resets to a fresh entry for the same date (the date stays selected, but it's now an unsaved blank). Recent-entries pills refresh — the deleted date drops off the strip.<br/>
+      <strong>Coach view:</strong> coach can also delete — same access pattern as the rest of Weekly Entry.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Persistent "Saved ✓" state across all save buttons</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Save buttons currently flash green for 2 seconds after a successful save, then revert to the yellow "Save" state. Replace that with a persistent saved state: the button stays green and reads <strong>"Saved ✓"</strong> until the form is meaningfully changed or the user leaves the current edit context.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Scope:</strong> applies to all save buttons across the portal — Weekly Entry, Budget &amp; Goals, Settings, Custom Industries Manager. Wherever there is a Save button, this behavior applies.<br/>
+      <strong>Cancel buttons paired everywhere:</strong> wherever there is a Save button, there is also a Cancel button next to it (secondary grey styling). Same revert-to-saved-state behavior — discards in-progress changes and reverts to the most recently saved state.<br/>
+      <strong>Reverts to active "Save" state when:</strong> (a) any field on the form is edited, or (b) the user leaves the current edit context (navigates to a different page, switches to a different entry date on Weekly Entry, switches to a different budget year on Budget &amp; Goals, logs out, etc.).<br/>
+      <strong>Saved state is per-entry / per-edit-context:</strong> on Weekly Entry, the saved state is tied to the current <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entryDate</code> — switching to a different date resets the indicator since you're now editing a different entry. Same idea on Budget &amp; Goals when switching budget years.<br/>
+      <strong>Cancel during clean-saved state:</strong> active no-op — the button stays clickable but does nothing since there are no unsaved changes to discard. No confirm dialog.<br/>
+      <strong>Rationale:</strong> the 2-second flash is gone before the user has time to verify it. A persistent indicator gives clear, unambiguous feedback about whether their work is currently saved.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Unsaved-changes guard on navigation and date switching</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      When the form has unsaved changes, attempting to leave the current edit context (clicking a different recent-entry pill, picking a different date in the date picker, navigating to another page like Dashboard or History, or logging out) opens a small confirmation dialog before the navigation completes.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Dialog content:</strong> headline reads <em>"You have unsaved changes."</em> Three buttons: <strong>Save</strong> (commits the current form, then proceeds with the navigation), <strong>Discard Changes</strong> (drops the in-progress edits and proceeds with the navigation), <strong>Stay Here</strong> (cancels the navigation and keeps the user on the current edit).<br/>
+      <strong>Scope of "navigation":</strong> any action that would switch the user out of the current edit context — Weekly Entry includes pill clicks, date picker changes, top-nav clicks, and Logout. Budget &amp; Goals includes year switching and top-nav clicks. Settings and Custom Industries follow the same pattern.<br/>
+      <strong>No dialog when nothing has changed:</strong> if the form is in a clean saved state, navigation proceeds silently — no interruption.<br/>
+      <strong>Pill creation tied to save:</strong> if a client opens a fresh entry for a new date, fills in some fields, then hits Cancel or chooses Discard Changes from the dialog, no recent-entry pill is created for that date. Pills are derived from the saved entries array — unsaved drafts are invisible. (This is already current behavior, called out here so it stays consistent through the rebuild.)<br/>
+      <strong>Coach view:</strong> same — coach gets the same dialog when navigating away from unsaved client data.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Block future dates on Weekly Entry</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The date picker currently accepts any date — including dates years in the future. Cap the picker at the current Monday so a client cannot accidentally enter "Apr 28, 2027" or any week that hasn't happened yet.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Maximum allowed date:</strong> the current Monday (i.e., <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code>). Any later date is blocked at the picker level.<br/>
+      <strong>Past dates remain open:</strong> no minimum date constraint. Clients legitimately need to backfill missed weeks, and mid-year-intake clients may want to capture history before they joined.<br/>
+      <strong>Implementation:</strong> set <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">max</code> attribute on the date input to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code>. Browsers handle the UI — picker grays out future dates.<br/>
+      <strong>Recent-entries pills unaffected:</strong> the pills only show entries that already exist, so future dates can't surface there anyway.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Prevent period overlap between entries</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Block saving an entry whose date range overlaps with an existing entry. Stops the data-integrity issue where, e.g., a 7-day entry starting Apr 13 and a 3-day Partial entry starting Apr 15 both save and both feed cumulative aggregations — double-counting the overlap.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Logic:</strong> on save, compute the date range of the entry being saved (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> through <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate + days − 1</code>). Compare against the date range of every other saved entry. If any overlap exists, reject the save.<br/>
+      <strong>Exception:</strong> overwriting an entry that has the exact same <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> is allowed — that's "edit existing entry," not "create overlapping entry."<br/>
+      <strong>Error message:</strong> inline near the date picker — <em>"This period overlaps with your entry starting [date]. Edit that entry instead, or pick a non-overlapping date."</em> Includes a clickable link to jump to the conflicting entry.<br/>
+      <strong>Common cases this prevents:</strong> (1) Full Week and Partial Period entries overlapping in the same calendar week. (2) Two Partial entries that abut or overlap. (3) Backdated entries that collide with already-recorded weeks.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Mandatory fields: Revenue and COGS</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Revenue and COGS become required fields on every weekly entry. Save is disabled until both are filled. Empty mandatory fields show a red outline. Zero is a valid value — clients can save a $0 revenue week if they had one (closed, holiday, etc.) — but the field cannot be left blank.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Why these two:</strong> Revenue is the anchor for nearly every goal, color rule, and cumulative calc on the dashboard. COGS feeds Gross Profit and GP% — both always-on KPIs. An entry without these is essentially blank and pollutes downstream views.<br/>
+      <strong>All other fields stay optional:</strong> requiring everything would be too aggressive. Clients legitimately have weeks where they didn't run estimates, didn't complete jobs, etc. — they shouldn't be forced to type "0" everywhere.<br/>
+      <strong>Visual treatment:</strong> required fields show a small red asterisk after the label (e.g. "Revenue *"). When empty and the user attempts to save, the input border turns red and a brief inline message reads <em>"Required."</em> Save button stays disabled until the field has a value.<br/>
+      <strong>Future extension (v2):</strong> individual clients could mark additional KPIs as required in their settings — useful for, e.g., a Construction client who wants Labor Hours required every week. Out of scope for v1.<br/>
+      <strong>Cancel still works regardless:</strong> Cancel reverts the form even if mandatory fields are empty. Mandatory only blocks Save, not Cancel.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sun–Sat week change (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Portal-wide week boundary changes from Mon–Sun to Sun–Sat. See Doc 08 for the source-of-truth decision and full cross-doc impact list.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Date picker default:</strong> <em>"Period Starting Date"</em> defaults to the current Sunday instead of the current Monday. Combined with the existing planned change <em>"Snap Period Starting Date to Monday,"</em> the snap target becomes <strong>Sunday</strong>. Update that earlier card's wording during the rebuild pass.<br/>
+      <strong>Recent-entries pill strip:</strong> dates displayed are now Sun–Sat anchored. Each pill shows the week's Sunday date.<br/>
+      <strong>Partial-entry boundary logic:</strong> when a week crosses a month/quarter/year boundary, the split logic still produces two partials (e.g. a Sun–Sat week spanning Mar 30 → Apr 5 splits into a 2-day March entry and a 5-day April entry). Boundary-driven, calendar-agnostic — no code change needed beyond the anchor shift.<br/>
+      <strong>Helper functions:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code> usage replaced with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentSunday()</code> throughout.<br/>
+      <strong>Existing data migration:</strong> entries already saved with Monday <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> values get re-anchored (subtract one day) or remain as-is via a cutover date. Approach decided when the rebuild lands; documented in Doc 08.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Re-balance the top bar — client first, branding to footer (carry-forward from Doc 03)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Top bar across all client-facing pages flips visual hierarchy: client company name becomes the primary title, "The Good Plans Co" branding moves to a small footer/corner mark. See Doc 03 for the source-of-truth decision.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Doc 06 impact:</strong> Weekly Entry top bar shows the client company name as primary. Coach View on this page combines the COACH VIEW badge with the client name, making it clear the coach is operating inside that client's space. No structural changes to the page body.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>

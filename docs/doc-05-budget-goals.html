@@ -1,0 +1,657 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 05</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Budget &amp; Goals</h1>
+  <div style="font-size:14px;color:#555;">Annual revenue budget, year-to-date actuals, monthly distribution, monthly goal tiles, KPI goal fields by category, and capacity group targets. The math layer that powers tile coloring everywhere else.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><span>State / Storage</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP: PRIMARY -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map · Client View (top to bottom)</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- ===== Header row + year tabs ===== -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:6px;">Budget &amp; Goals</div>
+          <div style="display:flex;gap:5px;">
+            <span style="padding:3px 11px;border-radius:4px;border:1px solid #888;background:transparent;color:#555;font-size:11px;">2025</span>
+            <span style="padding:3px 11px;border-radius:4px;border:1px solid #333;background:#252525;color:#FFF200;font-size:11px;font-weight:700;">2026</span>
+            <span style="padding:3px 11px;border-radius:4px;border:1px dashed #aaa;background:transparent;color:#555;font-size:11px;">+ 2027</span>
+          </div>
+        </div>
+        <div style="background:#FFF200;color:#000;padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;">Save</div>
+      </div>
+
+      <!-- ===== Card 1: Annual Revenue Budget ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Annual Revenue Budget — 2026</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Annual Revenue</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 2,000,000</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Gross Profit % (Target)</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">50</div>
+          </div>
+        </div>
+        <div style="background:#252525;border-radius:8px;padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Gross Profit $</div>
+            <div style="font-size:15px;font-weight:700;color:#FFF200;">$1,000,000</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">COGS $</div>
+            <div style="font-size:15px;font-weight:700;color:#fff;">$1,000,000</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">COGS %</div>
+            <div style="font-size:15px;font-weight:700;color:#fff;">50.0%</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Budget Year</div>
+            <div style="font-size:15px;font-weight:700;color:#fff;">2026</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Card 2: YTD Actuals ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:6px;">YTD Actuals</div>
+        <div style="font-size:10px;color:#fff;margin-bottom:14px;">Enter actuals from January through the most recently completed month.</div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Most Recently Completed Month</div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">March ▾</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD Revenue</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 500,000</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD COGS</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 325,000</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD Gross Profit <span style="color:#FFF200;font-size:7px;background:rgba(255,242,0,0.13);padding:1px 4px;border-radius:3px;">AUTO</span></div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#FFF200;font-size:11px;font-weight:700;">$175,000</div>
+          </div>
+        </div>
+
+        <!-- Status banners -->
+        <div style="background:rgba(255,49,49,0.13);border:1px solid #ff3131;border-radius:8px;padding:10px;display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+          <div style="font-size:18px;color:#ff3131;">!</div>
+          <div>
+            <div style="font-weight:700;color:#ff3131;font-size:11px;">Revenue — Behind Budget</div>
+            <div style="font-size:10px;color:#fff;">January – March budget: $500,000 · Actual: $500,000 · -$0</div>
+          </div>
+        </div>
+        <div style="background:rgba(255,49,49,0.13);border:1px solid #ff3131;border-radius:8px;padding:10px;display:flex;gap:12px;align-items:center;">
+          <div style="font-size:18px;color:#ff3131;">!</div>
+          <div>
+            <div style="font-weight:700;color:#ff3131;font-size:11px;">Gross Profit — Behind Budget</div>
+            <div style="font-size:10px;color:#fff;">January – March GP budget: $250,000 · Actual: $175,000 · -$75,000</div>
+            <div style="font-size:9px;color:#ff3131;margin-top:2px;">Remaining monthly goals adjusted to close this GP gap.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Card 3: Monthly Distribution ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Monthly Distribution</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Month Coaching Started</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">April ▾</div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;">
+            <div style="flex:1;padding:7px;border-radius:5px;border:1px solid #FFF200;background:rgba(255,242,0,0.13);color:#FFF200;text-align:center;font-size:11px;">Even</div>
+            <div style="flex:1;padding:7px;border-radius:5px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:11px;">Seasonal</div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#888;font-style:italic;">↑ When set to "Seasonal," reveals 12 percentage fields (one per month) that must total 100%.</div>
+      </div>
+
+      <!-- ===== Card 4: Monthly Financial Goals ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:4px;">Monthly Financial Goals</div>
+        <div style="font-size:10px;color:#fff;margin-bottom:4px;">Showing April – December. Remaining months adjusted for YTD actuals.</div>
+        <div style="font-size:10px;color:#FFF200;margin-bottom:12px;">Remaining revenue to produce: $1,650,000 across 9 months</div>
+
+        <!-- Month tiles grid -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">
+          <!-- Past months (greyed) -->
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid rgba(46,46,46,0.4);opacity:0.55;">
+            <div style="font-size:11px;font-weight:700;color:#888;text-align:center;margin-bottom:6px;">Jan ✓</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">
+              Revenue $166,667<br/>
+              COGS $83,333 (50%)<br/>
+              <hr style="border:none;border-top:1px solid #2e2e2e;margin:3px 0;"/>
+              GP <span style="color:#888;font-weight:700;">$83,333</span><br/>
+              GP% <span style="color:#888;font-weight:700;">50.0%</span>
+            </div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid rgba(46,46,46,0.4);opacity:0.55;">
+            <div style="font-size:11px;font-weight:700;color:#888;text-align:center;margin-bottom:6px;">Feb ✓</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">Revenue $166,667<br/>COGS $83,333 (50%)<br/>GP <span style="color:#888;font-weight:700;">$83,333</span></div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid rgba(46,46,46,0.4);opacity:0.55;">
+            <div style="font-size:11px;font-weight:700;color:#888;text-align:center;margin-bottom:6px;">Mar ✓</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">Revenue $166,667<br/>COGS $83,333 (50%)<br/>GP <span style="color:#888;font-weight:700;">$83,333</span></div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid #2e2e2e;">
+            <div style="font-size:11px;font-weight:700;color:#FFF200;text-align:center;margin-bottom:6px;">Apr</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">Revenue $183,333<br/>COGS $91,667 (50%)<br/>GP <span style="color:#FFF200;font-weight:700;">$91,667</span><br/>GP% <span style="color:#FFF200;font-weight:700;">50.0%</span></div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid #2e2e2e;">
+            <div style="font-size:11px;font-weight:700;color:#FFF200;text-align:center;margin-bottom:6px;">May</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">Revenue $183,333<br/>COGS $91,667<br/>GP <span style="color:#FFF200;font-weight:700;">$91,667</span></div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:10px;border:1px solid #2e2e2e;">
+            <div style="font-size:11px;font-weight:700;color:#FFF200;text-align:center;margin-bottom:6px;">Jun</div>
+            <div style="font-size:10px;color:#fff;line-height:1.5;">↓ continues for Jul–Dec</div>
+          </div>
+          <div style="background:transparent;border:1px dashed #555;border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;font-style:italic;">5 more months</div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- ===== Card 5: Marketing Goals ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Marketing</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Leads Generated - Monthly #</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">20</div>
+            <div style="font-size:9px;color:#fff;margin-top:3px;">~5/wk</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">New Contracts (#) - Monthly #</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">15</div>
+            <div style="font-size:9px;color:#fff;margin-top:3px;">~3/wk</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Card 6: Sales Goals (with Estimating + Pipeline subsections) ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Sales</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Estimates / Contracts Won - Monthly $</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 150,000</div>
+            <div style="font-size:9px;color:#fff;margin-top:3px;">~$34,642/wk</div>
+          </div>
+        </div>
+
+        <!-- Estimating subsection -->
+        <div style="border-top:1px solid #2e2e2e;padding-top:10px;margin-bottom:14px;">
+          <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Estimating</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Estimates Written – Target $</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 200,000</div>
+            </div>
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;"># of Estimates Written - Monthly #</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">30</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline subsection -->
+        <div style="border-top:1px solid #2e2e2e;padding-top:10px;">
+          <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Pipeline</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Pipeline Value - Monthly $</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 150,000</div>
+            </div>
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Pipeline Deals - Monthly #</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">8</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Card 7: Operations Goals ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Operations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Jobs Completed - Monthly #</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">30</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">On-Time Delivery - Target %</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">85</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Warranty / Returns - Monthly #</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">2</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Card 8: Capacity Targets ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:6px;">Capacity &amp; Utilization Targets</div>
+        <div style="font-size:10px;color:#fff;margin-bottom:14px;">Goals match each group's tracking method. Tiles show green when within 10% of target.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Production Crew — Target %</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">85</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Sales Team — Weekly Revenue Goal</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">$ 50,000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom save -->
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="background:#FFF200;color:#000;padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;">Save Budget &amp; Goals</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: SEASONAL DISTRIBUTION EXPANDED -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Seasonal distribution expanded</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;">
+      <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Monthly Distribution</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Month Coaching Started</div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">January ▾</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <div style="flex:1;padding:7px;border-radius:5px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:11px;">Even</div>
+          <div style="flex:1;padding:7px;border-radius:5px;border:1px solid #FFF200;background:rgba(255,242,0,0.13);color:#FFF200;text-align:center;font-size:11px;">Seasonal</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px;">
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Jan</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">5.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Feb</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">6.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Mar</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">8.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Apr</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">10.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">May</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">12.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Jun</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">12.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Jul</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">12.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Aug</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">11.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Sep</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">9.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Oct</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">7.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Nov</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">5.0</div></div>
+        <div><div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Dec</div><div style="background:#252525;border:1px solid #2e2e2e;border-radius:4px;padding:4px;text-align:center;color:#fff;font-size:10px;">3.0</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#7ED957;">Total: 100.0% ok</div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: NO YTD ACTUALS YET -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · No YTD actuals entered yet</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;">
+      <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:6px;">YTD Actuals</div>
+      <div style="font-size:10px;color:#fff;margin-bottom:14px;">Enter actuals from January through the most recently completed month.</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Most Recently Completed Month</div>
+        <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:11px;">— Select —</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD Revenue</div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:11px;">$ 0</div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD COGS</div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:11px;">$ 0</div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">YTD Gross Profit <span style="color:#FFF200;font-size:7px;background:rgba(255,242,0,0.13);padding:1px 4px;border-radius:3px;">AUTO</span></div>
+          <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">—</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:#888;font-style:italic;margin-top:10px;">↑ No status banners shown when YTD actuals are empty.</div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Coach View (accessed via "View Portal")</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body identical to Client View — same cards, same fields, same edit access. Coach can change any goal or budget number on the client's behalf.
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><div style="font-size:13px;font-weight:700;">Storage</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">All budgets persist at <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:budgets:&lt;clientId&gt;</code>. Keyed by year. Multiple years can coexist on the same client.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Year tabs</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Year buttons at top of page switch which budget object is displayed. "+ 2027" creates a fresh empty budget for next year and switches to it. Once created, it gets its own tab.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Static parts of this page</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Annual Revenue Budget, YTD Actuals, Monthly Distribution, and Monthly Financial Goals are <strong>always</strong> shown — they're tied to always-on financials (Revenue, COGS, GP, GP%) and the budget structure itself.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Dynamic parts of this page</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        Goal cards by category (Marketing, Sales, Operations, Team) appear only if KPIs are toggled on in Settings for that category. <strong>Each KPI toggle drives whether its goal field exists.</strong> Toggle off in Settings → goal field disappears here. Toggle back on → the previously-saved goal value reappears (preserved, not deleted).<br/>
+        Capacity &amp; Utilization Targets card appears only if at least one capacity group exists in Settings.<br/>
+        Custom KPI goal fields appear in their assigned categories only when the custom KPI exists in Settings.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Annual budget math</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        Coach enters Annual Revenue $ and GP % Target.<br/>
+        <strong>GP $</strong> = Revenue × (GP% ÷ 100).<br/>
+        <strong>COGS $</strong> = Revenue − GP $.<br/>
+        <strong>COGS %</strong> = 100 − GP%.<br/>
+        These four numbers display in the summary strip and feed every monthly distribution / goal calculation downstream.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Monthly distribution: even vs seasonal</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        <strong>Even:</strong> annual revenue ÷ 12 each month.<br/>
+        <strong>Seasonal:</strong> 12 percentage fields (one per month). Must total 100% (banner shows red if not). Each month's revenue goal = annual × that month's percentage.<br/>
+        Both modes feed into the Monthly Financial Goals tiles.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">YTD actuals reflow remaining months</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        If YTD Revenue + COGS are entered (and "Most Recently Completed Month" is set), remaining months get adjusted to close the gap toward the annual GP goal.<br/>
+        <strong>Math:</strong> Remaining GP needed = Annual GP goal − YTD GP. Remaining revenue needed = Remaining GP ÷ GP margin. Distributed across remaining months by even split or by remaining seasonal percentages.<br/>
+        Past months show as greyed/checked tiles. Future months show with the adjusted (often higher) goal.<br/>
+        "Remaining revenue to produce" line is shown only when reflow is active.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Status banners</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Shown only when YTD actuals are entered and Annual Revenue is set. Two banners — one for Revenue (vs Jan–MarchToDate budget), one for Gross Profit (vs Jan–MarchToDate GP budget). Green if on/above, red if behind. The GP banner adds a note when behind that the remaining goals have been adjusted.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">"Month Coaching Started"</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Determines which months show in the Monthly Financial Goals grid (Apr → Dec, for example). Doesn't affect the math — just the visible window. Months before the start date aren't shown, even if YTD actuals cover them.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Per-week preview text</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Goal fields with $ or # format show a small "~X/wk" hint below the input — the monthly value ÷ 4.33. Helps coaches sanity-check whether the monthly target is reasonable per week.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Sales card subsections</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Mirrors the dashboard: Main → Estimating → Pipeline. Estimating section appears if any of (# of Estimates Written, Estimates Written $) are toggled on. Pipeline section appears if any of (Pipeline Value, Pipeline Deals) are toggled on. (See Planned Changes — flatten Sales coming.)</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Capacity targets per group</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        Each capacity group (defined in Settings) gets one target field here. Format depends on method:<br/>
+        <strong>Manual %, Time Slots, Labor Hours, Headcount:</strong> Target % field.<br/>
+        <strong>By Revenue ($):</strong> Weekly Revenue Goal $ field.<br/>
+        Stored at <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.capacityGroupGoals[groupId]</code>.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Auto-derived KPIs don't get goals (today)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Conversion Rate, Avg Repair Order, Avg Pipeline Deal, Revenue per New Client, Avg Estimate Value, Sales Close Rate (Construction), Avg Transaction Value — none have goal fields here. Their tile coloring is driven by the underlying inputs' goals. (Doc 04 Planned Change #14 changes this — auto-derived KPIs will get their own goal fields.)</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIELD REFERENCE -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Budget Field Reference (everything stored on the budget object for a year)</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead>
+        <tr style="background:#f3f1e8;border-bottom:1px solid #ddd;">
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Field</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Type</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="3" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Annual budget</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">year</td><td style="padding:7px 10px;color:#444;">number</td><td style="padding:7px 10px;color:#666;">2026, 2027, etc.</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">revGoal</td><td style="padding:7px 10px;color:#444;">string (numeric)</td><td style="padding:7px 10px;color:#666;">Annual revenue target</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">gpTargetPct</td><td style="padding:7px 10px;color:#444;">string (numeric)</td><td style="padding:7px 10px;color:#666;">Target gross profit percentage</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">cogsTargetPct</td><td style="padding:7px 10px;color:#444;">string (numeric)</td><td style="padding:7px 10px;color:#666;">Auto-set to 100 - gpTargetPct</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">cogsGoal</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Cleared when GP% is set; legacy fallback</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="3" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">YTD Actuals</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">ytdThruMonth</td><td style="padding:7px 10px;color:#444;">number | null</td><td style="padding:7px 10px;color:#666;">0–11 (Jan–Dec) or null</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">ytdRevenue</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">YTD revenue actual</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">ytdCogs</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">YTD COGS actual; YTD GP is computed</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="3" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Distribution</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">startMonth</td><td style="padding:7px 10px;color:#444;">number</td><td style="padding:7px 10px;color:#666;">0–11 · "Month Coaching Started"</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">seasonType</td><td style="padding:7px 10px;color:#444;">'even' | 'seasonal'</td><td style="padding:7px 10px;color:#666;">Default 'even'</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">seasonPct</td><td style="padding:7px 10px;color:#444;">array of 12 numbers</td><td style="padding:7px 10px;color:#666;">Used only when seasonType='seasonal'; must total 100</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="3" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">KPI &amp; capacity goals</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">goals</td><td style="padding:7px 10px;color:#444;">map of kpi id → string</td><td style="padding:7px 10px;color:#666;">Monthly goals for non-financial KPIs</td></tr>
+        <tr><td style="padding:7px 10px;color:#222;font-weight:600;">capacityGroupGoals</td><td style="padding:7px 10px;color:#444;">map of group id → string</td><td style="padding:7px 10px;color:#666;">Target % or weekly $ depending on group method</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <!-- Carry-forward: Sales restructure -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sales card flatten — drop Estimating subsection (carry-forward from Doc 04 #10)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">Sales card on Budget &amp; Goals removes the Estimating subsection. Pipeline subsection stays. Goal fields for # of Estimates Written, Estimates Written ($), Avg Estimate Value all sit flat in the Sales card.</div>
+  </div>
+
+  <!-- Carry-forward: KPI splits -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">KPI splits and renames affect goal fields here (carry-forward from Doc 04 #11)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">"Estimates / Contracts Won" splits into separate goal fields for Contracts Won ($) and Estimates Won ($). Estimates Written tile renames drop the "Target $" wording. Revenue per New Client renamed to Contract Value per New Client.</div>
+  </div>
+
+  <!-- Carry-forward: auto-KPI goals -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Auto-derived KPIs get their own goal fields (carry-forward from Doc 04 #14)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      New goal fields appear in their respective category cards: Conversion Rate (Marketing, %), Contract Value per New Client (Sales, $), Avg Repair Order (Operations, $), Avg Pipeline Deal (Sales, $), Avg Estimate Value (Sales, $), Avg Transaction Value (Sales, $), Sales Close Rate (Sales, %).<br/>
+      <strong>Implication for tile coloring:</strong> Auto-KPI tiles on the dashboard now color against their own goal, not their inputs'.
+    </div>
+  </div>
+
+  <!-- Carry-forward: capacity targets stay here -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Capacity &amp; utilization targets stay here, not Settings (carry-forward from Doc 04 #13)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Capacity group definitions (name, method, employees, working hours, capacity hours) live in Settings. Capacity targets (% goal or $ goal per group) live here on Budget &amp; Goals. The split is intentional — setup is rare, targets reset annually.<br/>
+      <strong>Manual % method exception:</strong> No goal field shown for Manual % groups. The static utilization % comes from Settings and is the displayed value, not a target.
+    </div>
+  </div>
+
+  <!-- Carry-forward: client access -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Budget &amp; Goals is fully client-editable</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Unlike Settings (coach-owned per Doc 04 #7), Budget &amp; Goals stays open for the client to edit directly. Annual revenue target, GP %, monthly distribution (even/seasonal), YTD actuals, KPI goal fields, capacity targets — all editable by the client. Coach can also edit via Coach View.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Rationale:</strong> Setup (what gets tracked, how it's structured) is the coach's domain. Goals (what numbers we're aiming for this year) belong to the client — they own their business plan and need to be able to revise it as conditions change.<br/>
+      <strong>Coach role:</strong> Coach typically helps the client set initial goals during onboarding and revisits them in 1:1s. But day-to-day, the client can update without needing to ask.
+    </div>
+  </div>
+
+  <!-- Carry-forward: branding flip -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Re-balance the top bar — client first, branding to footer (carry-forward from Doc 03)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">Same change as on every client-facing page.</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Cross-doc: persistent saved state &amp; Cancel pattern</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The Save buttons on Budget &amp; Goals (top-right "Save" and bottom-right "Save Budget &amp; Goals") follow the portal-wide Save/Cancel pattern documented in Doc 06.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Persistent "Saved ✓" state:</strong> after a successful save, the button stays green and reads "Saved ✓" until the form is changed or the user leaves the current edit context. Replaces the current 2-second flash.<br/>
+      <strong>Cancel buttons paired with Save:</strong> add a Cancel button next to each Save button. Reverts the form to the most recently saved state for the current budget year — including annual revenue, GP target, YTD actuals, monthly distribution, all category goal cards, and capacity group goals.<br/>
+      <strong>Saved state is per-budget-year:</strong> switching to a different year (clicking a year tab or "+ {year}") resets the indicator since you're now editing a different budget. With unsaved changes on the current year, switching opens the Save / Discard Changes / Stay Here dialog before the year change completes.<br/>
+      <strong>Unsaved-changes guard:</strong> navigating away (top-nav clicks, Logout) with unsaved changes opens the same dialog.<br/>
+      <strong>"+ {next year}" button:</strong> creates a fresh budget for the next year. With unsaved changes on the current year, fires the dialog first — no silent year creation.<br/>
+      <strong>See Doc 06 for the full spec.</strong> This is just the cross-reference to keep all surfaces consistent.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Drop dead <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsGoal</code> field from budget shape</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsGoal</code> field still exists in the budget object shape but is silently cleared whenever <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsTargetPct</code> is set (which is the canonical input on this page). It's still queried as a fallback in calculations but never user-facing. Remove it entirely in the rebuild.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Effect:</strong> COGS is always derived as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">revenueGoal × cogsTargetPct ÷ 100</code> for goal-display purposes. No fallback path needed.<br/>
+      <strong>Code cleanup:</strong> Drop the field from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">defBudget()</code>, remove fallback branches in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getPeriodGoalFull('cogs', ...)</code> and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEntryGoal('cogs', ...)</code>. Confirms <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">cogsTargetPct</code> as the single canonical input.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">YTD actuals stored month-by-month — hybrid entry (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Replace single-bucket YTD actuals (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenue</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdCogs</code>) with month-by-month arrays so QTD math is accurate when coaching starts mid-quarter (e.g. April or August). Doc 08 has the full decision; this card captures the Doc 05 surface changes.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Storage on the budget record:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdRevenueByMonth: [num|null × 12]</code> and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdCogsByMonth: [num|null × 12]</code>. Indices 0–11 = Jan–Dec; months past <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> are null.<br/>
+      <strong>Migration:</strong> existing single-total values get auto-distributed across covered months on first load (even split when <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">seasonType='even'</code>; weighted by <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">seasonPct</code> when seasonal). Saved into the array so subsequent loads use the array directly.<br/>
+      <strong>Default UI — single-total entry:</strong> the existing two fields (Revenue, COGS) plus the <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> dropdown stay as the default entry path. Coaches who don't need monthly precision use this and never see the detail.<br/>
+      <strong>Optional detail entry:</strong> a "Show monthly breakdown" toggle (or expand control) opens a per-month grid below the single-total fields. One row per covered month with Revenue + COGS columns. Coach can override any month inline.<br/>
+      <strong>Sync rule:</strong> editing the single total re-runs auto-distribution (warns before overwriting overrides). Editing a month's value updates that cell and recomputes the displayed single total as the sum.<br/>
+      <strong>YtdStatusBanners impact:</strong> banner math reads the array sum (same total, just sourced differently). No visible change to coach.<br/>
+      <strong>YtdGP auto field:</strong> derives from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">sum(ytdRevenueByMonth) − sum(ytdCogsByMonth)</code>.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">YTD actuals + entries overlap warning (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> is set and weekly entries also exist within that same window, cumulative dashboards may double-count revenue and COGS. Surface a warning here so the coach can resolve it manually.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Where the warning appears:</strong> inline near the YTD Actuals card on Budget &amp; Goals. Not blocking — coach can still save.<br/>
+      <strong>Trigger:</strong> any weekly entry with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> on or before the last day of <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code> in the same year as the budget.<br/>
+      <strong>Wording (draft):</strong> <em>"Heads up — N weekly entries exist within the YTD actuals window ([Jan–Mar]). The cumulative dashboard will add both these entries and the actuals total, which may double-count revenue. If that's not intentional, delete the entries or shorten the actuals window."</em><br/>
+      <strong>Resolution paths (coach decides):</strong> delete the offending entries via Weekly Entry, shorten <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">ytdThruMonth</code>, or accept the overlap.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sun–Sat week change (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Portal-wide week boundary changes from Mon–Sun to Sun–Sat. See Doc 08 for the source-of-truth decision and full cross-doc impact list.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Doc 05 impact:</strong> goal pro-rating math that uses week boundaries (e.g. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEntryGoal</code> for revenue uses <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">days/daysInMo</code>) is unaffected — it operates on entry-day counts, not week anchors. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getMonthFrac</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getQtrFrac</code>, and the seasonal distribution logic are all month-/quarter-anchored, not week-anchored. No code changes here.<br/>
+      <strong>Per-month "weekly preview" hints (e.g. <em>"~$10K/wk"</em> beneath monthly goal fields):</strong> still divide by 4.33 weeks per month; that constant is unchanged.<br/>
+      <strong>Documentation:</strong> any reference in this doc to "Monday" as a week anchor (in examples or descriptions) updates to "Sunday" in the rebuild pass.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>

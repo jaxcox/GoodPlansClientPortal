@@ -1,0 +1,271 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1100px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 01</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Login / Auth</h1>
+  <div style="font-size:14px;color:#555;">Entry point. Three flows: Coach login, existing client login, first-time client activation via invite code.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1100px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element (matches actual app)</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Primary action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><span>State / Storage</span></div>
+  </div>
+</div>
+
+<!-- LAYOUT GRID -->
+<div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+  <!-- LEFT COLUMN: VISUAL MAP -->
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map · 3 flows</div>
+
+    <!-- ===== Flow 1: Coach Login ===== -->
+    <div style="margin-bottom:18px;">
+      <div style="font-size:10px;font-weight:700;color:#FFF200;background:#0f0f0f;display:inline-block;padding:4px 10px;border-radius:4px;margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">Flow 1 · Coach Login</div>
+
+      <div style="background:#0f0f0f;border-radius:14px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;">The Good Plans Co</div>
+          <div style="color:#aaa;font-size:10px;margin-top:2px;">Client Performance Portal</div>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;width:260px;">
+          <!-- Top tabs -->
+          <div style="display:flex;border-bottom:1px solid #2e2e2e;margin-bottom:12px;">
+            <div style="flex:1;text-align:center;padding:7px 0;color:#FFF200;font-size:10px;font-weight:700;border-bottom:2px solid #FFF200;margin-bottom:-1px;">Coach Login</div>
+            <div style="flex:1;text-align:center;padding:7px 0;color:#888;font-size:10px;">Client Login</div>
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Username</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">coach</div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Password</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">••••••••</div>
+          </div>
+
+          <div style="background:#FFF200;color:#000;text-align:center;padding:7px;border-radius:5px;font-size:10px;font-weight:700;">Sign In as Coach</div>
+          <div style="text-align:center;color:#aaa;font-size:8px;margin-top:7px;">Demo: coach / coach123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Flow 2: Client Login — Existing ===== -->
+    <div style="margin-bottom:18px;">
+      <div style="font-size:10px;font-weight:700;color:#FFF200;background:#0f0f0f;display:inline-block;padding:4px 10px;border-radius:4px;margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">Flow 2 · Client Login — Existing</div>
+
+      <div style="background:#0f0f0f;border-radius:14px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;">The Good Plans Co</div>
+          <div style="color:#aaa;font-size:10px;margin-top:2px;">Client Performance Portal</div>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;width:260px;">
+          <!-- Top tabs (Client active) -->
+          <div style="display:flex;border-bottom:1px solid #2e2e2e;margin-bottom:12px;">
+            <div style="flex:1;text-align:center;padding:7px 0;color:#888;font-size:10px;">Coach Login</div>
+            <div style="flex:1;text-align:center;padding:7px 0;color:#FFF200;font-size:10px;font-weight:700;border-bottom:2px solid #FFF200;margin-bottom:-1px;">Client Login</div>
+          </div>
+
+          <!-- Sub-tabs -->
+          <div style="display:flex;gap:5px;margin-bottom:12px;">
+            <div style="flex:1;padding:5px;border-radius:4px;background:rgba(255,242,0,0.13);border:1px solid #FFF200;color:#FFF200;text-align:center;font-size:9px;font-weight:700;">Existing User</div>
+            <div style="flex:1;padding:5px;border-radius:4px;background:transparent;border:1px solid #2e2e2e;color:#888;text-align:center;font-size:9px;">First Time? Use Invite Code</div>
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Email</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">you@company.com</div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Password</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">••••••••</div>
+          </div>
+
+          <div style="background:#FFF200;color:#000;text-align:center;padding:7px;border-radius:5px;font-size:10px;font-weight:700;">Sign In</div>
+          <div style="text-align:center;color:#aaa;font-size:8px;margin-top:7px;">Demo: client@demo.com / client123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Flow 3: Client Login — First Time ===== -->
+    <div>
+      <div style="font-size:10px;font-weight:700;color:#FFF200;background:#0f0f0f;display:inline-block;padding:4px 10px;border-radius:4px;margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">Flow 3 · Client Login — First Time (Activation)</div>
+
+      <div style="background:#0f0f0f;border-radius:14px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;">The Good Plans Co</div>
+          <div style="color:#aaa;font-size:10px;margin-top:2px;">Client Performance Portal</div>
+        </div>
+
+        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:16px;width:260px;">
+          <!-- Top tabs (Client active) -->
+          <div style="display:flex;border-bottom:1px solid #2e2e2e;margin-bottom:12px;">
+            <div style="flex:1;text-align:center;padding:7px 0;color:#888;font-size:10px;">Coach Login</div>
+            <div style="flex:1;text-align:center;padding:7px 0;color:#FFF200;font-size:10px;font-weight:700;border-bottom:2px solid #FFF200;margin-bottom:-1px;">Client Login</div>
+          </div>
+
+          <!-- Sub-tabs (First Time active) -->
+          <div style="display:flex;gap:5px;margin-bottom:12px;">
+            <div style="flex:1;padding:5px;border-radius:4px;background:transparent;border:1px solid #2e2e2e;color:#888;text-align:center;font-size:9px;">Existing User</div>
+            <div style="flex:1;padding:5px;border-radius:4px;background:rgba(255,242,0,0.13);border:1px solid #FFF200;color:#FFF200;text-align:center;font-size:9px;font-weight:700;">First Time? Use Invite Code</div>
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Email</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">you@company.com</div>
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Invite Code</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;font-family:monospace;">ABCAUT</div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div style="font-size:8px;color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;">Set a Password</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:10px;">••••••••</div>
+          </div>
+
+          <div style="background:#FFF200;color:#000;text-align:center;padding:7px;border-radius:5px;font-size:10px;font-weight:700;">Activate Account</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: BEHAVIOR NOTES -->
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+    <!-- Tabs -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span>
+        <div style="font-size:13px;font-weight:700;">Two top-level tabs</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Coach (default) and Client. Clicking either resets the error state. Tab choice is local UI state only — not persisted.</div>
+    </div>
+
+    <!-- Coach login -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span>
+        <div style="font-size:13px;font-weight:700;">Coach login</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;margin-bottom:8px;">Hardcoded credentials: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">coach / coach123</code>. On success, sets session to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">{type:'coach', name:'Coach'}</code> and routes to Coach Admin.</div>
+      <div style="font-size:11px;color:#a05500;background:#fff3e0;border-left:3px solid #e89000;padding:6px 10px;border-radius:3px;">Single shared coach account. No per-coach support yet.</div>
+    </div>
+
+    <!-- Client login -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span>
+        <div style="font-size:13px;font-weight:700;">Client login — Existing User</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Looks up clients in storage by <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">email + password</code> AND <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">activated === true</code>. On match, session is set to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">{type:'client', clientId, name}</code> and routes to Client Portal.</div>
+    </div>
+
+    <!-- Client activation -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span>
+        <div style="font-size:13px;font-weight:700;">Client activation — First-time</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;margin-bottom:8px;">Requires invite code (matched case-insensitive against client records where <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">activated === false</code>) plus an email and a chosen password. On activation, the client record is updated with the email/password and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">activated:true</code>, then signed in.</div>
+      <div style="font-size:11px;color:#a05500;background:#fff3e0;border-left:3px solid #e89000;padding:6px 10px;border-radius:3px;">Email is overwritten by the user's input — the email Coach entered when creating the client is replaced.</div>
+    </div>
+
+    <!-- Session storage -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8d4ff;border:1px solid #8a5ad1;"></span>
+        <div style="font-size:13px;font-weight:700;">Session persistence</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Session is stored at storage key <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:session</code>. Reloads stay signed in until logout (which sets session to null).</div>
+    </div>
+
+    <!-- Routing -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span>
+        <div style="font-size:13px;font-weight:700;">Routing decision (App root)</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">No session → LoginPage. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">type==='coach'</code> → CoachAdmin. Otherwise → ClientPortal with the stored clientId.</div>
+    </div>
+
+    <!-- Demo seeded accounts -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8d4ff;border:1px solid #8a5ad1;"></span>
+        <div style="font-size:13px;font-weight:700;">Seeded demo accounts</div>
+      </div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Three pre-activated client accounts seeded on first load: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">abc@demo.com / abc123</code> (ABC Autobody), <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">docs@demo.com / docs123</code> (Doc's Auto Clinic), <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client@demo.com / client123</code> (Demo Company). Re-seeded if SEED_VERSION changes.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1100px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Add "Forgot password?" link to the Client Login tab (cross-reference)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today there's no password recovery — if a client forgets their password, they're locked out. The full password reset flow is documented in <strong>Doc 04 PC #8 "Add password reset flow (coach-generated reset codes)"</strong>. Doc 01 surface change: add a small <em>"Forgot password?"</em> link below the password field on the Client Login (Existing User) form. Clicking it opens the reset form: Email + Reset Code + New Password.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Reset code source:</strong> coach generates a 6-character single-use code from Coach Admin → client card → "Reset Password" action, and relays it to the client (text, email, in-call). 24-hour expiration.<br/>
+      <strong>Coach Login tab:</strong> no "Forgot password?" link — the coach is a single account; if you forget your own password, that's a different recovery path (likely "rebuild platform handles it" — see below).<br/>
+      <strong>See Doc 04 PC #8 for the full spec.</strong>
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Replace plaintext passwords with proper authentication</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, both coach and client passwords are stored in plaintext on records in browser storage (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:clients</code> for clients, hard-coded check for coach). Acceptable for the current prototype since data lives only in your browser, but unacceptable for any real deployment where the portal lives on a server and is accessed by multiple people.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Required for rebuild:</strong> proper password hashing (bcrypt or equivalent) + secure password verification. Plaintext passwords never written to storage, never returned in API responses, never logged.<br/>
+      <strong>Platform-neutral:</strong> whichever rebuild path you take — WordPress plugin, standalone web app on a real backend (Node + Postgres, Supabase, Firebase, etc.), or something else — proper auth comes built-in or via a well-tested library. Don't roll your own crypto.<br/>
+      <strong>Session handling:</strong> the current portal stores a session blob in browser storage (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:session</code>). The rebuild should use whatever session/token model the chosen platform provides (cookies, JWTs, etc.) — same outcome (logged-in state survives reload), much better security.<br/>
+      <strong>Migration path:</strong> demo accounts (<code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">coach/coach123</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">abc@demo.com/abc123</code>, etc.) are seed data — they get re-created with hashed passwords on first run of the rebuilt app. No real client passwords to migrate yet.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Rate-limit invite-code and login attempts</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, the login form will accept unlimited login attempts and unlimited invite-code attempts with no throttling. Combined with 6-character alphanumeric invite codes, this means a determined attacker could brute-force codes given enough time. Real-world risk is low at current scale (a handful of clients, no real value to attack), but the rebuild should add basic rate limiting.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Limits to apply:</strong> after N failed attempts (e.g. 5) within a short window (e.g. 5 minutes) on a single email or IP, lock further attempts for a cooldown period (e.g. 15 minutes). Same logic applies to invite-code and reset-code submissions.<br/>
+      <strong>Platform-neutral:</strong> whichever rebuild platform is chosen, this is standard. Most modern auth libraries / frameworks include rate limiting out of the box, or it's a small middleware layer.<br/>
+      <strong>Invite-code expiration:</strong> consider also adding an expiration date to invite codes (e.g. 30 days from generation). Codes that haven't been redeemed in that window expire and need to be regenerated. Reduces the window for guessing attacks and forces stale invites to be refreshed before client onboarding.<br/>
+      <strong>UX:</strong> on rate-limit hit, show a friendly message — <em>"Too many attempts. Please wait a few minutes and try again."</em> — not a technical error.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- BOTTOM: GAPS / OPEN QUESTIONS -->
+<div style="max-width:1100px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>

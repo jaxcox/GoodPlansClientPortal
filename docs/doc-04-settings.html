@@ -1,0 +1,799 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 04</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Settings</h1>
+  <div style="font-size:14px;color:#555;">Where the client's structure is defined: company info, which KPIs are active, how capacity is tracked, and any custom KPIs. This is configuration, not data — set up rarely, referenced everywhere.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><span>State / Storage</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP: PRIMARY -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map · Client View (full page top-to-bottom)</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div style="font-size:18px;font-weight:700;color:#111;">Company Settings</div>
+        <div style="background:#FFF200;color:#000;padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;">Save Settings</div>
+      </div>
+
+      <!-- ===== Row 1: 2-column (Company Info + Active KPIs) ===== -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+
+        <!-- Card: Company Info -->
+        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;">
+          <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:12px;">Company Info</div>
+
+          <div style="margin-bottom:9px;">
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Company Name</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">ABC Autobody</div>
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Contact Name</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">Demo Client</div>
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Email</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">abc@demo.com</div>
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Shared Folder Link</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#888;font-size:11px;">https://drive.google.com/...</div>
+          </div>
+
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Industry</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:11px;">Construction / Trades ▾</div>
+            <div style="font-size:9px;color:#aaa;margin-top:4px;">Changing industry resets KPI defaults.</div>
+          </div>
+        </div>
+
+        <!-- Card: Active KPIs -->
+        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;">
+          <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:8px;">Active KPIs</div>
+          <div style="font-size:10px;color:#fff;margin-bottom:12px;">Revenue, COGS, Gross Profit, and GP Margin always on.</div>
+
+          <!-- Financials (Optional) section -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Financials (Optional)</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Accounts Receivable</span></div>
+          </div>
+
+          <!-- Marketing -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Marketing</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Leads Generated</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">New Contracts (#)</span></div>
+          </div>
+
+          <!-- Sales -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Sales</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Estimates / Contracts Won</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Estimates Written – Target $</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;"># of Estimates Written</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Pipeline Value</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Pipeline Deals</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Sales Close Rate</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#2e2e2e;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#888;position:absolute;top:1px;left:1px;"></span></span><span style="color:#fff;font-size:10px;"># of Transactions</span></div>
+            </div>
+          </div>
+
+          <!-- Ops -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Operations</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Jobs Completed</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">On-Time Delivery</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Warranty / Returns</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#2e2e2e;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#888;position:absolute;top:1px;left:1px;"></span></span><span style="color:#fff;font-size:10px;">Cancellations</span></div>
+            </div>
+          </div>
+
+          <!-- Team -->
+          <div>
+            <div style="font-size:8px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Team</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#FFF200;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#000;position:absolute;top:1px;left:11px;"></span></span><span style="color:#fff;font-size:10px;">Employee Utilization</span></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:24px;height:14px;border-radius:7px;background:#2e2e2e;position:relative;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#888;position:absolute;top:1px;left:1px;"></span></span><span style="color:#fff;font-size:10px;">Labor Hours Completed</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== Row 2: Capacity Groups (full width) ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:4px;">Capacity &amp; Utilization Tracking</div>
+        <div style="font-size:10px;color:#fff;margin-bottom:14px;">Set up tracking for departments or teams, grouped by method.</div>
+
+        <!-- Method group: By Labor Hours -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #2e2e2e;">
+            <div style="font-size:9px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">By Labor Hours</div>
+            <div style="background:#FFF200;color:#000;padding:3px 9px;border-radius:4px;font-size:9px;font-weight:700;">+ Add</div>
+          </div>
+
+          <!-- Group panel: Production Crew -->
+          <div style="background:#0f0f0f;border:1px solid rgba(255,242,0,0.27);border-radius:8px;padding:12px;margin-bottom:8px;">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;">
+              <div>
+                <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Department</div>
+                <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:10px;">Production Crew</div>
+              </div>
+              <div>
+                <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Method</div>
+                <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:10px;">By Labor Hours ▾</div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <div>
+                <div style="font-size:10px;color:#fff;font-weight:600;">Employee Capacities</div>
+                <div style="font-size:9px;color:#FFF200;">200 hrs/wk</div>
+              </div>
+              <div style="background:#FFF200;color:#000;padding:3px 9px;border-radius:4px;font-size:9px;font-weight:700;">+ Add</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;margin-bottom:4px;">
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Name</div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Role</div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Hrs/Wk</div>
+              <div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;margin-bottom:5px;align-items:center;">
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Team A</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Body</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">120</div>
+              <div style="color:#f87171;font-size:14px;line-height:1;">×</div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Team B</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Paint</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">80</div>
+              <div style="color:#f87171;font-size:14px;line-height:1;">×</div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;">
+              <div style="background:transparent;color:#f87171;border:1px solid #f87171;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;">Remove</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method group: By Revenue ($) -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #2e2e2e;">
+            <div style="font-size:9px;color:#FFF200;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">By Revenue ($)</div>
+            <div style="background:#FFF200;color:#000;padding:3px 9px;border-radius:4px;font-size:9px;font-weight:700;">+ Add</div>
+          </div>
+
+          <div style="background:#0f0f0f;border:1px solid rgba(255,242,0,0.27);border-radius:8px;padding:12px;">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;">
+              <div>
+                <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Department</div>
+                <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:10px;">Sales Team</div>
+              </div>
+              <div>
+                <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Method</div>
+                <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:6px 9px;color:#fff;font-size:10px;">By Revenue ($) ▾</div>
+              </div>
+            </div>
+
+            <div style="font-size:10px;color:#fff;font-weight:600;margin-bottom:5px;">Revenue Capacity</div>
+            <div style="font-size:9px;color:#FFF200;margin-bottom:8px;">$55,000/wk</div>
+            <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;align-items:center;margin-bottom:8px;">
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Estimators</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Sales</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">$55,000</div>
+              <div style="color:#f87171;font-size:14px;line-height:1;">×</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Tracking Method buttons row -->
+        <div>
+          <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Add Tracking Method</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <span style="padding:5px 10px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:9px;">+ Manual %</span>
+            <span style="padding:5px 10px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:9px;">+ By Time Slots</span>
+            <span style="padding:5px 10px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:9px;">+ By Working Hours</span>
+            <span style="padding:5px 10px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;font-size:9px;">+ By Headcount</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== Row 3: Custom KPIs (full width) ===== -->
+      <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Custom KPIs</div>
+
+        <!-- Add new -->
+        <div style="background:#252525;border-radius:8px;padding:10px;margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:end;">
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">KPI Name</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#888;font-size:10px;">e.g. NPS Score</div>
+            </div>
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Category</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Sales ▾</div>
+            </div>
+            <div>
+              <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Format</div>
+              <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;">Count ▾</div>
+            </div>
+            <div style="background:#FFF200;color:#000;padding:5px 12px;border-radius:4px;font-size:10px;font-weight:700;">Add</div>
+          </div>
+          <div style="margin-top:8px;">
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Direction</div>
+            <div style="display:flex;gap:6px;">
+              <div style="flex:1;padding:5px;border-radius:4px;border:1px solid #7ED957;background:rgba(126,217,87,0.13);color:#7ED957;text-align:center;font-size:10px;font-weight:700;">Higher is Better</div>
+              <div style="flex:1;padding:5px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:10px;">Lower is Better</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div style="background:#252525;border-radius:8px;padding:14px;text-align:center;color:#fff;font-size:11px;">
+          No custom KPIs. Add one above.
+        </div>
+
+      </div>
+
+      <!-- Bottom save -->
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="background:#FFF200;color:#000;padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;">Save Settings</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: WITH CUSTOM KPIs ADDED -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Custom KPIs section with entries (with one in edit mode)</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:14px;">
+      <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;">Custom KPIs</div>
+
+      <div style="background:#252525;border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:#888;text-align:center;">
+        ↑ "Add new" form (collapsed for brevity)
+      </div>
+
+      <!-- Existing KPI in display mode -->
+      <div style="background:#252525;border-radius:6px;padding:9px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="color:#fff;font-weight:600;font-size:11px;">NPS Score</span>
+          <span style="margin-left:8px;color:#fff;font-size:10px;">Marketing · Percent</span>
+          <span style="margin-left:6px;color:#888;font-size:9px;">(click to edit)</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:9px;color:#7ED957;font-weight:600;">Higher Better</span>
+          <span style="color:#f87171;font-size:14px;line-height:1;">×</span>
+        </div>
+      </div>
+
+      <!-- Existing KPI in edit mode -->
+      <div style="background:#252525;border-radius:6px;padding:11px 12px;margin-bottom:7px;border:1px solid rgba(255,242,0,0.27);">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">KPI Name</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:4px 7px;color:#fff;font-size:10px;">Mystery Shopper Score</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Category</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:4px 7px;color:#fff;font-size:10px;">Operations ▾</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Format</div>
+            <div style="background:#252525;border:1px solid #2e2e2e;border-radius:5px;padding:4px 7px;color:#fff;font-size:10px;">Percent ▾</div>
+          </div>
+        </div>
+        <div style="font-size:8px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Direction</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="flex:1;padding:4px;border-radius:4px;border:1px solid #7ED957;background:rgba(126,217,87,0.13);color:#7ED957;text-align:center;font-size:9px;font-weight:700;">Higher Better</div>
+          <div style="flex:1;padding:4px;border-radius:4px;border:1px solid #2e2e2e;background:transparent;color:#fff;text-align:center;font-size:9px;">Lower Better</div>
+        </div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <div style="background:transparent;color:#aaa;border:1px solid #555;padding:4px 10px;border-radius:4px;font-size:10px;">Cancel</div>
+          <div style="background:#FFF200;color:#000;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;">Save</div>
+        </div>
+      </div>
+
+      <!-- Existing KPI - lower better example -->
+      <div style="background:#252525;border-radius:6px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="color:#fff;font-weight:600;font-size:11px;">Avg Resolution Time</span>
+          <span style="margin-left:8px;color:#fff;font-size:10px;">Operations · Count</span>
+          <span style="margin-left:6px;color:#888;font-size:9px;">(click to edit)</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:9px;color:#ff3131;font-weight:600;">Lower Better</span>
+          <span style="color:#f87171;font-size:14px;line-height:1;">×</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Coach View (accessed via "View Portal")</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#555;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body identical to Client View — same cards, same fields, same edit access. Coach can change any setting on the client's behalf.
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Differences from Client View</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        (1) Yellow <strong>COACH VIEW</strong> badge in the top bar.<br/>
+        (2) Logout button reads <strong>Back</strong> and returns to Coach Admin.<br/>
+        (3) Coach has full edit access to every section. No read-only state today.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">In current code, client and coach have identical access</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Client can change their own industry, KPI toggles, capacity groups, custom KPIs — same as coach. (See Planned Changes for the proposed restriction.)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><div style="font-size:13px;font-weight:700;">Storage</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">All fields persist on the client record in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">portal:clients</code>. Save writes the whole updated client object back to the array. No partial saves.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Save button (top &amp; bottom)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Same Save button appears at top-right and bottom-right. Both call the same handler. Two buttons because the page is long enough that scrolling back up to save is annoying.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Industry change is destructive</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Changing industry replaces <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.kpis</code> with that industry's defaults. Any toggles set manually for the previous industry are lost. Tooltip in the UI says "Changing industry resets KPI defaults."</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">KPI toggle visibility</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Only KPIs that the selected industry's <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">kpiDefaults</code> contain a value for (0 or 1) appear as toggles. Auto-calculated KPIs (Conversion Rate, Avg Repair Order, etc.) and always-on KPIs (Revenue/COGS/GP/GP%) are not shown — they're managed automatically.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Active KPIs panel — Financials section appears conditionally</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Only renders if the industry has any optional Financials KPIs (currently just Accounts Receivable in Construction). Industries without optional Financials KPIs skip the section entirely.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Capacity groups grouped by method</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Groups using the same method are visually clustered under a method header. "+ Add" within a method header creates another group of that same method. The "Add Tracking Method" row at the bottom shows only methods not yet in use — clicking creates the first group with that method.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Capacity group methods (6 types)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        <strong>Manual %</strong> — coach types in utilization % each week.<br/>
+        <strong>By Time Slots</strong> — total slots vs filled slots (e.g. Healthcare appts).<br/>
+        <strong>By Labor Hours</strong> — labor hours completed ÷ employee capacity.<br/>
+        <strong>By Working Hours</strong> — labor hours completed ÷ (FTE × hrs/wk).<br/>
+        <strong>By Revenue ($)</strong> — revenue ÷ revenue capacity.<br/>
+        <strong>By Headcount</strong> — labor hours ÷ headcount capacity.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Method-dependent fields</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        Each capacity group's edit panel changes shape based on its method:<br/>
+        <strong>Manual:</strong> no extra config.<br/>
+        <strong>Slots:</strong> 30 / 60 min slot duration toggle.<br/>
+        <strong>Labor Hours / Revenue:</strong> employee list with hours or $ capacity per row.<br/>
+        <strong>Working Hours:</strong> "Hours/Week per FTE" + department list (full-time / part-time counts).<br/>
+        <strong>Headcount:</strong> "Hours/Week per FTE" + FT/PT vs Labor Cap toggle + department list.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Custom KPIs are flat — added one at a time</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Add row at top creates a new KPI in the list below. Clicking an existing row enters inline edit mode (form replaces the row). Save commits, Cancel reverts.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Custom KPI fields</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        <strong>Name</strong> (free text), <strong>Category</strong> (Financials / Marketing / Sales / Operations / Team / Overall Company), <strong>Format</strong> (Count / Dollar / Percent), <strong>Direction</strong> (Higher Better / Lower Better). All required.
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Custom KPI delete</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Red × button on the row. No confirmation. Removes from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.customKpis</code> immediately. Historical entry data for that KPI stays in storage but becomes unreachable from the UI.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8d4ff;border:1px solid #8a5ad1;"></span><div style="font-size:13px;font-weight:700;">Custom KPI ID format</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Generated as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">c_&lt;random&gt;</code>. Stored on entries by this ID. Renaming a custom KPI doesn't change its ID — historical data follows.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIELD REFERENCE -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Settings Field Reference (everything that's stored on the client record)</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead>
+        <tr style="background:#f3f1e8;border-bottom:1px solid #ddd;">
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Section</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Field / Object</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Type</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Company Info</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Company Info</td><td style="padding:7px 10px;color:#222;font-weight:600;">company</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Required</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Company Info</td><td style="padding:7px 10px;color:#222;font-weight:600;">contactName</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Company Info</td><td style="padding:7px 10px;color:#222;font-weight:600;">email</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Used for login</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Company Info</td><td style="padding:7px 10px;color:#222;font-weight:600;">sharedFolderLink</td><td style="padding:7px 10px;color:#444;">string (URL)</td><td style="padding:7px 10px;color:#666;">Optional · displayed but not consumed elsewhere yet</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Company Info</td><td style="padding:7px 10px;color:#222;font-weight:600;">industry</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Drives KPI defaults &amp; relabels</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Active KPIs</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Active KPIs</td><td style="padding:7px 10px;color:#222;font-weight:600;">kpis</td><td style="padding:7px 10px;color:#444;">map of id → 0|1</td><td style="padding:7px 10px;color:#666;">Toggles for each optional KPI</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Capacity &amp; Utilization</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Capacity</td><td style="padding:7px 10px;color:#222;font-weight:600;">capacityGroups</td><td style="padding:7px 10px;color:#444;">array of group objects</td><td style="padding:7px 10px;color:#666;">Each: id, name, method, employees[], departments[], etc.</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Capacity (legacy)</td><td style="padding:7px 10px;color:#222;font-weight:600;">capacityMethod</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Pre-groups system · still in code, no UI</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Capacity (legacy)</td><td style="padding:7px 10px;color:#222;font-weight:600;">weeklyHoursPerFTE</td><td style="padding:7px 10px;color:#444;">number</td><td style="padding:7px 10px;color:#666;">Default 40 · also lives inside each capacity group</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Capacity (legacy)</td><td style="padding:7px 10px;color:#222;font-weight:600;">slotDuration</td><td style="padding:7px 10px;color:#444;">number</td><td style="padding:7px 10px;color:#666;">30 or 60 · also per-group</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Capacity (legacy)</td><td style="padding:7px 10px;color:#222;font-weight:600;">employees, departments</td><td style="padding:7px 10px;color:#444;">arrays</td><td style="padding:7px 10px;color:#666;">Pre-groups · superseded by per-group lists</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Custom KPIs</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Custom KPIs</td><td style="padding:7px 10px;color:#222;font-weight:600;">customKpis</td><td style="padding:7px 10px;color:#444;">array of objects</td><td style="padding:7px 10px;color:#666;">Each: id, label, cat, fmt, dir</td></tr>
+
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="4" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Auth / Lifecycle</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Auth</td><td style="padding:7px 10px;color:#222;font-weight:600;">password</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Set during activation · plaintext (see Doc 01)</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Auth</td><td style="padding:7px 10px;color:#222;font-weight:600;">inviteCode</td><td style="padding:7px 10px;color:#444;">string</td><td style="padding:7px 10px;color:#666;">Generated at creation · 6 chars uppercase</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#444;">Auth</td><td style="padding:7px 10px;color:#222;font-weight:600;">activated</td><td style="padding:7px 10px;color:#444;">bool</td><td style="padding:7px 10px;color:#666;">Toggled true on first-time login</td></tr>
+        <tr><td style="padding:7px 10px;color:#444;">Lifecycle</td><td style="padding:7px 10px;color:#222;font-weight:600;">hiddenKpis</td><td style="padding:7px 10px;color:#444;">array</td><td style="padding:7px 10px;color:#666;">Defined in defaults, never used in current code</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <!-- 1. Working Hours field -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Add "Working Hours" to capacity groups (By Labor Hours method)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Add a <strong>Working Hours/Wk</strong> field alongside the existing <strong>Capacity Hrs/Wk</strong> on each employee row of capacity groups using the <em>By Labor Hours</em> method. Capacity = produced-hours target. Working Hours = actual scheduled time on the clock.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Example:</strong> Team A — Capacity: 120 hrs/wk · Working Hours: 135 hrs/wk. (3 people × 45 hr schedule = 135 working; produces 120 of valued output.)<br/>
+      <strong>Scope:</strong> Field appears on the employee table only when the group's method is "By Labor Hours." Other methods don't have an Efficiency calculation, so the field has no meaning there.<br/>
+      <strong>Storage:</strong> New field on each employee object inside the capacity group, e.g. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">weeklyWorkingHours</code>.<br/>
+      <strong>Label clarity:</strong> Rename existing "Hrs/Wk" column to "Capacity Hrs/Wk" so the distinction is unambiguous.
+    </div>
+  </div>
+
+  <!-- 2. Labor Efficiency redefined -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Labor Efficiency — move to Operations, redefine</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Move Labor Efficiency from <strong>Team</strong> to <strong>Operations</strong>. Redefine as <strong>Produced Hours ÷ Working Hours</strong>. Measures how fast the work got done this week.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Formula:</strong> sum of group's Labor Hours Completed (produced) ÷ sum of working hours across employees in that group. Per group, then rolled up if multiple groups.<br/>
+      <strong>Applies only to:</strong> Capacity groups using <em>By Labor Hours</em> method. Other methods don't have produced/working hours to compare; no tile.<br/>
+      <strong>Distinction from Utilization:</strong> Efficiency = output vs <em>actual time on the clock</em>. Utilization = output vs <em>reasonable target capacity</em>. Same numerator, different denominators. A team can be highly efficient but under-utilized, or highly utilized but inefficient.<br/>
+      <strong>Today's behavior:</strong> Labor Efficiency is defined in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">KPIS</code> but never actually rendered. Activates as a real Operations tile after this change.
+    </div>
+  </div>
+
+  <!-- 3. Manual % becomes a setting -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Manual % method — one-time setting, not a weekly input</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, capacity groups using Manual % require the coach to enter a utilization % on every weekly entry. Change so Manual % is a <strong>single number set once</strong> in Settings (per capacity group). The dashboard tile displays that number every week, unchanged, until the coach updates the setting.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Settings UI:</strong> Manual % capacity group has a single "Utilization %" field in the group config. No employee/department list needed.<br/>
+      <strong>Weekly Entry UI:</strong> Manual % groups show no field. Tile is informational only.<br/>
+      <strong>Storage:</strong> Move <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">utilPct</code> from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">entry.cgData[id]</code> to <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacityGroup.staticUtilPct</code>.<br/>
+      <strong>Use case:</strong> Coach has decided "Production runs at 88% on average" — set it and stop typing.
+    </div>
+  </div>
+
+  <!-- 4. Drop "By Working Hours" method -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Drop "By Working Hours" as a capacity method</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Remove the <em>By Working Hours</em> method from the list of capacity tracking options. Its math (produced ÷ FTE × hrs/wk) is now covered by the combination of <strong>By Labor Hours</strong> (utilization vs capacity) + <strong>Labor Efficiency</strong> (produced ÷ working hours).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Remaining methods:</strong> Manual %, By Time Slots, By Labor Hours, By Revenue ($), By Headcount. <em>(5 methods, down from 6.)</em><br/>
+      <strong>Migration:</strong> Demo seed and any existing groups using By Working Hours need to be either re-set as By Labor Hours or recreated. None in current demo data, so no migration concern there.
+    </div>
+  </div>
+
+  <!-- 5. weeklyHoursPerFTE cleanup -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Clean up duplicated <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">weeklyHoursPerFTE</code></div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today this field exists at both the client root <em>and</em> inside each capacity group, with no clear authority. Remove the client-root version. The per-group version becomes the only source.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Use:</strong> The per-group field powers calculations only for methods that need it (Headcount). With "By Working Hours" gone (see above), the only remaining method that uses it is Headcount.<br/>
+      <strong>Working Hours field (different):</strong> The new per-employee Working Hours field replaces this for Efficiency calculations. Don't confuse the two.
+    </div>
+  </div>
+
+  <!-- 6. Drop legacy capacity system -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Remove legacy capacity system entirely</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Drop the pre-groups capacity fields from the client root: <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacityMethod</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">slotDuration</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">employees</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">departments</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">weeklyRevCapacity</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">headcountCapMethod</code>. They're defined and have logic in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">calcUtil</code> but no UI exposes them — pure dead weight.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Effect:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEnabledKpis</code> and <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">calcUtil</code> get a lot simpler. Conditional rendering branches in EntryView and DashView for "no groups configured" disappear because every client always has at least the empty <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">capacityGroups</code> array.<br/>
+      <strong>Also drop:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">hiddenKpis</code> field — defined in client defaults, never read anywhere.
+    </div>
+  </div>
+
+  <!-- 7. Client access restrictions -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Client access to Settings — partial editability</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, clients have full edit access to Settings — they can toggle KPIs, change industry, modify capacity groups, delete custom KPIs. This is risky: clients can silently change what's tracked, create gaps in their own data, or orphan historical entries. Restrict client editing to fields that are genuinely "theirs."
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Client-editable fields:</strong> Contact Name, Company Name.<br/>
+      <strong>Coach-only fields:</strong> Email (login key — see Password Reset below), Shared Folder Link, Industry, Active KPI toggles, Capacity Groups (entire section — definitions, employees, working hours, capacity hours, methods), Custom KPIs (add / edit / delete).<br/>
+      <strong>UX:</strong> Coach-only fields render in client view as read-only (greyed inputs, no edit). Add a small note: "Contact your coach to update these settings." Save button only writes the editable subset.<br/>
+      <strong>Coach view:</strong> All fields editable as today.<br/>
+      <strong>Industry-related logic:</strong> Since Industry is now coach-only and the 7 standard industries are removed (Doc 02 planned change), the Industry dropdown is purely a list of coach-defined custom industries.
+    </div>
+  </div>
+
+  <!-- 8. Password reset flow -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Add password reset flow (coach-generated reset codes)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today there's no way for a client to recover a forgotten password — and since email infrastructure isn't part of the portal, traditional reset-link emails aren't possible. Add a coach-generated, single-use reset code system that reuses the invite-code pattern.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Coach action:</strong> Coach Admin client card gets a <em>"Reset Password"</em> action. Click generates a random 6-char code, displays it for the coach to relay to the client (text, email, in-call). Code is stored on the client record with a 24-hour expiration.<br/>
+      <strong>Client flow:</strong> Login page gets a <em>"Forgot password?"</em> link. Clicking it shows a form: Email + Reset Code + New Password. On submit, validates the email/code pair, sets the new password, marks the code consumed.<br/>
+      <strong>Storage:</strong> New fields on client record — <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">resetCode</code>, <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">resetCodeExpiresAt</code>. Cleared on successful reset or expiration.<br/>
+      <strong>Security notes:</strong> Single-use (consumed on success). Expires after 24 hours. Generating a new code invalidates any prior unused code. Coach-only — clients can't trigger reset for themselves (this preserves the coach-as-gatekeeper model, and there's no email channel anyway).<br/>
+      <strong>Future:</strong> If self-service reset is wanted later, the natural addition is security questions captured during activation. Out of scope for now.
+    </div>
+  </div>
+
+  <!-- 9. KPI dependency model -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">KPI dependency model — auto-enable inputs, cascade-off with confirmation</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, auto-derived KPIs (Conversion Rate, Avg Repair Order, etc.) only render when their inputs happen to be toggled on — and the dependency is invisible. Coach toggles random KPIs and silently fails to get the calculated tile they wanted. Replace with an explicit dependency model.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Auto-derived KPIs are now in the toggle list.</strong> Coach picks "Avg Repair Order" directly. The system handles inputs.<br/>
+      <strong>Toggling an auto-KPI on:</strong> auto-enables every required input that's currently off. Both the dependent and the inputs render as full tiles.<br/>
+      <strong>Toggling an input off (when something depends on it):</strong> Cascade. Show confirmation: "This will also disable Avg Repair Order (which requires Jobs Completed)." On confirm, both toggle off.<br/>
+      <strong>Toggling an auto-KPI off:</strong> Inputs that were auto-enabled stay on. The coach didn't ask to lose them — they're real KPIs in their own right and toggleable on directly anyway.<br/>
+      <strong>UI feedback when auto-enabling:</strong> Both — input toggles visibly flip on (briefly highlighted) AND an inline message under the auto-KPI: "Also enabled: Jobs Completed."<br/>
+      <strong>Dependency hints in toggle list:</strong> Each auto-KPI shows what it requires, e.g. "Avg Repair Order — requires Jobs Completed." <em>Skip the hint when the only dependency is an always-on financial</em> (Revenue, COGS, Gross Profit, GP Margin) — those are guaranteed present, calling them out is noise. (No current KPI hits this case; rule is forward-looking.)
+    </div>
+  </div>
+
+  <!-- 10. Sales restructure -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sales section restructure — flat (no Estimating subsection)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      With the KPI splits below, the Estimating subsection is unnecessary. Sales becomes a single flat list of tiles. Pipeline subsection still exists as its own grouping (Pipeline Value, Pipeline Deals, Avg Deal in Pipeline).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Today:</strong> Sales splits into Main → Estimating → Pipeline three subsections.<br/>
+      <strong>New:</strong> Sales splits into Main → Pipeline. Two subsections only.<br/>
+      <strong>Drag-reorder behavior (from Doc 03):</strong> Subsection order within Sales can still be reordered, just only Pipeline is left to move.
+    </div>
+  </div>
+
+  <!-- 11. KPI splits and renames -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Split "Estimates / Contracts Won" into two KPIs · rename auto-KPIs</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The current "Estimates / Contracts Won" tile conflates two different things. Split into two separate, individually-toggleable KPIs. Plus rename Revenue per New Client to reflect its new formula.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>New KPI: Contracts Won ($).</strong> Sales category. The closed-deal headline number. Sum.<br/>
+      <strong>New KPI: Estimates Won ($).</strong> Sales category. Distinct from Contracts Won — coach picks whichever fits the client's terminology. Sum.<br/>
+      <strong>Renamed: Revenue per New Client → Contract Value per New Client.</strong> Operations or Sales — confirm placement. <strong>Formula changes</strong> too — see #12 below.<br/>
+      <strong>Renamed: "Estimates Written – Target $" → "Estimates Written ($)".</strong> Per Doc 03 planned change. Just dropping the "Target $" wording.<br/>
+      <strong>Storage note:</strong> Splitting <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">newContractsDollars</code> into two distinct KPI ids requires picking new ids and migrating any historical entry data. For the rebuild, fresh start — no migration needed.
+    </div>
+  </div>
+
+  <!-- 12. Contract Value per New Client formula -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Contract Value per New Client — formula change</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today: Revenue per New Client = Revenue ÷ New Clients. But Revenue includes everything — services, parts, repeat work — making this a poor measure of new-client deal size. Change the formula to use Contracts Won.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>New formula:</strong> Contract Value per New Client = Contracts Won ($) ÷ New Clients.<br/>
+      <strong>Dependencies:</strong> Toggling Contract Value per New Client on auto-enables both Contracts Won AND New Clients (per the dependency model in #9).<br/>
+      <strong>Inverted from current:</strong> The old name ("Revenue per New Client") and new name use different numerators, so any historical comparison is apples-to-oranges. Worth flagging in any export/migration.
+    </div>
+  </div>
+
+  <!-- 13. Capacity targets move to Budget & Goals -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Move capacity &amp; utilization targets fully into Budget &amp; Goals</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, the goal % (or $) for each capacity group lives in Budget &amp; Goals as <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.capacityGroupGoals</code>. Confirming that's the right home — keep it there. Settings owns the structural definition (group name, method, employees, capacity hrs, working hrs); Budget &amp; Goals owns the target numbers.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Rationale:</strong> Setup (who/what/how) changes rarely. Targets get reset annually alongside revenue goals. Different cadences belong in different places.<br/>
+      <strong>Manual % exception:</strong> The static utilization % (per the Manual %-as-setting change in #3) lives in Settings — it's a configuration value, not a target. The Budget &amp; Goals card just doesn't show a goal field for Manual % groups (no target needed; the value IS the displayed number).
+    </div>
+  </div>
+
+  <!-- 14. Auto-derived KPIs get goals -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Auto-derived KPIs get their own goal fields</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, auto-derived KPIs (Conversion Rate, Avg Repair Order, Avg Pipeline Deal, Contract Value per New Client, Avg Estimate Value, Avg Transaction Value, Sales Close Rate) don't get individual goal fields in Budget &amp; Goals — their tiles inherit color logic from the inputs. Change so each auto-derived KPI gets its own goal field, settable independently.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Why:</strong> A coach might want "Avg Repair Order ≥ $400" as a target distinct from "Jobs Completed ≥ 30/week" — an auto-derived KPI is a real number with its own meaning, not just a side-effect of the inputs.<br/>
+      <strong>Format:</strong> Goal field's format (#, $, %) follows the KPI's own format, just like input KPIs.<br/>
+      <strong>Coloring:</strong> Auto-KPI tile colors against its own goal, not its inputs'.
+    </div>
+  </div>
+
+  <!-- 15. Preserved data on toggle-off -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Toggle-off preserves data — codify as intentional behavior</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Already the existing behavior, but make it explicit and durable: toggling a KPI off in Settings is a <strong>visibility</strong> change, never a <strong>destruction</strong> change. All data is preserved.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>What's preserved on toggle-off:</strong><br/>
+      · Historical weekly entry values for that KPI — all of them, every week.<br/>
+      · Goal value for that KPI in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">budget.goals[id]</code>.<br/>
+      · Custom KPI definition itself (if applicable).<br/>
+      <strong>Toggle back on:</strong> Tile reappears, historical data shows in History view, goal coloring resumes, weekly entry field returns. Nothing was lost.<br/>
+      <strong>Mental model:</strong> Toggle off = "hide from my dashboard." Need to actually delete data → must be a separate, explicit, confirmed action.
+    </div>
+  </div>
+
+  <!-- 16. Custom KPI delete needs confirmation -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Custom KPI delete — add confirmation with cascade warning</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Today, the red × on a custom KPI deletes it instantly with no confirmation, orphaning all historical entry data. Add a confirmation dialog that surfaces the cost.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Confirmation copy (when historical data exists):</strong> "Deleting <em>NPS Score</em> will permanently remove the KPI definition and unlink 47 weekly entries that contain values for it. The entry data won't be visible anywhere after deletion. To hide this KPI without losing data, toggle it off in [where toggles live] instead."<br/>
+      <strong>Confirmation copy (no historical data):</strong> "Delete <em>NPS Score</em>? This custom KPI has no historical data."<br/>
+      <strong>Storage cleanup:</strong> Removes the KPI from <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.customKpis</code>. Optionally also strips the orphaned values from every weekly entry, OR leaves them in place as inert. Either is defensible — leaving them is safer for any "undo" future.<br/>
+      <strong>Coach-only:</strong> Per #7, custom KPI editing is coach-only anyway, so this confirmation is for the coach.
+    </div>
+  </div>
+
+  <!-- Carry-forward: branding flip -->
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Re-balance the top bar — client first, branding to footer (carry-forward from Doc 03)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Same change as on every client-facing page. Client company name becomes the primary title; "The Good Plans Co" branding moves to a small footer.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Cross-doc: persistent saved state &amp; Cancel pattern</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The Save Settings buttons (top-right and bottom-right) follow the portal-wide Save/Cancel pattern documented in Doc 06.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Persistent "Saved ✓" state:</strong> after a successful save, the button stays green and reads "Saved ✓" until the form is changed or the user navigates away. Replaces the current 2-second flash.<br/>
+      <strong>Cancel button paired with Save:</strong> add a Cancel button next to each Save Settings button. Reverts the form to the most recently saved state — including company info, industry selection, KPI toggles, capacity groups, and custom KPIs.<br/>
+      <strong>Unsaved-changes guard:</strong> navigating away (top-nav clicks, Logout) with unsaved changes opens the Save / Discard Changes / Stay Here dialog.<br/>
+      <strong>Industry change consideration:</strong> changing the industry resets KPI defaults (current behavior). With the saved-state pattern, the change becomes "unsaved" — Cancel reverts both the industry and the KPI toggles back to their previous saved state.<br/>
+      <strong>See Doc 06 for the full spec.</strong> This is just the cross-reference to keep all surfaces consistent.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Shared Drive button — top-bar shortcut on every client page</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      The <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">sharedFolderLink</code> field is captured but never surfaced in the UI. Make it a clickable shortcut so clients can jump to their shared materials (Google Drive, Dropbox, OneDrive, etc.) from anywhere in the portal.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Button placement:</strong> top bar of every client-facing page — Dashboard, Weekly Entry, Budget &amp; Goals, History, Settings. Sits alongside the nav links, opens the link in a new tab.<br/>
+      <strong>Label:</strong> <strong>"Shared Drive"</strong> — clear, neutral, familiar terminology that matches what most clients call their cloud storage. Avoids ambiguity with documents <em>inside</em> the portal.<br/>
+      <strong>Edit access:</strong> coach-only. The link is set in Settings (per the "Client access to Settings — partial editability" planned change above). Clients see the field as read-only in their Settings view — they can't change where the button points.<br/>
+      <strong>Empty state:</strong> if no link is set, the button doesn't render. No empty button, no broken link.<br/>
+      <strong>Coach view:</strong> button works the same way — clicking opens the same shared drive the client sees, useful for the coach to grab files during a session.<br/>
+      <strong>Top bar interaction with branding flip:</strong> per Doc 03's "Re-balance the top bar" change, client name becomes the primary title. The Shared Drive button sits in the same row as the nav, alongside Logout. Order suggestion: client name (left) · nav links · Shared Drive · Logout (right).
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>

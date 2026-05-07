@@ -1,0 +1,667 @@
+<div style="font-family:Inter,system-ui,sans-serif;background:#f5f3ec;color:#1a1a1a;padding:32px;min-height:100vh;box-sizing:border-box;">
+
+<!-- HEADER -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;">View Map · 03</div>
+  <h1 style="font-size:32px;font-weight:800;margin:0 0 6px;letter-spacing:-0.5px;">Dashboard — Weekly Mode</h1>
+  <div style="font-size:14px;color:#555;">Default landing view. Shows the most recent weekly entry as a grid of KPI tiles, color-coded against goals, with week-over-week deltas.</div>
+</div>
+
+<!-- LEGEND -->
+<div style="max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12px;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#0f0f0f;"></span><span>Dark UI element</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FFF200;border:1px solid #d4c800;"></span><span>Accent / Action</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#7ED957;"></span><span>On track / Above goal</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ff3131;"></span><span>Behind / Below goal</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#fff7c2;border:1px solid #d4c800;"></span><span>Behavior note</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#dcecff;border:1px solid #5a8fd1;"></span><span>Conditional logic</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ffe0e0;border:1px solid #d15a5a;"></span><span>Calculation / Formula</span></div>
+  </div>
+</div>
+
+<!-- VISUAL MAP -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Visual Map</div>
+
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Logout</span>
+      </div>
+    </div>
+
+    <!-- Pane content -->
+    <div style="padding:20px;">
+
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:18px;font-weight:700;color:#111;">Performance Dashboard</div>
+        <div style="display:flex;gap:4px;">
+          <span style="background:#252525;color:#FFF200;border:1px solid #333;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:800;">Weekly</span>
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">MTD</span>
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">QTD</span>
+          <span style="background:transparent;color:#555;border:1px solid #888;padding:5px 12px;border-radius:5px;font-size:11px;">YTD</span>
+        </div>
+      </div>
+
+      <!-- Color key -->
+      <div style="display:flex;gap:14px;margin-bottom:14px;font-size:11px;">
+        <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#7ED957;"></span><span style="color:#333;">On track / Above goal</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ff3131;"></span><span style="color:#333;">Behind / Below goal</span></div>
+      </div>
+
+      <!-- Most recent entry indicator -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:11px;">
+        <span style="background:#252525;color:#FFF200;padding:2px 9px;border-radius:3px;font-size:10px;font-weight:700;">Most Recent Entry</span>
+        <span style="color:#333;">Apr 20, 2026</span>
+      </div>
+
+      <!-- ===================== FINANCIALS ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Financials</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+
+          <!-- Revenue tile (on track) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Revenue</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Total sales this week</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$47,000</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ $5,000</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;">
+              <span>Goal: $42,500</span><span>111%</span>
+            </div>
+          </div>
+
+          <!-- Gross Profit tile (auto) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Gross Profit</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Revenue minus COGS</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$24,500</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ $2,500</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;">
+              <span>Goal: $21,250</span><span>115%</span>
+            </div>
+          </div>
+
+          <!-- Gross Margin tile (%) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Gross Profit Margin</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">GP ÷ Revenue</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">52.1%</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#7ED957;">
+              +2.1% vs 50.0% goal
+            </div>
+          </div>
+
+          <!-- Accounts Receivable (range KPI) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Accounts Receivable</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Target range ±10%</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">$48,000</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#7ED957;">
+              $48,000 vs $50,000 (±10%)
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== MARKETING ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Marketing</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;position:relative;">
+            <div style="position:absolute;top:4px;right:6px;font-size:7px;color:#7ED957;font-weight:700;">Achieved!</div>
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Leads Generated</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">New prospects this week</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">23</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ 2</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;">
+              <span>Goal: 5</span><span>460%</span>
+            </div>
+          </div>
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">New Clients</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">New clients this week</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">17</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ 2</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;">
+              <span>Goal: 3</span><span>567%</span>
+            </div>
+          </div>
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Leads Conversion Rate</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">New Clients ÷ Leads</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">73.9%</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#7ED957;">
+              +13.9% vs 60.0% goal
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== SALES ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Sales</div>
+
+        <!-- Main sales tiles -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px;">
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Estimates / Contracts Won</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$39,000</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ $5,000</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;">
+              <span>Goal: $34,500</span><span>113%</span>
+            </div>
+          </div>
+
+          <!-- AUTO Close Rate (Construction industry) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Sales Close Rate</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Contracts $ ÷ Proposals $</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">75.0%</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#7ED957;">
+              +25.0% vs 50.0% goal
+            </div>
+          </div>
+
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Revenue per New Client</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$2,765</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#888;">
+              No goal set
+            </div>
+          </div>
+        </div>
+
+        <!-- Estimating subsection -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:9px;color:#444;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #ccc;">Estimating</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;"># of Estimates Written</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">10</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: 7</span><span>143%</span></div>
+            </div>
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Estimates Written – Target $</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$52,000</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: $46,000</span><span>113%</span></div>
+            </div>
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Average Estimate Value</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$5,200</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#888;">No goal set</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline subsection -->
+        <div>
+          <div style="font-size:9px;color:#444;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #ccc;">Pipeline</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Pipeline Value</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$170,000</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: $34,500</span><span>493%</span></div>
+            </div>
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Pipeline Deals</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">8</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: 2</span><span>400%</span></div>
+            </div>
+            <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+              <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Avg Deal in Pipeline</div>
+              <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$21,250</div>
+              <div style="flex:1;"></div>
+              <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#888;">No goal set</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== OPERATIONS ===================== -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Operations</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Jobs Completed</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">9</div>
+            <div style="font-size:10px;color:#4ade80;margin-top:2px;">▲ 1</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: 7</span><span>129%</span></div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">On-Time Delivery</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">87.0%</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#7ED957;">+2.0% vs 85.0% goal</div>
+          </div>
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Avg Repair Order</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:7px;">$5,222</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;color:#888;">No goal set</div>
+          </div>
+          <!-- INVERTED KPI: warranty returns -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Warranty / Returns ▼</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">Lower is better</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">0</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;font-size:9px;display:flex;justify-content:space-between;color:#7ED957;"><span>Goal: ≤2</span><span>0%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== TEAM ===================== -->
+      <div style="margin-bottom:8px;">
+        <div style="font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFF200;">Team</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+          <!-- Capacity group tile (variant) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Production Crew</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">By Labor Hours</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">84.0%</div>
+            <div style="font-size:10px;color:#888;margin-top:2px;">168 / 200 hrs</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:3px;"><div style="height:3px;border-radius:2px;background:#7ED957;width:84%;"></div></div>
+              <div style="font-size:9px;color:#7ED957;">−1.0% vs 85% goal</div>
+            </div>
+          </div>
+          <!-- Capacity group: Sales (by_dollars) -->
+          <div style="background:#252525;border-radius:8px;padding:11px;border:1px solid rgba(126,217,87,0.6);min-height:110px;display:flex;flex-direction:column;">
+            <div style="font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Sales Team</div>
+            <div style="font-size:8px;color:#ccc;font-style:italic;margin-bottom:3px;">By Revenue ($)</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;margin-top:3px;">85.5%</div>
+            <div style="font-size:10px;color:#888;margin-top:2px;">$47,000 / $55,000</div>
+            <div style="flex:1;"></div>
+            <div style="border-top:1px solid #2e2e2e;padding-top:5px;margin-top:5px;">
+              <div style="height:3px;background:#2e2e2e;border-radius:2px;margin-bottom:3px;"><div style="height:3px;border-radius:2px;background:#7ED957;width:85.5%;"></div></div>
+              <div style="font-size:9px;color:#7ED957;">$47,000 / $50,000 goal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes block -->
+      <div style="background:#fff;border:1px solid #ccc;border-radius:8px;padding:11px;margin-top:14px;">
+        <div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Notes — Apr 20</div>
+        <div style="font-size:11px;color:#222;line-height:1.5;">Big push on Insurance work this week. Team B finished both Lexus jobs early.</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- VARIANT: NO ENTRIES YET -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · No Entries Yet</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:20px;">
+    <div style="background:#fff;border:1px solid #ccc;border-radius:10px;padding:36px;text-align:center;color:#666;font-size:12px;">
+      No entries yet. Go to <strong>Weekly Entry</strong> to add your first entry.
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT: COACH VIEW -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Variant · Coach View (accessed via "View Portal")</div>
+  <div style="background:#DAD7C5;border-radius:14px;padding:0;overflow:hidden;">
+
+    <!-- Top bar with COACH VIEW badge -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:14px;font-weight:800;color:#111;">The Good Plans Co</span>
+        <span style="font-size:11px;color:#666;margin-left:10px;">ABC Autobody</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:11px;flex-wrap:wrap;">
+        <span style="background:#252525;color:#FFF200;border:1px solid #2e2e2e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;">COACH VIEW</span>
+        <span style="color:#111;font-weight:700;border-bottom:2px solid #FFF200;padding:2px 5px;">Dashboard</span>
+        <span style="color:#555;padding:2px 5px;">Weekly Entry</span>
+        <span style="color:#555;padding:2px 5px;">Budget &amp; Goals</span>
+        <span style="color:#555;padding:2px 5px;">History</span>
+        <span style="color:#555;padding:2px 5px;">Settings</span>
+        <span style="background:#252525;color:#fff;border:1px solid #2e2e2e;padding:4px 10px;border-radius:4px;margin-left:6px;">Back</span>
+      </div>
+    </div>
+
+    <!-- Body placeholder -->
+    <div style="padding:36px;text-align:center;color:#555;font-size:12px;font-style:italic;">
+      Page body is identical to the Client View above — same KPI grid, same tiles, same goal coloring, same notes block. Coach has full read/write access to entries, budgets, settings.
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Differences from Client View</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        (1) Yellow <strong>COACH VIEW</strong> badge in the top bar.<br/>
+        (2) Logout button reads <strong>Back</strong> and returns to the Coach Admin Clients list rather than ending the session.<br/>
+        (3) Everything else identical — same data, same controls, full write access.
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">How it's reached</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Coach Admin → Clients tab → "View Portal" button on a client card. Coach session is preserved; no separate auth.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= BEHAVIOR / LOGIC ============= -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Behavior &amp; Logic</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <!-- Which entry is shown -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Which entry is shown</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">First, looks for an entry with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate === currentMonday()</code>. If none, falls back to the most recent entry by date. Date label says <em>Most Recent Entry</em> in either case.</div>
+    </div>
+
+    <!-- Week-over-week deltas -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">▲▼ Delta arrows</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Compared against the entry whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> is exactly 7 days earlier than today's Monday — not "the previous saved entry." If there's a gap, no delta shown. Hidden in cumulative modes.</div>
+    </div>
+
+    <!-- KPI eligibility -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Which KPIs are tiles</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;"><code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEnabledKpis(client)</code> returns: all <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">always:true</code> KPIs (Revenue, COGS, GP, GP%) + any toggled-on per <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.kpis[id]</code> + auto-derived KPIs whose dependencies are toggled on (e.g. Conversion Rate needs both Leads &amp; New Clients on). COGS tile is always hidden — it's an input, not a tile.</div>
+    </div>
+
+    <!-- Auto-calculated KPIs -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Auto / derived KPIs</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        Gross Profit = Revenue − COGS. GP% = GP ÷ Revenue. Conversion = New Clients ÷ Leads. Avg Transaction = Revenue ÷ Transactions. Avg Repair Order = Revenue ÷ Jobs (Construction only). Avg Pipeline Deal = Pipeline Value ÷ Pipeline Deals. Revenue per New Client = Revenue ÷ New Clients. Avg Estimate Value = Estimates $ ÷ Estimates #. Sales Close Rate (Construction) = Contracts $ ÷ Proposals $.
+      </div>
+    </div>
+
+    <!-- Industry-specific labels -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Healthcare &amp; Construction relabels</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        <strong>Healthcare:</strong> "Leads" → "New Clients Scheduled", "Employee Utilization" → "Appt Fill Rate" (and the Util tile is suppressed entirely).<br/>
+        <strong>Construction:</strong> "New Clients" → "New Contracts (#)", "Employee Utilization" → "Labor Utilization".
+      </div>
+    </div>
+
+    <!-- Sales subsections -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Sales is split 3 ways</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Main (Contracts Won, Close Rate, Rev/Client, etc.) → Estimating subsection (Estimates Written, Target $, Avg Estimate) → Pipeline subsection (Pipeline Value/Deals/Avg). Each subsection has its own gray header rule. Other categories don't have subsections.</div>
+    </div>
+
+    <!-- Color thresholds -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Tile color rules</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        <strong>Standard KPIs:</strong> green if <em>actual ≥ goal</em> (or ≤ goal for inverted), red if not. No goal → gray border, no color.<br/>
+        <strong>Range KPIs (Accounts Receivable):</strong> green if within ±10% of goal, red if outside.<br/>
+        <strong>"Achieved!" badge:</strong> top-right when goal is met (any non-range KPI with a goal).
+      </div>
+    </div>
+
+    <!-- Capacity group tiles -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Capacity group tiles (Team)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">If <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.capacityGroups</code> has any groups, they replace the global Employee Utilization tile. Each group renders one tile with its own utilization % (calculated per its method: manual, slots, labor hours, etc.). Goal coloring is "within ±10% of target %" for non-dollar groups, "actual ≥ goal $" for dollar-based groups.</div>
+    </div>
+
+    <!-- Goal source -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ffe0e0;border:1px solid #d15a5a;"></span><div style="font-size:13px;font-weight:700;">Weekly goal calculation</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">
+        From <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">getEntryGoal(id, entry, budget)</code>:<br/>
+        <strong>Revenue:</strong> month's adjusted goal × (entry.days ÷ days in month).<br/>
+        <strong>COGS:</strong> entry.revenue × cogsTargetPct.<br/>
+        <strong>GP:</strong> revenue goal × (1 − cogsTargetPct).<br/>
+        <strong>GP%:</strong> 100 − cogsTargetPct (constant).<br/>
+        <strong>Other count/$ KPIs:</strong> monthly goal × days ÷ 30.<br/>
+        <strong>% / avg / last KPIs:</strong> monthly goal as-is.
+      </div>
+    </div>
+
+    <!-- Inverted KPIs -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Inverted KPIs (lower is better)</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">COGS, Cancellations, Warranty / Returns. Plus any custom KPI the coach flagged as "Lower Better." Color logic flips: green if actual ≤ goal.</div>
+    </div>
+
+    <!-- Notes block -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff7c2;border:1px solid #d4c800;"></span><div style="font-size:13px;font-weight:700;">Notes block</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Renders only if the displayed entry has a non-empty <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">notes</code> field. Light card style (different from the dark KPI tiles) to make it read like commentary.</div>
+    </div>
+
+    <!-- No-entries empty state -->
+    <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dcecff;border:1px solid #5a8fd1;"></span><div style="font-size:13px;font-weight:700;">Empty state</div></div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">If the client has zero entries, the entire KPI grid is replaced with the "No entries yet" card. Mode pills (Weekly/MTD/QTD/YTD) are still visible.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- KPI METADATA TABLE -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">KPI Metadata Reference (all tiles that may appear)</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead>
+        <tr style="background:#f3f1e8;border-bottom:1px solid #ddd;">
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">KPI</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Category</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Format</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Aggregation</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Direction</th>
+          <th style="text-align:left;padding:9px 10px;font-weight:700;color:#444;text-transform:uppercase;font-size:9px;letter-spacing:0.06em;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Financials -->
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Financials</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Revenue</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Always on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">COGS</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#a85050;">Lower</td><td style="padding:7px 10px;color:#666;">Always on · tile hidden</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Gross Profit</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · always on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Gross Profit Margin</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · always on</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Accounts Receivable</td><td style="padding:7px 10px;color:#444;">Financials</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Last</td><td style="padding:7px 10px;color:#5a7aa0;">Range ±10%</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+
+        <!-- Marketing -->
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Marketing</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Leads Generated</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional · relabeled in Healthcare</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">New Clients</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional · relabeled in Construction</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Leads Conversion Rate</td><td style="padding:7px 10px;color:#444;">Marketing</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · needs Leads + New Clients</td></tr>
+
+        <!-- Sales -->
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Sales</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Estimates / Contracts Won</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Sales Close Rate</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Avg / Auto</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto if Construction</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Revenue per New Client</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · needs New Clients</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Transaction Value</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · needs Transactions</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;"># of Transactions</td><td style="padding:7px 10px;color:#444;">Sales</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;"># of Estimates Written</td><td style="padding:7px 10px;color:#444;">Sales · Estimating</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Estimates Written – Target $</td><td style="padding:7px 10px;color:#444;">Sales · Estimating</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Average Estimate Value</td><td style="padding:7px 10px;color:#444;">Sales · Estimating</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · needs Estimates # + $</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Pipeline Value</td><td style="padding:7px 10px;color:#444;">Sales · Pipeline</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Last</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional · point-in-time</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Pipeline Deals</td><td style="padding:7px 10px;color:#444;">Sales · Pipeline</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Last</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional · point-in-time</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Deal in Pipeline</td><td style="padding:7px 10px;color:#444;">Sales · Pipeline</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · needs Pipeline V + #</td></tr>
+
+        <!-- Operations -->
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Operations</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Jobs Completed</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">On-Time Delivery</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Avg</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Optional</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Avg Repair Order</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">$</td><td style="padding:7px 10px;color:#444;">Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · Construction + Jobs</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Warranty / Returns</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#a85050;">Lower</td><td style="padding:7px 10px;color:#666;">Optional · inverted</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Cancellations</td><td style="padding:7px 10px;color:#444;">Operations</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#a85050;">Lower</td><td style="padding:7px 10px;color:#666;">Optional · inverted</td></tr>
+
+        <!-- Team -->
+        <tr style="border-bottom:1px solid #eee;background:#fafaf3;"><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;">Team</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Labor Hours Completed</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">#</td><td style="padding:7px 10px;color:#444;">Sum</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Skipped in cumulative modes</td></tr>
+        <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 10px;color:#222;font-weight:600;">Employee Utilization</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Avg / Auto</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Suppressed if capacity groups exist or Healthcare</td></tr>
+        <tr><td style="padding:7px 10px;color:#222;font-weight:600;">Labor Efficiency</td><td style="padding:7px 10px;color:#444;">Team</td><td style="padding:7px 10px;color:#444;">%</td><td style="padding:7px 10px;color:#444;">Avg / Derived</td><td style="padding:7px 10px;color:#7a9a3a;">Higher</td><td style="padding:7px 10px;color:#666;">Auto · never tiled in current code</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADDITIONAL TILES (NOT IN STANDARD KPI LIST) -->
+<div style="max-width:1200px;margin:0 auto 28px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:10px;">Additional Tiles That Can Appear (beyond standard KPIs)</div>
+  <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px;">
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px;">Custom KPI tiles</div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Each client can define unlimited custom KPIs in Settings → Custom KPIs. Each can be Count / Dollar / Percent format, placed in any category (Financials, Marketing, Sales, Operations, Team, Overall Company), with Higher Better or Lower Better direction. They render alongside standard KPIs in their assigned category. Stored on the client record at <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.customKpis</code>. <strong>No upper limit.</strong></div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px;">Capacity group tiles (Team category only)</div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">When <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">client.capacityGroups</code> contains any groups, the standard Employee Utilization tile is replaced with one tile per group. Each group has its own tracking method (manual %, by time slots, by labor hours, by working hours, by revenue $, by headcount) and its own goal. Tile renders as utilization % with a progress bar and method label. ABC Autobody = 2 groups (Production Crew + Sales Team). Doc's Auto Clinic = 1 group (Service Technicians). <strong>No upper limit.</strong></div>
+    </div>
+
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px;">"Overall Company" category exists but is empty</div>
+      <div style="font-size:12px;color:#444;line-height:1.6;">Listed as a category in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">CATS</code> but no standard KPI is assigned to it. Custom KPIs can be placed there. Otherwise the entire category section is hidden (no header rule, no empty state).</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PLANNED CHANGES -->
+<div style="max-width:1200px;margin:24px auto 0;background:#e8f7e0;border:1px solid #6db04a;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2d6a14;margin-bottom:10px;">Planned Changes (for rebuild)</div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Drop "Lower is better" subtitle on inverted KPIs</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Inverted KPIs (Warranty/Returns, Cancellations, COGS, and any custom KPI flagged "Lower Better") currently show an italic "Lower is better" subtitle under the tile name. <strong>Remove that subtitle.</strong> The KPI stays inverted — green-when-lower color logic continues to apply — just no text label.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Drag to reorder dashboard (per-client)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Each client can rearrange their own dashboard. Order persists per-client (saved to client record).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Categories:</strong> Financials is locked at the top — not draggable. All other categories (Marketing, Sales, Operations, Team, Overall Company) can be reordered up/down freely.<br/>
+      <strong>Subsections:</strong> Estimating and Pipeline (within Sales) can reorder up/down within Sales only. They can't move out of Sales.<br/>
+      <strong>Tiles:</strong> Can reorder within their parent section/subsection only. No cross-category moves (e.g. you can't drag New Clients out of Marketing into Sales).<br/>
+      <strong>Storage:</strong> Order saved on the client record — likely a <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">dashboardOrder</code> object holding category order, subsection order per category, and tile order per section.<br/>
+      <strong>Reset:</strong> Should have a "reset to default order" affordance for clients who get lost.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Drop "Target $" from "Estimates Written" tile name</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Current label: <em>"Estimates Written – Target $"</em>. New label: just <em>"Estimates Written ($)"</em> or <em>"Estimates Written"</em> with a $ format indicator. Just dropping the words "Target $" — the underlying KPI doesn't change. The companion <em>"# of Estimates Written"</em> KPI is unchanged.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Re-balance the top bar — client first, branding to footer</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Current top bar leads with "The Good Plans Co" and shows the client company name as a small subtitle. Flip the visual hierarchy: <strong>client company name becomes the primary title in the top bar</strong>, prominent and clearly identifying whose portal you're in. "The Good Plans Co" branding moves out of the top bar entirely and lives in a small footer at the bottom of every page (or a discreet corner mark).
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Rationale:</strong> When a client is logged in, this is <em>their</em> portal — the visual emphasis should reinforce that. Coach branding stays present (footer) but doesn't compete with the client identity for attention.<br/>
+      <strong>Applies to:</strong> Top bar across <em>all</em> client-facing pages — Dashboard (all 4 modes), Weekly Entry, Budget &amp; Goals, History, Settings. Coach Admin pages (Clients list, Industries) keep the current top bar since there's no single client context.<br/>
+      <strong>Coach View consideration:</strong> When a coach is viewing a client's portal via "View Portal," the top bar shows the client's name as primary too — combined with the COACH VIEW badge, this makes it clear the coach is operating <em>inside</em> that client's space.<br/>
+      <strong>Footer treatment:</strong> Small text, low-key. Could include "Powered by The Good Plans Co" or just the wordmark. Not a full footer with nav — just a brand mark.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">No-entry indicator when the current week is missing</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      When no weekly entry exists for the current week (Monday–Sunday), surface it visibly on the dashboard so the client and coach both notice the gap immediately. Two layers:
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Inline pill (always present):</strong> the existing header pill (currently "Most Recent Entry · [date]") becomes a two-state element. <strong>Fresh state:</strong> reads <em>"Week of [date]"</em> with neutral styling when the current week's entry exists — tighter, less redundant than "Most Recent Entry" once the no-entry case is handled separately. <strong>Stale state:</strong> turns red and reads <em>"⚠️ Entry overdue · last entry [date]"</em> when no current-week entry exists. Same pill, two states, no extra real estate.<br/>
+      <strong>Banner:</strong> a slim red strip at the top of the dashboard: <em>"Weekly entry overdue — your portal can't reflect this week until you log it."</em> Includes a "Go to Weekly Entry" button. Dismissible per-session but reappears on next load if still overdue.<br/>
+      <strong>Logic:</strong> a current-week entry is one whose <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">date</code> falls within this Monday → Sunday. Indicator clears the moment one is saved. Applies to Weekly mode only — MTD/QTD/YTD modes don't show the indicator since they're cumulative views.<br/>
+      <strong>Coach view:</strong> same indicator visible. When the coach drops into View Portal on a client, the inline pill and banner both show — useful pre-session check. The sister planned change on Doc 02 (per-client entry status on the Clients list) handles the multi-client overview so the coach doesn't have to click into each portal individually.<br/>
+      <strong>Rationale:</strong> Weekly entry is part of the coaching contract, not something the product engineers around. But making the gap visible — to both parties — turns "you forgot" into a fast, low-friction nudge instead of a coaching conversation.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Coach notes block on the dashboard</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      A single persistent block on the dashboard where the coach leaves standing context for the client — focus areas, action items from sessions, strategic heads-ups. Coach edits, client reads. Not tied to a specific week — the coach updates it as the relationship evolves.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Position:</strong> top of the dashboard, above the KPI tiles. Prominent placement — frames the numbers below it as the first thing the client sees on login.<br/>
+      <strong>Editing:</strong> coach-only write access via Coach View. Click into the block to open an inline editor; save persists to the client record. Plain text with line breaks (no rich formatting in v1 — keeps the rebuild simple).<br/>
+      <strong>Display to client:</strong> read-only. Includes a small "Updated [date]" timestamp so the client knows when the message was last refreshed.<br/>
+      <strong>Empty state:</strong> when no note exists, the block is hidden in client view (a fresh client doesn't see an empty card). In Coach View, shows a subtle "Add a note for [client]…" prompt so the coach can start one.<br/>
+      <strong>Length handling:</strong> shows up to ~3 lines / ~300 characters by default with "Read more" to expand. Prevents a long message from pushing the KPI grid below the fold.<br/>
+      <strong>Storage:</strong> new field on the client record, e.g. <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">coachNote: { body: string, updatedAt: timestamp }</code>. Single value — no history/versioning. If session-by-session history matters later, that's a separate "Notes &amp; Sessions" page, not part of this change.<br/>
+      <strong>Access pattern:</strong> follows the same coach-edit / client-read split as Settings (per Doc 04 #7) and the per-client entry-status logic in Doc 02. Consistent permissions model across the portal.<br/>
+      <strong>Applies to:</strong> Weekly mode dashboard for v1. MTD/QTD/YTD modes can inherit the same block in the cumulative-modes doc when we get there — likely just renders identically since the note is a property of the client, not the period.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #b8d8a4;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#2d6a14;margin-bottom:6px;">Sun–Sat week change (carry-forward from Doc 08)</div>
+    <div style="font-size:12px;color:#1e4a0e;line-height:1.6;">
+      Portal-wide week boundary changes from Mon–Sun to Sun–Sat. See Doc 08 for the source-of-truth decision and full cross-doc impact list.
+    </div>
+    <div style="font-size:11px;color:#5a7a45;margin-top:8px;line-height:1.7;">
+      <strong>Doc 03 impact:</strong> Most Recent Entry indicator anchors on the current Sunday instead of the current Monday. Week-over-week delta lookup changes from <em>"exactly 7 days earlier than today's Monday"</em> to <em>"exactly 7 days earlier than today's Sunday."</em><br/>
+      <strong>No-entry indicator:</strong> the "current week" definition for the Entry Overdue pill / banner becomes Sun–Sat. An entry is "current" when its <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">startDate</code> matches the current week's Sunday anchor.<br/>
+      <strong>Helper functions:</strong> <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentMonday()</code> usage replaced with <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">currentSunday()</code>; <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">prevMonday</code> derivation in <code style="background:#f3f1e8;padding:1px 5px;border-radius:3px;font-size:11px;">DashView</code> shifts by one day.
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#2d6a14;font-style:italic;margin-top:8px;">Note: current code behavior (above) is unchanged for now. These are notes for the eventual rebuild, not edits to apply today.</div>
+</div>
+
+<!-- GAPS -->
+<div style="max-width:1200px;margin:16px auto 0;background:#fff8e8;border:1px solid #e8c878;border-radius:10px;padding:16px 20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a05500;margin-bottom:8px;">Gaps &amp; Open Questions</div>
+  <div style="font-size:12px;color:#3a2a00;line-height:1.7;">
+    <div>• No genuinely open items — see Planned Changes panel above for resolved decisions.</div>
+  </div>
+</div>
+
+</div>
