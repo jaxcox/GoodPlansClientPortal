@@ -102,7 +102,7 @@ create index if not exists idx_profiles_client_id on profiles(client_id);
 -- HELPER FUNCTIONS — used by RLS policies and app code
 -- =============================================================================
 
-create or replace function current_role()
+create or replace function current_app_role()
 returns text
 language sql
 stable
@@ -149,7 +149,7 @@ alter table profiles enable row level security;
 drop policy if exists "coaches_select" on coaches;
 create policy "coaches_select" on coaches
 for select using (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or id = current_coach_id()
   or id = (select coach_id from public.clients where id = current_client_id())
 );
@@ -157,22 +157,22 @@ for select using (
 drop policy if exists "coaches_update_self" on coaches;
 create policy "coaches_update_self" on coaches
 for update using (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or id = current_coach_id()
 );
 
 drop policy if exists "coaches_insert_admin" on coaches;
 create policy "coaches_insert_admin" on coaches
-for insert with check (current_role() = 'super_admin');
+for insert with check (current_app_role() = 'super_admin');
 
 -- industries policies ---------------------------------------------------------
 drop policy if exists "industries_coach_rw" on industries;
 create policy "industries_coach_rw" on industries
 for all using (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or coach_id = current_coach_id()
 ) with check (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or coach_id = current_coach_id()
 );
 
@@ -186,10 +186,10 @@ for select using (
 drop policy if exists "clients_coach_rw" on clients;
 create policy "clients_coach_rw" on clients
 for all using (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or coach_id = current_coach_id()
 ) with check (
-  current_role() = 'super_admin'
+  current_app_role() = 'super_admin'
   or coach_id = current_coach_id()
 );
 
@@ -206,14 +206,14 @@ drop policy if exists "profiles_self_read" on profiles;
 create policy "profiles_self_read" on profiles
 for select using (
   id = auth.uid()
-  or current_role() = 'super_admin'
-  or (current_role() = 'coach' and coach_id = current_coach_id())
+  or current_app_role() = 'super_admin'
+  or (current_app_role() = 'coach' and coach_id = current_coach_id())
 );
 
 drop policy if exists "profiles_admin_write" on profiles;
 create policy "profiles_admin_write" on profiles
-for all using (current_role() = 'super_admin')
-with check (current_role() = 'super_admin');
+for all using (current_app_role() = 'super_admin')
+with check (current_app_role() = 'super_admin');
 
 -- =============================================================================
 -- TIMESTAMP TRIGGERS

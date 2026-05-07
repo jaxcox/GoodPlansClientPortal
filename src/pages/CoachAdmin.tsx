@@ -103,7 +103,7 @@ function ClientsTab({
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-accent text-base font-bold">
+        <h1 className="text-ink text-base font-bold">
           My Clients ({clients?.length ?? 0})
         </h1>
         <button
@@ -153,7 +153,7 @@ function ClientsTab({
 function IndustriesTab() {
   return (
     <section>
-      <h1 className="text-accent text-base font-bold mb-2">Custom Industries</h1>
+      <h1 className="text-ink text-base font-bold mb-2">Custom Industries</h1>
       <p className="text-gray-500 text-xs mb-6">
         Define industries and their default KPI sets for new clients.
       </p>
