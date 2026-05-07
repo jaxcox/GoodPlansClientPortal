@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import type { Client } from '../lib/types'
 import { NewClientModal } from '../components/NewClientModal'
+import { IndustriesPage } from '../components/IndustriesPage'
 
 type Tab = 'clients' | 'industries'
 type ClientFilter = 'active' | 'archived'
@@ -76,7 +77,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
             onViewPortal={onViewPortal}
           />
         ) : (
-          <IndustriesTab />
+          <IndustriesPage />
         )}
       </main>
     </div>
@@ -346,22 +347,3 @@ function StatusPill({
   )
 }
 
-function IndustriesTab() {
-  return (
-    <section>
-      <h1 className="text-ink text-base font-bold mb-2">Custom Industries</h1>
-      <p className="text-gray-500 text-xs mb-6">
-        Define industries and their default KPI sets for new clients.
-      </p>
-      <div className="bg-ink border border-dashed border-line rounded p-10 text-center">
-        <div className="text-2xl mb-2">🏭</div>
-        <div className="text-white font-bold text-sm mb-1">
-          Industries land in Phase 3
-        </div>
-        <div className="text-mute text-xs">
-          Once you start creating clients, industries become the next thing.
-        </div>
-      </div>
-    </section>
-  )
-}

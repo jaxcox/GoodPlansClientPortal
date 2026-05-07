@@ -1,0 +1,364 @@
+// =============================================================================
+// KPI Registry — the single source of truth for every standard KPI in the portal.
+// Custom KPIs (defined per-client) follow the same shape but live on the client
+// record rather than here. Industry KPI defaults are stored as { [kpi.id]: 1|0 }.
+//
+// Reflects the rebuild planned changes from the docs:
+//   - Doc 04 PC #2: efficiency moved from Team to Operations, becomes auto
+//   - Doc 04 PC #6: legacy capacity fields dropped (employeeUtilization KPI removed)
+//   - Doc 04 PC #9: auto-derived KPIs are first-class toggles with their own goals
+//   - Doc 04 PC #11: contractsWonDollars + estimatesWonDollars split; rename
+//                    revenuePerNewClient → contractValuePerNewClient (with new formula)
+//   - Doc 08 PC: closeRate aggregates as `derived` instead of `avg`
+// =============================================================================
+
+export type KpiCategory =
+  | 'Financials'
+  | 'Marketing'
+  | 'Sales'
+  | 'Operations'
+  | 'Team'
+  | 'Overall Company'
+
+export type KpiFormat = '#' | '$' | '%'
+export type KpiAggregation = 'sum' | 'avg' | 'last' | 'derived'
+export type KpiDirection = 'hi' | 'lo' // higher is better / lower is better
+
+export type KpiDef = {
+  id: string
+  label: string
+  desc?: string
+  category: KpiCategory
+  format: KpiFormat
+  aggregation: KpiAggregation
+  /** Direction: 'lo' = lower-is-better (color logic flips). Default 'hi'. */
+  direction?: KpiDirection
+  /** Always rendered regardless of toggle state. (Revenue/COGS/GP/GP%.) */
+  always?: boolean
+  /** Calculated, not entered. Still toggleable, still has goal field. */
+  auto?: boolean
+  /** Range KPI: green when within ±10% of goal (only Accounts Receivable today). */
+  range?: boolean
+  /** Hidden from dashboard tiles even when enabled. (COGS — entry-only.) */
+  hideTile?: boolean
+  /** For auto KPIs: which inputs are required. Toggling auto on auto-enables these;
+   * toggling an input off cascades with confirmation. */
+  dependsOn?: string[]
+  /** Special role: when on, renders one tile per capacityGroup. */
+  isCapacityFlag?: boolean
+}
+
+export const KPIS: KpiDef[] = [
+  // ----- Financials -----
+  {
+    id: 'revenue',
+    label: 'Revenue',
+    desc: 'Total sales this week',
+    category: 'Financials',
+    format: '$',
+    aggregation: 'sum',
+    always: true,
+  },
+  {
+    id: 'cogs',
+    label: 'COGS',
+    desc: 'Direct production costs',
+    category: 'Financials',
+    format: '$',
+    aggregation: 'sum',
+    always: true,
+    direction: 'lo',
+    hideTile: true,
+  },
+  {
+    id: 'grossProfit',
+    label: 'Gross Profit',
+    desc: 'Revenue minus COGS',
+    category: 'Financials',
+    format: '$',
+    aggregation: 'sum',
+    always: true,
+    auto: true,
+    dependsOn: ['revenue', 'cogs'],
+  },
+  {
+    id: 'grossMargin',
+    label: 'Gross Profit Margin',
+    desc: 'Gross Profit ÷ Revenue',
+    category: 'Financials',
+    format: '%',
+    aggregation: 'derived',
+    always: true,
+    auto: true,
+    dependsOn: ['revenue', 'cogs'],
+  },
+  {
+    id: 'accountsReceivable',
+    label: 'Accounts Receivable',
+    desc: 'Target range ±10%',
+    category: 'Financials',
+    format: '$',
+    aggregation: 'last',
+    range: true,
+  },
+
+  // ----- Marketing -----
+  {
+    id: 'leads',
+    label: 'Leads Generated',
+    desc: 'New prospects this week',
+    category: 'Marketing',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'newClients',
+    label: 'New Clients',
+    desc: 'New clients this week',
+    category: 'Marketing',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'conversionRate',
+    label: 'Leads Conversion Rate',
+    desc: 'New Clients ÷ Leads',
+    category: 'Marketing',
+    format: '%',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['leads', 'newClients'],
+  },
+
+  // ----- Sales -----
+  {
+    id: 'contractsWonDollars',
+    label: 'Contracts Won ($)',
+    desc: 'Dollar value of contracts won',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'sum',
+  },
+  {
+    id: 'estimatesWonDollars',
+    label: 'Estimates Won ($)',
+    desc: 'Dollar value of estimates won',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'sum',
+  },
+  {
+    id: 'proposalsDollars',
+    label: 'Estimates Written ($)',
+    desc: 'Total estimates written this week',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'sum',
+  },
+  {
+    id: 'estimatesWritten',
+    label: '# of Estimates Written',
+    desc: 'Number of estimates written this week',
+    category: 'Sales',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'avgEstimateValue',
+    label: 'Average Estimate Value',
+    desc: 'Estimates Written $ ÷ # of Estimates',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['proposalsDollars', 'estimatesWritten'],
+  },
+  {
+    id: 'pipelineValue',
+    label: 'Pipeline Value',
+    desc: 'Open deals — total value',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'last',
+  },
+  {
+    id: 'pipelineDeals',
+    label: 'Pipeline Deals',
+    desc: 'Open deals — count',
+    category: 'Sales',
+    format: '#',
+    aggregation: 'last',
+  },
+  {
+    id: 'avgPipelineDeal',
+    label: 'Avg Deal in Pipeline',
+    desc: 'Pipeline Value ÷ Pipeline Deals',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['pipelineValue', 'pipelineDeals'],
+  },
+  {
+    id: 'closeRate',
+    label: 'Sales Close Rate',
+    desc: 'Contracts $ ÷ Estimates Written $',
+    category: 'Sales',
+    format: '%',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['contractsWonDollars', 'proposalsDollars'],
+  },
+  {
+    id: 'transactions',
+    label: '# of Transactions',
+    desc: 'Total sales transactions',
+    category: 'Sales',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'avgTransactionValue',
+    label: 'Avg Transaction Value',
+    desc: 'Revenue ÷ Transactions',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['transactions'],
+  },
+  {
+    id: 'contractValuePerNewClient',
+    label: 'Contract Value per New Client',
+    desc: 'Contracts Won $ ÷ New Clients',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['contractsWonDollars', 'newClients'],
+  },
+
+  // ----- Operations -----
+  {
+    id: 'jobsCompleted',
+    label: 'Jobs Completed',
+    desc: 'Jobs finished this week',
+    category: 'Operations',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'onTimeDelivery',
+    label: 'On-Time Delivery',
+    desc: 'Percent of jobs on schedule',
+    category: 'Operations',
+    format: '%',
+    aggregation: 'avg',
+  },
+  {
+    id: 'avgRepairOrder',
+    label: 'Avg Repair Order',
+    desc: 'Revenue ÷ Jobs Completed',
+    category: 'Operations',
+    format: '$',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['jobsCompleted'],
+  },
+  {
+    id: 'efficiency',
+    label: 'Labor Efficiency',
+    desc: 'Produced hours ÷ Working hours',
+    category: 'Operations',
+    format: '%',
+    aggregation: 'avg',
+    auto: true,
+    dependsOn: ['laborHoursCompleted'],
+  },
+  {
+    id: 'warrantyReturns',
+    label: 'Warranty / Returns',
+    desc: 'Returns and warranty claims',
+    category: 'Operations',
+    format: '#',
+    aggregation: 'sum',
+    direction: 'lo',
+  },
+  {
+    id: 'cancellations',
+    label: 'Cancellations',
+    desc: 'Cancelled / not rescheduled',
+    category: 'Operations',
+    format: '#',
+    aggregation: 'sum',
+    direction: 'lo',
+  },
+
+  // ----- Team -----
+  {
+    id: 'laborHoursCompleted',
+    label: 'Labor Hours Completed',
+    desc: 'Hours produced this week',
+    category: 'Team',
+    format: '#',
+    aggregation: 'sum',
+  },
+  {
+    id: 'teamCapacity',
+    label: 'Team Capacity',
+    desc: 'Track utilization by employee or team — defined in Capacity Groups',
+    category: 'Team',
+    format: '%',
+    aggregation: 'avg',
+    isCapacityFlag: true,
+  },
+]
+
+export const CATEGORIES: KpiCategory[] = [
+  'Financials',
+  'Marketing',
+  'Sales',
+  'Operations',
+  'Team',
+  'Overall Company',
+]
+
+/** KPI ids whose tiles are NOT shown on the dashboard even when enabled. */
+export const HIDE_TILE_IDS = KPIS.filter((k) => k.hideTile).map((k) => k.id)
+
+/** Lookup helper. */
+export function findKpi(id: string): KpiDef | undefined {
+  return KPIS.find((k) => k.id === id)
+}
+
+/**
+ * KPIs eligible to appear in the Active-KPIs / Industry-defaults toggle list.
+ * Excludes always-on KPIs (Revenue, COGS, GP, GP%) — those are guaranteed and
+ * not shown. Auto-derived KPIs ARE included per Doc 04 PC #9.
+ */
+export function toggleableKpis(): KpiDef[] {
+  return KPIS.filter((k) => !k.always)
+}
+
+/** Toggleable KPIs grouped by category, in the order categories should render. */
+export function toggleableByCategory(): Array<{
+  category: KpiCategory
+  kpis: KpiDef[]
+}> {
+  const visible: KpiCategory[] = ['Marketing', 'Sales', 'Operations', 'Team']
+  return visible
+    .map((category) => ({
+      category,
+      kpis: toggleableKpis().filter((k) => k.category === category),
+    }))
+    .filter((g) => g.kpis.length > 0)
+}
+
+/** Build a kpiDefaults object with every toggleable KPI set to off (0). */
+export function emptyKpiDefaults(): Record<string, number> {
+  const out: Record<string, number> = {}
+  toggleableKpis().forEach((k) => {
+    out[k.id] = 0
+  })
+  return out
+}
