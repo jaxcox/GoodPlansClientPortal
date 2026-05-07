@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { useAuth } from './lib/auth'
 import { LoginPage } from './pages/LoginPage'
 import { CoachAdmin } from './pages/CoachAdmin'
+import { ClientPortal } from './pages/ClientPortal'
 import { supabaseConfigured } from './lib/supabase'
 
 export default function App() {
   const { session, profile, loading } = useAuth()
+  const [viewingClientId, setViewingClientId] = useState<string | null>(null)
 
   if (!supabaseConfigured) {
     return <SetupNeeded />
@@ -22,16 +25,32 @@ export default function App() {
     return <LoginPage />
   }
 
+  // Coach (or super_admin) view
   if (profile.role === 'coach' || profile.role === 'super_admin') {
-    return <CoachAdmin />
+    if (viewingClientId) {
+      return (
+        <ClientPortal
+          clientId={viewingClientId}
+          coachView
+          onBack={() => setViewingClientId(null)}
+        />
+      )
+    }
+    return <CoachAdmin onViewPortal={(id) => setViewingClientId(id)} />
   }
 
-  // Client role lands here in Phase 2
+  // Client view
+  if (profile.role === 'client' && profile.client_id) {
+    return <ClientPortal clientId={profile.client_id} coachView={false} />
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-gray-600 p-6">
       <div className="text-center">
-        <div className="font-bold mb-2">Client portal coming in Phase 2</div>
-        <div className="text-sm">You're signed in but your client account isn't wired up yet.</div>
+        <div className="font-bold mb-2">Account not fully set up</div>
+        <div className="text-sm">
+          You're signed in but your profile isn't linked to a client record yet.
+        </div>
       </div>
     </div>
   )
