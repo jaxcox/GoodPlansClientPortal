@@ -8,6 +8,10 @@ export type CustomKpi = {
   category: KpiCategory
   format: KpiFormat
   direction: KpiDirection
+  /** When false, the KPI is hidden from dashboard tiles but its definition
+   * and any historical data are preserved. Mirrors how standard KPI toggles
+   * behave (Doc 04 PC #15). New custom KPIs default to true. */
+  active: boolean
 }
 
 export type Coach = {

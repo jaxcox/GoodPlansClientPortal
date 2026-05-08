@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { PasswordField } from '../components/PasswordField'
 
 type TopTab = 'coach' | 'client'
 type ClientSubTab = 'existing' | 'firstTime'
@@ -132,12 +133,26 @@ function ClientFirstTimeForm() {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [show, setShow] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const longEnough = password.length >= 8
+  const matches = confirm.length > 0 && password === confirm
+  const ready = longEnough && matches
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (!ready) {
+      setError(
+        !longEnough
+          ? 'Password must be at least 8 characters.'
+          : "Passwords don't match."
+      )
+      return
+    }
     setSubmitting(true)
 
     const { data, error: invokeError } = await supabase.functions.invoke<{
@@ -146,7 +161,6 @@ function ClientFirstTimeForm() {
     }>('activate-client', { body: { code, email, password } })
 
     if (invokeError) {
-      // FunctionsHttpError carries the original Response in `context`.
       let msg = invokeError.message
       const ctx = (invokeError as { context?: Response }).context
       if (ctx && typeof ctx.json === 'function') {
@@ -154,7 +168,7 @@ function ClientFirstTimeForm() {
           const body = await ctx.json()
           if (body?.error) msg = body.error
         } catch {
-          /* fall through to generic message */
+          /* fall through */
         }
       }
       setError(msg)
@@ -168,7 +182,6 @@ function ClientFirstTimeForm() {
       return
     }
 
-    // Activation succeeded — sign in normally.
     const signInResult = await signInWithPassword(email.trim(), password)
     setSubmitting(false)
     if (signInResult.error) {
@@ -177,6 +190,8 @@ function ClientFirstTimeForm() {
       )
     }
   }
+
+  const visibility = { show, toggle: () => setShow((s) => !s) }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
@@ -188,25 +203,54 @@ function ClientFirstTimeForm() {
         mono
         required
       />
-      <Field
+      <PasswordField
         label="Set a Password"
-        type="password"
         value={password}
         onChange={setPassword}
         required
+        visibility={visibility}
       />
       <PasswordRequirement value={password} />
+      <PasswordField
+        label="Confirm Password"
+        value={confirm}
+        onChange={setConfirm}
+        required
+        visibility={visibility}
+      />
+      <PasswordMatch value={confirm} matches={matches} hasPassword={password.length > 0} />
 
       {error && <ErrorBox>{error}</ErrorBox>}
 
       <button
         type="submit"
-        disabled={submitting || password.length < 8}
+        disabled={submitting || !ready}
         className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {submitting ? 'Activating…' : 'Activate Account'}
       </button>
     </form>
+  )
+}
+
+function PasswordMatch({
+  value,
+  matches,
+  hasPassword,
+}: {
+  value: string
+  matches: boolean
+  hasPassword: boolean
+}) {
+  if (!hasPassword || value.length === 0) return null
+  return (
+    <div
+      className={`text-xs -mt-2 ${
+        matches ? 'text-good' : 'text-bad-soft'
+      }`}
+    >
+      {matches ? '✓ Passwords match' : "Passwords don't match"}
+    </div>
   )
 }
 

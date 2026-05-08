@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import type { Client } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
+import { ResetPasswordModal } from '../components/ResetPasswordModal'
 
 type Tab = 'clients' | 'industries'
 type ClientFilter = 'active' | 'archived'
@@ -125,6 +126,7 @@ function ClientsTab({
     | { kind: 'create' }
     | { kind: 'edit'; client: Client }
   >({ kind: 'closed' })
+  const [resetClient, setResetClient] = useState<Client | null>(null)
 
   const active = (clients ?? []).filter((c) => !c.archived)
   const archived = (clients ?? []).filter((c) => c.archived)
@@ -181,6 +183,7 @@ function ClientsTab({
               onChange={onChange}
               onViewPortal={() => onViewPortal(c.id)}
               onEdit={() => setModalState({ kind: 'edit', client: c })}
+              onResetPassword={() => setResetClient(c)}
             />
           ))}
         </ul>
@@ -194,6 +197,13 @@ function ClientsTab({
           if (modalState.kind === 'create') setFilter('active')
           onChange()
         }}
+      />
+
+      <ResetPasswordModal
+        open={resetClient !== null}
+        client={resetClient}
+        onClose={() => setResetClient(null)}
+        onReset={() => onChange()}
       />
     </section>
   )
@@ -246,11 +256,13 @@ function ClientCard({
   onChange,
   onViewPortal,
   onEdit,
+  onResetPassword,
 }: {
   client: Client
   onChange: () => void
   onViewPortal: () => void
   onEdit: () => void
+  onResetPassword: () => void
 }) {
   const [busy, setBusy] = useState(false)
 
@@ -295,7 +307,7 @@ function ClientCard({
           )}
         </div>
       </div>
-      <div className="flex gap-1.5 shrink-0">
+      <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
         <button
           type="button"
           onClick={onEdit}
@@ -303,6 +315,15 @@ function ClientCard({
         >
           Edit
         </button>
+        {client.activated && !client.archived && (
+          <button
+            type="button"
+            onClick={onResetPassword}
+            className="bg-transparent text-white border border-mute text-[11px] font-bold px-3 py-1.5 rounded hover:bg-white/10"
+          >
+            Reset Password
+          </button>
+        )}
         <button
           type="button"
           onClick={onViewPortal}

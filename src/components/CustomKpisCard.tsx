@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../lib/kpis'
 import type { KpiCategory, KpiFormat, KpiDirection } from '../lib/kpis'
 import type { Client, CustomKpi } from '../lib/types'
+import { Toggle } from './Toggle'
 
 type Props = {
   client: Client
@@ -45,8 +46,16 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
   }
 
   // ----- Operations ------------------------------------------------------
-  const addKpi = async (k: Omit<CustomKpi, 'id'>) => {
-    const next: CustomKpi[] = [...list, { ...k, id: newCustomId() }]
+  const addKpi = async (k: Omit<CustomKpi, 'id' | 'active'>) => {
+    const next: CustomKpi[] = [
+      ...list,
+      { ...k, id: newCustomId(), active: true },
+    ]
+    await persist(next)
+  }
+
+  const setActive = async (id: string, active: boolean) => {
+    const next = list.map((k) => (k.id === id ? { ...k, active } : k))
     await persist(next)
   }
 
@@ -73,7 +82,8 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
 
   // ----- Render ----------------------------------------------------------
   if (!coachView) {
-    if (list.length === 0) {
+    const activeList = list.filter((k) => k.active !== false)
+    if (activeList.length === 0) {
       return (
         <div className="text-mute text-xs">
           No custom KPIs. Your coach can add custom metrics here.
@@ -82,7 +92,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
     }
     return (
       <div className="space-y-1">
-        {list.map((k) => (
+        {activeList.map((k) => (
           <ReadOnlyRow key={k.id} kpi={k} />
         ))}
       </div>
@@ -119,6 +129,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
                 kpi={k}
                 onEdit={() => setEditingId(k.id)}
                 onDelete={() => deleteKpi(k.id)}
+                onToggleActive={(on) => setActive(k.id, on)}
               />
             )
           )}
@@ -135,29 +146,31 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
 function AddRow({
   onAdd,
 }: {
-  onAdd: (k: Omit<CustomKpi, 'id'>) => Promise<void>
+  onAdd: (k: Omit<CustomKpi, 'id' | 'active'>) => Promise<void>
 }) {
   const [name, setName] = useState('')
-  const [category, setCategory] = useState<KpiCategory>('Sales')
-  const [format, setFormat] = useState<KpiFormat>('#')
+  const [category, setCategory] = useState<KpiCategory | ''>('')
+  const [format, setFormat] = useState<KpiFormat | ''>('')
   const [direction, setDirection] = useState<KpiDirection>('hi')
   const [submitting, setSubmitting] = useState(false)
 
+  const ready = name.trim().length > 0 && category !== '' && format !== ''
+
   const reset = () => {
     setName('')
-    setCategory('Sales')
-    setFormat('#')
+    setCategory('')
+    setFormat('')
     setDirection('hi')
   }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!ready) return
     setSubmitting(true)
     await onAdd({
       name: name.trim(),
-      category,
-      format,
+      category: category as KpiCategory,
+      format: format as KpiFormat,
       direction,
     })
     setSubmitting(false)
@@ -182,9 +195,12 @@ function AddRow({
         <FieldGroup label="Category">
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as KpiCategory)}
+            onChange={(e) =>
+              setCategory(e.target.value as KpiCategory | '')
+            }
             className="w-full bg-surface-1 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
+            <option value="">— Pick one —</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -195,9 +211,10 @@ function AddRow({
         <FieldGroup label="Format">
           <select
             value={format}
-            onChange={(e) => setFormat(e.target.value as KpiFormat)}
+            onChange={(e) => setFormat(e.target.value as KpiFormat | '')}
             className="w-full bg-surface-1 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
+            <option value="">— Pick one —</option>
             {FORMATS.map((f) => (
               <option key={f.value} value={f.value}>
                 {f.label}
@@ -207,7 +224,7 @@ function AddRow({
         </FieldGroup>
         <button
           type="submit"
-          disabled={submitting || !name.trim()}
+          disabled={submitting || !ready}
           className="bg-accent text-black font-bold px-4 py-2 rounded text-xs hover:brightness-95 disabled:opacity-50"
         >
           {submitting ? 'Adding…' : 'Add'}
@@ -231,13 +248,27 @@ function DisplayRow({
   kpi,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   kpi: CustomKpi
   onEdit: () => void
   onDelete: () => void
+  onToggleActive: (active: boolean) => void
 }) {
+  const active = kpi.active !== false
   return (
-    <div className="bg-surface-2 rounded px-3 py-2.5 flex items-center justify-between gap-3">
+    <div
+      className={`bg-surface-2 rounded px-3 py-2.5 flex items-center justify-between gap-3 ${
+        active ? '' : 'opacity-60'
+      }`}
+    >
+      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+        <Toggle
+          checked={active}
+          onChange={onToggleActive}
+          label=""
+        />
+      </div>
       <button
         type="button"
         onClick={onEdit}

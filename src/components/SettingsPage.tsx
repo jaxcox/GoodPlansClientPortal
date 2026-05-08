@@ -144,6 +144,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 
   const onSave = async () => {
     if (!client) return
+    if (!isDirty) return // No-op when there's nothing to save
     setSaveError(null)
     if (!companyName.trim()) {
       setSaveError('Company name is required.')
@@ -389,7 +390,8 @@ function SaveBar({
   onCancel: () => void
   onSave: () => void
 }) {
-  const showSaved = !isDirty && savedAt !== null
+  void savedAt
+  const allSaved = !isDirty
   return (
     <div className="flex items-center gap-2">
       <button
@@ -402,14 +404,14 @@ function SaveBar({
       <button
         type="button"
         onClick={onSave}
-        disabled={!isDirty || saving}
+        disabled={saving}
         className={`px-4 py-1.5 rounded text-xs font-bold ${
-          showSaved
-            ? 'bg-good text-black'
+          allSaved
+            ? 'bg-good text-black hover:brightness-95'
             : 'bg-accent text-black hover:brightness-95'
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
+        } disabled:opacity-60 disabled:cursor-wait`}
       >
-        {saving ? 'Saving…' : showSaved ? 'Saved ✓' : 'Save Settings'}
+        {saving ? 'Saving…' : allSaved ? 'Saved ✓' : 'Save Settings'}
       </button>
     </div>
   )
