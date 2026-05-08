@@ -314,19 +314,19 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         )}
       </Card>
 
+      {/* YTD actuals — Phase 4.3 */}
+      <Card title="YTD Actuals">
+        <PhaseStub
+          phase="Phase 4.3"
+          summary="Month-by-month Revenue and Cost of Goods Sold actuals through a chosen month, so QTD math stays accurate when coaching starts mid-quarter (Doc 08 PC)."
+        />
+      </Card>
+
       {/* Per-KPI goals — Phase 4.2 */}
       <Card title="KPI Goals">
         <PhaseStub
           phase="Phase 4.2"
           summary="Goal numbers for each active KPI on this client (Marketing, Sales, Operations, Team) — including auto-derived KPIs per Doc 04 PC #14."
-        />
-      </Card>
-
-      {/* YTD actuals — Phase 4.3 */}
-      <Card title="YTD Actuals">
-        <PhaseStub
-          phase="Phase 4.3"
-          summary="Month-by-month Revenue and COGS actuals through a chosen month, so QTD math stays accurate when coaching starts mid-quarter (Doc 08 PC)."
         />
       </Card>
 
