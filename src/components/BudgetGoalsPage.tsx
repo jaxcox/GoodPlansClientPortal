@@ -14,11 +14,17 @@ import {
   looksAutoDistributed,
   sumMonthsThru,
 } from '../lib/budget'
-import type { Budget, Client, SeasonType } from '../lib/types'
+import type {
+  Budget,
+  CapacityGroupGoal,
+  Client,
+  SeasonType,
+} from '../lib/types'
 import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
 import { BudgetStatusBanners } from './BudgetStatusBanners'
 import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
+import { CapacityGroupGoalsCard } from './CapacityGroupGoalsCard'
 
 type Props = {
   clientId: string
@@ -66,6 +72,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
+  // Per-capacity-group goals, keyed by group id
+  const [capacityGoals, setCapacityGoals] = useState<
+    Record<string, CapacityGroupGoal>
+  >({})
 
   // Tab within the Budget & Goals page
   const [budgetTab, setBudgetTab] = useState<'targets' | 'monthly'>('targets')
@@ -112,6 +122,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       looksAutoDistributed(seededCogs, b?.ytd_thru_month ?? null)
     setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
+    setCapacityGoals(b?.capacity_group_goals ?? {})
     setSavedAt(null)
     setSaveError(null)
   }
@@ -183,7 +194,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth) ||
       JSON.stringify(ytdExpensesByMonth) !==
         JSON.stringify(savedExpensesByMonth) ||
-      JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {})
+      JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {}) ||
+      JSON.stringify(capacityGoals) !==
+        JSON.stringify(budget?.capacity_group_goals ?? {})
     )
   }, [
     budget,
@@ -197,6 +210,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdCogsByMonth,
     ytdExpensesByMonth,
     kpiGoals,
+    capacityGoals,
   ])
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
@@ -298,6 +312,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       ytd_expenses_by_month:
         ytdThruMonth === null ? null : ytdExpensesByMonth,
       goals: kpiGoals,
+      capacity_group_goals: capacityGoals,
     }
 
     const op = budget
@@ -524,11 +539,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
-      {/* Capacity goals — Phase 4.5 */}
+      {/* Capacity goals */}
       <Card title="Capacity Group Goals">
-        <PhaseStub
-          phase="Phase 4.5"
-          summary="Target % or $ per capacity group from Settings."
+        <CapacityGroupGoalsCard
+          client={client}
+          goals={capacityGoals}
+          onChange={setCapacityGoals}
         />
       </Card>
         </>
@@ -1109,22 +1125,6 @@ function SeasonalSum({ sum }: { sum: number }) {
   )
 }
 
-function PhaseStub({
-  phase,
-  summary,
-}: {
-  phase: string
-  summary: string
-}) {
-  return (
-    <div className="bg-surface-2 border border-line rounded p-4 text-white text-xs leading-relaxed">
-      <div className="text-white font-bold uppercase tracking-wider text-xs mb-1">
-        {phase}
-      </div>
-      {summary}
-    </div>
-  )
-}
 
 function formatDollars(n: number): string {
   return n.toLocaleString('en-US', {
