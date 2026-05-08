@@ -9,6 +9,9 @@ import {
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
+import { IndustryQuickAddModal } from './IndustryQuickAddModal'
+
+const CREATE_NEW_INDUSTRY = '__create__'
 
 type Props = {
   open: boolean
@@ -33,6 +36,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
   const [industries, setIndustries] = useState<Industry[] | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [industryModalOpen, setIndustryModalOpen] = useState(false)
 
   // Reset when reopening (or seed from `editing`)
   useEffect(() => {
@@ -99,7 +103,13 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
 
   // When the user actively switches industries, replace KPI toggles with that
   // industry's defaults (matches Doc 04: "Industry change resets KPI defaults").
+  // The special CREATE_NEW_INDUSTRY value opens a stacked modal instead of
+  // selecting; the dropdown's value stays at the previous selection.
   const onIndustryChange = (id: string) => {
+    if (id === CREATE_NEW_INDUSTRY) {
+      setIndustryModalOpen(true)
+      return
+    }
     setIndustryId(id)
     const ind = industries?.find((i) => i.id === id)
     if (ind) {
@@ -107,6 +117,17 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
     } else {
       setKpis(emptyKpiDefaults())
     }
+  }
+
+  const onIndustryCreated = (created: Industry) => {
+    setIndustries((prev) => {
+      const next = [...(prev ?? []), created]
+      next.sort((a, b) => a.name.localeCompare(b.name))
+      return next
+    })
+    setIndustryId(created.id)
+    setKpis({ ...emptyKpiDefaults(), ...(created.kpi_defaults ?? {}) })
+    setIndustryModalOpen(false)
   }
 
   const { onToggle: onKpiToggle, feedback: kpiFeedback } = useKpiToggle(
@@ -257,11 +278,17 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             {industries === null ? (
               <div className="text-mute text-xs italic">Loading…</div>
             ) : noIndustries ? (
-              <div className="text-xs text-gray-300 bg-line/40 border border-line rounded px-3 py-2 leading-relaxed">
-                No industries defined yet. Open the{' '}
-                <strong className="text-accent">Industries</strong> tab in Coach
-                Admin and create one first — that's where you set default KPIs
-                that get applied to new clients.
+              <div className="space-y-2">
+                <div className="text-xs text-gray-300 bg-line/40 border border-line rounded px-3 py-2 leading-relaxed">
+                  No industries defined yet — create one to continue.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIndustryModalOpen(true)}
+                  className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95"
+                >
+                  + Create new industry
+                </button>
               </div>
             ) : (
               <select
@@ -275,6 +302,8 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
                     {i.name}
                   </option>
                 ))}
+                <option disabled>──────────</option>
+                <option value={CREATE_NEW_INDUSTRY}>+ Create new industry…</option>
               </select>
             )}
             {isEdit && (
@@ -349,6 +378,15 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           </div>
         </form>
       </div>
+
+      {coach && (
+        <IndustryQuickAddModal
+          open={industryModalOpen}
+          coachId={coach.id}
+          onClose={() => setIndustryModalOpen(false)}
+          onCreated={onIndustryCreated}
+        />
+      )}
     </div>
   )
 }
