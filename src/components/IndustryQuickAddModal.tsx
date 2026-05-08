@@ -104,7 +104,7 @@ export function IndustryQuickAddModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
-              className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+              className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
             />
           </div>
 

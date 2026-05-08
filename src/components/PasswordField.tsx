@@ -39,7 +39,7 @@ export function PasswordField({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           autoComplete={autoComplete}
-          className="w-full bg-surface-2 border border-line rounded text-white text-sm pl-3 pr-10 py-2 focus:outline-none focus:border-accent"
+          className="w-full bg-surface-2 border border-accent rounded text-white text-sm pl-3 pr-10 py-2 focus:outline-none focus:border-accent"
         />
         <button
           type="button"

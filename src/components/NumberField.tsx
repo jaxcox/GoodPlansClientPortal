@@ -90,7 +90,7 @@ export function NumberField({
         onFocus={handleFocus}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full bg-surface-2 border border-line rounded text-white text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
+        className={`w-full bg-surface-2 border border-accent rounded text-white text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
       />
       {suffix && (
         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white text-sm">

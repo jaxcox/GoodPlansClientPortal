@@ -324,7 +324,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className={`w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent ${
+        className={`w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent ${
           mono ? 'font-mono tracking-wider' : ''
         }`}
         autoComplete={

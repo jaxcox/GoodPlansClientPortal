@@ -375,61 +375,80 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         <>
       {/* Annual Targets */}
       <Card title="Annual Targets">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Labeled label="Income Target">
-            <NumberField
-              value={annualRevenue}
-              onChange={setAnnualRevenue}
-              format="dollars"
-              max={null}
-              ariaLabel="Annual income target"
-            />
-          </Labeled>
-          <Labeled label="Gross Profit %">
-            <NumberField
-              value={grossProfitPct}
-              onChange={setGrossProfitPct}
-              format="percent"
-              ariaLabel="Gross profit percent"
-            />
-          </Labeled>
-          <Labeled label="Expenses">
-            <NumberField
-              value={annualExpenses}
-              onChange={setAnnualExpenses}
-              format="dollars"
-              max={null}
-              ariaLabel="Annual operating expenses"
-            />
-          </Labeled>
-        </div>
+        <div className="space-y-4">
+          {/* Row 1: Income */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Income Target">
+              <NumberField
+                value={annualRevenue}
+                onChange={setAnnualRevenue}
+                format="dollars"
+                max={null}
+                ariaLabel="Annual income target"
+              />
+            </Labeled>
+          </div>
 
-        <CalculatedPanel
-          rows={[
-            {
-              label: 'Gross Profit $',
-              value: gpDollars !== null ? formatDollars(gpDollars) : '—',
-            },
-            {
-              label: 'Cost of Goods Sold %',
-              value:
-                cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—',
-            },
-            {
-              label: 'Cost of Goods Sold $',
-              value:
-                cogsDollars !== null ? formatDollars(cogsDollars) : '—',
-            },
-            {
-              label: 'Net Profit $',
-              value: npDollars !== null ? formatDollars(npDollars) : '—',
-            },
-            {
-              label: 'Net Profit %',
-              value: npPct !== null ? `${npPct.toFixed(1)}%` : '—',
-            },
-          ]}
-        />
+          {/* Row 2: Gross Profit */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Gross Profit %">
+              <NumberField
+                value={grossProfitPct}
+                onChange={setGrossProfitPct}
+                format="percent"
+                ariaLabel="Gross profit percent"
+              />
+            </Labeled>
+            <Labeled label="Gross Profit $">
+              <DerivedBox
+                value={gpDollars !== null ? formatDollars(gpDollars) : '—'}
+              />
+            </Labeled>
+          </div>
+
+          {/* Row 3: Cost of Goods Sold */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Cost of Goods Sold %">
+              <DerivedBox
+                value={cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—'}
+              />
+            </Labeled>
+            <Labeled label="Cost of Goods Sold $">
+              <DerivedBox
+                value={
+                  cogsDollars !== null ? formatDollars(cogsDollars) : '—'
+                }
+              />
+            </Labeled>
+          </div>
+
+          {/* Row 4: Expenses */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Expenses">
+              <NumberField
+                value={annualExpenses}
+                onChange={setAnnualExpenses}
+                format="dollars"
+                max={null}
+                ariaLabel="Annual operating expenses"
+              />
+            </Labeled>
+          </div>
+
+          {/* Row 5: Net Profit */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Net Profit $">
+              <DerivedBox
+                value={npDollars !== null ? formatDollars(npDollars) : '—'}
+              />
+            </Labeled>
+            <Labeled label="Net Profit %">
+              <DerivedBox
+                value={npPct !== null ? `${npPct.toFixed(1)}%` : '—'}
+              />
+            </Labeled>
+          </div>
+        </div>
 
         <RoundingNote />
       </Card>
@@ -657,7 +676,7 @@ function YtdActualsBody({
         <select
           value={ytdThruMonth ?? 'none'}
           onChange={(e) => onThruMonthChange(e.target.value)}
-          className="w-48 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+          className="w-48 bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
         >
           <option value="none">— Pick one —</option>
           {MONTH_LABELS.map((m, i) => (
@@ -694,7 +713,8 @@ function YtdActualsBody({
 
           {entryMode === 'bulk' ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Row 1: Income */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Income (YTD total)">
                   <NumberField
                     value={revenueTotal === 0 ? undefined : revenueTotal}
@@ -704,6 +724,28 @@ function YtdActualsBody({
                     ariaLabel="YTD income total"
                   />
                 </Labeled>
+              </div>
+
+              {/* Row 2: Gross Profit (both derived) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Gross Profit $">
+                  <DerivedBox
+                    value={formatDollars(revenueTotal - cogsTotal)}
+                  />
+                </Labeled>
+                <Labeled label="Gross Profit %">
+                  <DerivedBox
+                    value={
+                      revenueTotal > 0
+                        ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                        : '—'
+                    }
+                  />
+                </Labeled>
+              </div>
+
+              {/* Row 3: Cost of Goods Sold (input + derived %) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Cost of Goods Sold (YTD total)">
                   <NumberField
                     value={cogsTotal === 0 ? undefined : cogsTotal}
@@ -713,6 +755,19 @@ function YtdActualsBody({
                     ariaLabel="YTD cost of goods sold total"
                   />
                 </Labeled>
+                <Labeled label="Cost of Goods Sold % (of Income)">
+                  <DerivedBox
+                    value={
+                      revenueTotal > 0
+                        ? `${((cogsTotal / revenueTotal) * 100).toFixed(1)}%`
+                        : '—'
+                    }
+                  />
+                </Labeled>
+              </div>
+
+              {/* Row 4: Expenses */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Expenses (YTD total)">
                   <NumberField
                     value={expensesTotal === 0 ? undefined : expensesTotal}
@@ -724,41 +779,25 @@ function YtdActualsBody({
                 </Labeled>
               </div>
 
-              <CalculatedPanel
-                rows={[
-                  {
-                    label: 'Gross Profit $',
-                    value: formatDollars(revenueTotal - cogsTotal),
-                  },
-                  {
-                    label: 'Gross Profit %',
-                    value:
-                      revenueTotal > 0
-                        ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
-                        : '—',
-                  },
-                  {
-                    label: 'Cost of Goods Sold % (of Income)',
-                    value:
-                      revenueTotal > 0
-                        ? `${((cogsTotal / revenueTotal) * 100).toFixed(1)}%`
-                        : '—',
-                  },
-                  {
-                    label: 'Net Profit $',
-                    value: formatDollars(
+              {/* Row 5: Net Profit (both derived) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Net Profit $">
+                  <DerivedBox
+                    value={formatDollars(
                       revenueTotal - cogsTotal - expensesTotal
-                    ),
-                  },
-                  {
-                    label: 'Net Profit %',
-                    value:
+                    )}
+                  />
+                </Labeled>
+                <Labeled label="Net Profit %">
+                  <DerivedBox
+                    value={
                       revenueTotal > 0
                         ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
-                        : '—',
-                  },
-                ]}
-              />
+                        : '—'
+                    }
+                  />
+                </Labeled>
+              </div>
             </div>
           ) : (
             <div className="bg-[#0a0a0a] border border-line rounded p-3 overflow-x-auto">
@@ -809,29 +848,13 @@ function YtdActualsBody({
   )
 }
 
-function CalculatedPanel({
-  rows,
-}: {
-  rows: { label: string; value: string }[]
-}) {
+/** Read-only display box that mirrors the input field's dimensions and bg
+ *  but uses a gray (line) border instead of the yellow (accent) ring on
+ *  fillable inputs. */
+function DerivedBox({ value }: { value: string }) {
   return (
-    <div className="bg-[#0a0a0a] border border-line rounded-lg overflow-hidden">
-      <div className="px-3 py-1.5 border-b border-line bg-surface-2">
-        <div className="text-xs font-bold uppercase tracking-wider text-white">
-          Calculated
-        </div>
-      </div>
-      <div className="px-3 py-2 space-y-1.5">
-        {rows.map((r) => (
-          <div
-            key={r.label}
-            className="flex justify-between items-baseline text-sm text-white"
-          >
-            <div>{r.label}</div>
-            <div className="font-semibold">{r.value}</div>
-          </div>
-        ))}
-      </div>
+    <div className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2">
+      {value}
     </div>
   )
 }

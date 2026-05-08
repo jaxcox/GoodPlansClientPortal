@@ -142,14 +142,14 @@ function GroupPanel({
             value={group.name}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder="e.g. Production Crew"
-            className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           />
         </FieldGroup>
         <FieldGroup label="Tracking Method">
           <select
             value={group.method ?? ''}
             onChange={(e) => onMethodChange(e.target.value as CapacityMethod)}
-            className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             <option value="" disabled>
               — Pick one —
@@ -399,7 +399,7 @@ function EmployeeRow({
   onRemove: () => void
 }) {
   const textCell =
-    'bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent'
+    'bg-surface-2 border border-accent rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent'
   if (method === 'labor') {
     return (
       <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 items-center">
@@ -553,7 +553,7 @@ function HeadcountBody({
                   value={d.name}
                   onChange={(e) => updateDept(d.id, { name: e.target.value })}
                   placeholder="Department"
-                  className="bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
+                  className="bg-surface-2 border border-accent rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
                 />
                 <NumberField
                   value={d.fullTimeCount}

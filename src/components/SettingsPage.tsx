@@ -288,7 +288,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               <select
                 value={industryId}
                 onChange={(e) => onIndustryChange(e.target.value)}
-                className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+                className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
               >
                 <option value="">— Pick one —</option>
                 {(industries ?? []).map((i) => (
@@ -467,7 +467,7 @@ function SharedFolderRow({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="https://drive.google.com/..."
-            className="flex-1 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="flex-1 bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           />
           {isLikelyUrl && (
             <a
