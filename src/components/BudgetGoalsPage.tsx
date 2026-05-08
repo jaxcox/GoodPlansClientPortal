@@ -17,7 +17,6 @@ import {
 import type {
   Budget,
   CapacityGroup,
-  CapacityGroupGoal,
   Client,
   SeasonType,
 } from '../lib/types'
@@ -73,13 +72,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
-  // Per-capacity-group goals, keyed by group id
-  const [capacityGoals, setCapacityGoals] = useState<
-    Record<string, CapacityGroupGoal>
-  >({})
   // Capacity groups themselves (definitions, employee tables, etc.)
-  // Lives on the client record but managed here on the Budget & Goals tab —
-  // the structural setup and the per-group goals are now one card.
+  // Lives on the client record but managed here on the Budget & Goals tab.
   const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
 
   // Tab within the Budget & Goals page
@@ -127,7 +121,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       looksAutoDistributed(seededCogs, b?.ytd_thru_month ?? null)
     setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
-    setCapacityGoals(b?.capacity_group_goals ?? {})
     // capacityGroups is seeded from the client record, not the budget.
     // It's mirrored from the client load in the useEffect below.
     setSavedAt(null)
@@ -203,8 +196,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       JSON.stringify(ytdExpensesByMonth) !==
         JSON.stringify(savedExpensesByMonth) ||
       JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {}) ||
-      JSON.stringify(capacityGoals) !==
-        JSON.stringify(budget?.capacity_group_goals ?? {}) ||
       JSON.stringify(capacityGroups) !==
         JSON.stringify(client?.capacity_groups ?? [])
     )
@@ -221,7 +212,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdCogsByMonth,
     ytdExpensesByMonth,
     kpiGoals,
-    capacityGoals,
     capacityGroups,
   ])
 
@@ -324,7 +314,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       ytd_expenses_by_month:
         ytdThruMonth === null ? null : ytdExpensesByMonth,
       goals: kpiGoals,
-      capacity_group_goals: capacityGoals,
     }
 
     const op = budget
@@ -568,14 +557,11 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
-      {/* Capacity & Utilization (setup + goals merged). Editable by both
-          coach and client — Budget & Goals is fully client-editable. */}
+      {/* Capacity & Utilization. Editable by both coach and client. */}
       <Card title="Capacity & Utilization Tracking">
         <CapacityGroupsCard
           groups={capacityGroups}
           onChange={setCapacityGroups}
-          goals={capacityGoals}
-          onGoalsChange={setCapacityGoals}
           coachView={true}
         />
       </Card>
