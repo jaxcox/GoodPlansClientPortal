@@ -48,7 +48,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [ytdCogsByMonth, setYtdCogsByMonth] = useState<(number | null)[]>(
     emptyMonthArray()
   )
-  const [showMonthlyBreakdown, setShowMonthlyBreakdown] = useState(false)
+  // YTD entry method — explicit choice instead of a hybrid "single total +
+  // expand for overrides" UI. Defaults from the data: months that look
+  // auto-distributed → bulk; mixed values → monthly.
+  const [ytdEntryMode, setYtdEntryMode] = useState<'bulk' | 'monthly'>('bulk')
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
@@ -72,17 +75,22 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         : evenSeasonPct()
     )
     setYtdThruMonth(b?.ytd_thru_month ?? null)
-    setYtdRevenueByMonth(
+    const seededRevenue =
       b?.ytd_revenue_by_month && b.ytd_revenue_by_month.length === 12
         ? b.ytd_revenue_by_month
         : emptyMonthArray()
-    )
-    setYtdCogsByMonth(
+    const seededCogs =
       b?.ytd_cogs_by_month && b.ytd_cogs_by_month.length === 12
         ? b.ytd_cogs_by_month
         : emptyMonthArray()
-    )
-    setShowMonthlyBreakdown(false)
+    setYtdRevenueByMonth(seededRevenue)
+    setYtdCogsByMonth(seededCogs)
+    // If either array shows manual overrides, default to monthly entry so the
+    // coach can see what's actually stored. Otherwise prefer bulk.
+    const looksBulk =
+      looksAutoDistributed(seededRevenue, b?.ytd_thru_month ?? null) &&
+      looksAutoDistributed(seededCogs, b?.ytd_thru_month ?? null)
+    setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
     setSavedAt(null)
     setSaveError(null)
@@ -382,8 +390,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           setRevenueByMonth={setYtdRevenueByMonth}
           cogsByMonth={ytdCogsByMonth}
           setCogsByMonth={setYtdCogsByMonth}
-          showMonthly={showMonthlyBreakdown}
-          setShowMonthly={setShowMonthlyBreakdown}
+          entryMode={ytdEntryMode}
+          setEntryMode={setYtdEntryMode}
           seasonType={seasonType}
           seasonPct={seasonPct}
         />
@@ -431,8 +439,8 @@ function YtdActualsBody({
   setRevenueByMonth,
   cogsByMonth,
   setCogsByMonth,
-  showMonthly,
-  setShowMonthly,
+  entryMode,
+  setEntryMode,
   seasonType,
   seasonPct,
 }: {
@@ -442,8 +450,8 @@ function YtdActualsBody({
   setRevenueByMonth: (arr: (number | null)[]) => void
   cogsByMonth: (number | null)[]
   setCogsByMonth: (arr: (number | null)[]) => void
-  showMonthly: boolean
-  setShowMonthly: (b: boolean) => void
+  entryMode: 'bulk' | 'monthly'
+  setEntryMode: (m: 'bulk' | 'monthly') => void
   seasonType: SeasonType
   seasonPct: number[]
 }) {
@@ -456,7 +464,6 @@ function YtdActualsBody({
       setYtdThruMonth(null)
       setRevenueByMonth(emptyMonthArray())
       setCogsByMonth(emptyMonthArray())
-      setShowMonthly(false)
       return
     }
     const next = Number(raw)
@@ -472,37 +479,23 @@ function YtdActualsBody({
     }
   }
 
-  const setRevenueTotal = (n: number | undefined) => {
+  // Bulk mode handlers — typing a total replaces all months with the
+  // auto-distribute. No confirm: bulk is an explicit mode, the coach asked
+  // for this behavior by picking it.
+  const setBulkRevenue = (n: number | undefined) => {
     if (ytdThruMonth === null) return
     if (n === undefined) {
       setRevenueByMonth(emptyMonthArray())
-      return
-    }
-    if (
-      !looksAutoDistributed(revenueByMonth, ytdThruMonth) &&
-      !confirm(
-        'You have per-month overrides for Revenue. Replace them with an auto-distributed split based on this total?'
-      )
-    ) {
       return
     }
     setRevenueByMonth(
       distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
     )
   }
-
-  const setCogsTotal = (n: number | undefined) => {
+  const setBulkCogs = (n: number | undefined) => {
     if (ytdThruMonth === null) return
     if (n === undefined) {
       setCogsByMonth(emptyMonthArray())
-      return
-    }
-    if (
-      !looksAutoDistributed(cogsByMonth, ytdThruMonth) &&
-      !confirm(
-        'You have per-month overrides for Cost of Goods Sold. Replace them with an auto-distributed split based on this total?'
-      )
-    ) {
       return
     }
     setCogsByMonth(
@@ -527,7 +520,7 @@ function YtdActualsBody({
       <p className="text-xs text-white leading-relaxed">
         Year-to-date actuals from outside the portal — typically used when
         you start coaching a client mid-year. Pick the most recent completed
-        month, then enter the totals (or expand for per-month overrides).
+        month, then choose how to enter the numbers.
       </p>
 
       <Labeled label="YTD Through">
@@ -547,60 +540,51 @@ function YtdActualsBody({
 
       {enabled && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Revenue (YTD total)">
-              <NumberField
-                value={revenueTotal === 0 ? undefined : revenueTotal}
-                onChange={setRevenueTotal}
-                format="dollars"
-                max={null}
-                ariaLabel="YTD revenue total"
-              />
-            </Labeled>
-            <Labeled label="Cost of Goods Sold (YTD total)">
-              <NumberField
-                value={cogsTotal === 0 ? undefined : cogsTotal}
-                onChange={setCogsTotal}
-                format="dollars"
-                max={null}
-                ariaLabel="YTD cost of goods sold total"
-              />
-            </Labeled>
-          </div>
+          <Labeled label="How do you want to enter actuals?">
+            <div className="inline-flex border border-line rounded overflow-hidden">
+              <ModeButton
+                active={entryMode === 'bulk'}
+                onClick={() => setEntryMode('bulk')}
+              >
+                Single total
+              </ModeButton>
+              <ModeButton
+                active={entryMode === 'monthly'}
+                onClick={() => setEntryMode('monthly')}
+              >
+                Month-by-month
+              </ModeButton>
+            </div>
+            <div className="text-xs text-white mt-2 leading-relaxed">
+              {entryMode === 'bulk'
+                ? `Enter one Revenue and one Cost of Goods Sold figure for the whole window. The portal spreads it across ${ytdThruMonth + 1} month${ytdThruMonth === 0 ? '' : 's'} ${seasonType === 'seasonal' ? 'using your seasonal distribution' : 'evenly'}.`
+                : `Enter Revenue and Cost of Goods Sold for each of the ${ytdThruMonth + 1} month${ytdThruMonth === 0 ? '' : 's'} individually. The totals at the bottom are computed from your entries.`}
+            </div>
+          </Labeled>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
-            <Derived
-              label="YTD Gross Profit"
-              value={formatDollars(revenueTotal - cogsTotal)}
-              hint="Revenue − Cost of Goods Sold"
-            />
-            <Derived
-              label="YTD GP Margin"
-              value={
-                revenueTotal > 0
-                  ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
-                  : '—'
-              }
-              hint="Gross Profit ÷ Revenue"
-            />
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowMonthly(!showMonthly)}
-              className="text-xs text-white hover:text-white"
-            >
-              {showMonthly ? '▾ Hide monthly breakdown' : '▸ Show monthly breakdown'}
-            </button>
-          </div>
-
-          {showMonthly && (
+          {entryMode === 'bulk' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Labeled label="Revenue (YTD total)">
+                <NumberField
+                  value={revenueTotal === 0 ? undefined : revenueTotal}
+                  onChange={setBulkRevenue}
+                  format="dollars"
+                  max={null}
+                  ariaLabel="YTD revenue total"
+                />
+              </Labeled>
+              <Labeled label="Cost of Goods Sold (YTD total)">
+                <NumberField
+                  value={cogsTotal === 0 ? undefined : cogsTotal}
+                  onChange={setBulkCogs}
+                  format="dollars"
+                  max={null}
+                  ariaLabel="YTD cost of goods sold total"
+                />
+              </Labeled>
+            </div>
+          ) : (
             <div className="bg-surface-2 rounded p-3">
-              <div className="text-xs text-white mb-2 leading-relaxed">
-                Override individual months below. Editing a YTD total above
-                will warn before replacing your overrides.
-              </div>
               <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-3 gap-y-1.5 items-center">
                 <div className="text-xs font-semibold uppercase tracking-wider text-white">
                   Month
@@ -621,12 +605,62 @@ function YtdActualsBody({
                     onCogsChange={(n) => setMonthValue('cogs', i, n)}
                   />
                 ))}
+                <div className="text-xs font-bold uppercase tracking-wider text-white pt-2 border-t border-line">
+                  Total
+                </div>
+                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                  {formatDollars(revenueTotal)}
+                </div>
+                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                  {formatDollars(cogsTotal)}
+                </div>
               </div>
             </div>
           )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
+            <Derived
+              label="YTD Gross Profit"
+              value={formatDollars(revenueTotal - cogsTotal)}
+              hint="Revenue − Cost of Goods Sold"
+            />
+            <Derived
+              label="YTD GP Margin"
+              value={
+                revenueTotal > 0
+                  ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                  : '—'
+              }
+              hint="Gross Profit ÷ Revenue"
+            />
+          </div>
         </>
       )}
     </div>
+  )
+}
+
+function ModeButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-1.5 text-xs font-semibold ${
+        active
+          ? 'bg-accent text-black'
+          : 'bg-transparent text-white hover:bg-white/10'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 
