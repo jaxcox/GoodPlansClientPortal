@@ -67,8 +67,11 @@ export const CAPACITY_METHODS: CapacityMethodMeta[] = [
   },
 ]
 
-export function methodMeta(m: CapacityMethod): CapacityMethodMeta {
-  return CAPACITY_METHODS.find((x) => x.value === m) ?? CAPACITY_METHODS[0]
+export function methodMeta(
+  m: CapacityMethod | undefined
+): CapacityMethodMeta | null {
+  if (!m) return null
+  return CAPACITY_METHODS.find((x) => x.value === m) ?? null
 }
 
 // -----------------------------------------------------------------------------
@@ -82,7 +85,7 @@ function rid(prefix: string): string {
   return `${prefix}_${arr[0].toString(36)}${arr[1].toString(36).slice(0, 4)}`
 }
 
-export function newCapacityGroup(method: CapacityMethod): CapacityGroup {
+export function newCapacityGroup(method?: CapacityMethod): CapacityGroup {
   const base: CapacityGroup = {
     id: rid('cg'),
     name: '',
@@ -99,6 +102,10 @@ export function newCapacityGroup(method: CapacityMethod): CapacityGroup {
       return { ...base, employees: [] }
     case 'headcount':
       return { ...base, weeklyHoursPerFTE: 40, departments: [] }
+    default:
+      // No method picked yet — render the "Pick one" placeholder until
+      // the coach chooses.
+      return base
   }
 }
 
@@ -147,8 +154,3 @@ export function totalHeadcountCapacityHours(g: CapacityGroup): number {
   )
 }
 
-/** Methods currently in use (so the "Add Tracking Method" row only offers
- * methods that aren't yet present). */
-export function methodsInUse(groups: CapacityGroup[]): Set<CapacityMethod> {
-  return new Set(groups.map((g) => g.method))
-}

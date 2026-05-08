@@ -51,7 +51,9 @@ export type CapacityDepartment = {
 export type CapacityGroup = {
   id: string
   name: string
-  method: CapacityMethod
+  /** Optional so newly-added groups can default to "— Pick one —" until the
+   * coach explicitly chooses a tracking method. */
+  method?: CapacityMethod
   /** 'manual' method: single static utilization % stored once in Settings
    * (Doc 04 PC #3 — no longer a weekly entry input). */
   staticUtilPct?: number

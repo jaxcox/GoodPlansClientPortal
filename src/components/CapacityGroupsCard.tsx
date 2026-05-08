@@ -15,6 +15,7 @@ import type {
   CapacityGroup,
   CapacityMethod,
 } from '../lib/types'
+import { NumberField } from './NumberField'
 
 type Props = {
   groups: CapacityGroup[]
@@ -62,9 +63,10 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   const removeGroup = (id: string) => {
     const g = groups.find((x) => x.id === id)
     if (!g) return
+    const label = g.name || methodMeta(g.method)?.label || 'this'
     if (
       !confirm(
-        `Remove the "${g.name || methodMeta(g.method).label}" group? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked.`
+        `Remove the "${label}" group? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked.`
       )
     )
       return
@@ -72,9 +74,9 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   }
 
   const addGroup = () => {
-    // Default to Labor Hours — the most common method. Coach can switch via
-    // the per-group method dropdown.
-    onChange([...groups, newCapacityGroup('labor')])
+    // No method preselected — coach picks via the per-group dropdown
+    // (project rule: every pick list defaults to "— Pick one —").
+    onChange([...groups, newCapacityGroup()])
   }
 
   return (
@@ -145,23 +147,34 @@ function GroupPanel({
         </FieldGroup>
         <FieldGroup label="Tracking Method">
           <select
-            value={group.method}
+            value={group.method ?? ''}
             onChange={(e) => onMethodChange(e.target.value as CapacityMethod)}
             className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
+            <option value="" disabled>
+              — Pick one —
+            </option>
             {CAPACITY_METHODS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
           </select>
-          <div className="text-[10px] text-mute mt-1 leading-relaxed">
-            {meta.description}
-          </div>
+          {meta && (
+            <div className="text-[10px] text-mute mt-1 leading-relaxed">
+              {meta.description}
+            </div>
+          )}
         </FieldGroup>
       </div>
 
-      <MethodBody group={group} onChange={onChange} />
+      {group.method ? (
+        <MethodBody group={group} onChange={onChange} />
+      ) : (
+        <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
+          Pick a tracking method above to continue.
+        </div>
+      )}
 
       <div className="flex justify-end pt-1">
         <button
@@ -206,6 +219,8 @@ function MethodBody({
       )
     case 'headcount':
       return <HeadcountBody group={group} onChange={onChange} />
+    default:
+      return null
   }
 }
 
@@ -219,22 +234,16 @@ function ManualBody({
   onChange: (patch: Partial<CapacityGroup>) => void
 }) {
   return (
-    <FieldGroup label="Utilization %">
+    <FieldGroup label="Utilization">
       <div className="flex items-center gap-2">
-        <input
-          type="number"
-          min={0}
-          max={100}
-          step={1}
-          value={group.staticUtilPct ?? ''}
-          onChange={(e) =>
-            onChange({
-              staticUtilPct:
-                e.target.value === '' ? undefined : Number(e.target.value),
-            })
-          }
-          className="w-24 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
-        />
+        <div className="w-28">
+          <NumberField
+            value={group.staticUtilPct}
+            onChange={(n) => onChange({ staticUtilPct: n })}
+            format="percent"
+            ariaLabel="Static utilization percent"
+          />
+        </div>
         <span className="text-mute text-xs">
           shown every week until you change it
         </span>
@@ -389,7 +398,7 @@ function EmployeeRow({
   onChange: (patch: Partial<CapacityEmployee>) => void
   onRemove: () => void
 }) {
-  const cellClass =
+  const textCell =
     'bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent'
   if (method === 'labor') {
     return (
@@ -399,40 +408,26 @@ function EmployeeRow({
           value={employee.name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder="Name"
-          className={cellClass}
+          className={textCell}
         />
         <input
           type="text"
           value={employee.role}
           onChange={(e) => onChange({ role: e.target.value })}
           placeholder="Role"
-          className={cellClass}
+          className={textCell}
         />
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={employee.capacityHoursPerWeek ?? ''}
-          onChange={(e) =>
-            onChange({
-              capacityHoursPerWeek:
-                e.target.value === '' ? undefined : Number(e.target.value),
-            })
-          }
-          className={cellClass}
+        <NumberField
+          value={employee.capacityHoursPerWeek}
+          onChange={(n) => onChange({ capacityHoursPerWeek: n })}
+          format="count"
+          ariaLabel="Capacity hours per week"
         />
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={employee.weeklyWorkingHours ?? ''}
-          onChange={(e) =>
-            onChange({
-              weeklyWorkingHours:
-                e.target.value === '' ? undefined : Number(e.target.value),
-            })
-          }
-          className={cellClass}
+        <NumberField
+          value={employee.weeklyWorkingHours}
+          onChange={(n) => onChange({ weeklyWorkingHours: n })}
+          format="count"
+          ariaLabel="Working hours per week"
         />
         <RemoveX onClick={onRemove} />
       </div>
@@ -445,27 +440,21 @@ function EmployeeRow({
         value={employee.name}
         onChange={(e) => onChange({ name: e.target.value })}
         placeholder="Name"
-        className={cellClass}
+        className={textCell}
       />
       <input
         type="text"
         value={employee.role}
         onChange={(e) => onChange({ role: e.target.value })}
         placeholder="Role"
-        className={cellClass}
+        className={textCell}
       />
-      <input
-        type="number"
-        min={0}
-        step={100}
-        value={employee.revenueCapacityPerWeek ?? ''}
-        onChange={(e) =>
-          onChange({
-            revenueCapacityPerWeek:
-              e.target.value === '' ? undefined : Number(e.target.value),
-          })
-        }
-        className={cellClass}
+      <NumberField
+        value={employee.revenueCapacityPerWeek}
+        onChange={(n) => onChange({ revenueCapacityPerWeek: n })}
+        format="dollars"
+        max={null}
+        ariaLabel="Revenue capacity per week"
       />
       <RemoveX onClick={onRemove} />
     </div>
@@ -513,19 +502,14 @@ function HeadcountBody({
   return (
     <div className="space-y-3">
       <FieldGroup label="Hours/Week per FTE">
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={group.weeklyHoursPerFTE ?? ''}
-          onChange={(e) =>
-            onChange({
-              weeklyHoursPerFTE:
-                e.target.value === '' ? undefined : Number(e.target.value),
-            })
-          }
-          className="w-24 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
-        />
+        <div className="w-28">
+          <NumberField
+            value={group.weeklyHoursPerFTE}
+            onChange={(n) => onChange({ weeklyHoursPerFTE: n })}
+            format="count"
+            ariaLabel="Hours per week per full-time employee"
+          />
+        </div>
       </FieldGroup>
 
       <div>
@@ -571,25 +555,21 @@ function HeadcountBody({
                   placeholder="Department"
                   className="bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
                 />
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
+                <NumberField
                   value={d.fullTimeCount}
-                  onChange={(e) =>
-                    updateDept(d.id, { fullTimeCount: Number(e.target.value) })
+                  onChange={(n) =>
+                    updateDept(d.id, { fullTimeCount: n ?? 0 })
                   }
-                  className="bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
+                  format="count"
+                  ariaLabel="Full-time count"
                 />
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
+                <NumberField
                   value={d.partTimeCount}
-                  onChange={(e) =>
-                    updateDept(d.id, { partTimeCount: Number(e.target.value) })
+                  onChange={(n) =>
+                    updateDept(d.id, { partTimeCount: n ?? 0 })
                   }
-                  className="bg-surface-2 border border-line rounded text-white text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
+                  format="count"
+                  ariaLabel="Part-time count"
                 />
                 <RemoveX onClick={() => removeDept(d.id)} />
               </div>
@@ -607,17 +587,26 @@ function HeadcountBody({
 
 function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
   const meta = methodMeta(group.method)
+  const titleFallback = meta?.label ? `Untitled (${meta.label})` : 'Untitled'
   return (
     <div className="bg-surface-2 rounded p-3">
       <div className="flex justify-between items-baseline mb-1.5">
         <div className="text-white text-sm font-semibold">
-          {group.name || `Untitled (${meta.label})`}
+          {group.name || titleFallback}
         </div>
-        <div className="text-[10px] text-accent font-bold uppercase tracking-wider">
-          {meta.short}
-        </div>
+        {meta && (
+          <div className="text-[10px] text-accent font-bold uppercase tracking-wider">
+            {meta.short}
+          </div>
+        )}
       </div>
-      <ReadOnlySummary group={group} meta={meta} />
+      {meta ? (
+        <ReadOnlySummary group={group} meta={meta} />
+      ) : (
+        <div className="text-mute text-xs italic">
+          Tracking method not yet picked.
+        </div>
+      )}
     </div>
   )
 }
