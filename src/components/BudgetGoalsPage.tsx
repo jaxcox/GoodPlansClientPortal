@@ -866,10 +866,11 @@ function YtdActualsBody({
 
 /** Read-only display box that mirrors the input field's dimensions but uses
  *  a gray (line) border instead of the yellow (accent) ring on fillable
- *  inputs. White-tone variant matches the Budget & Goals card test. */
+ *  inputs. Stays dark on the Budget & Goals card so derived values are
+ *  visually distinct from the white fillable inputs. */
 function DerivedBox({ value }: { value: string }) {
   return (
-    <div className="w-full bg-white border border-line rounded text-black text-sm px-3 py-2">
+    <div className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2">
       {value}
     </div>
   )
