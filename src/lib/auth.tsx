@@ -45,8 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Re-fetch the profile + coach record only when the AUTH USER ACTUALLY
+  // CHANGES — not on every session-object change. Supabase fires
+  // onAuthStateChange events (TOKEN_REFRESHED, USER_UPDATED) every time the
+  // tab regains focus, which would otherwise unmount and remount the entire
+  // logged-in tree and reset client-side state (e.g. the active nav tab).
+  const userId = session?.user.id ?? null
+
   useEffect(() => {
-    if (!session) return
+    if (!userId) return
     let cancelled = false
     setLoading(true)
 
@@ -54,13 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .maybeSingle()
 
       if (cancelled) return
 
       if (profileError || !profileData) {
-        // User is authenticated but has no profile row yet — treat as signed-out.
         setProfile(null)
         setCoach(null)
         setLoading(false)
@@ -84,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [session])
+  }, [userId])
 
   const signInWithPassword = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
