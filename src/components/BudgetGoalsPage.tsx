@@ -870,7 +870,7 @@ function YtdActualsBody({
  *  visually distinct from the white fillable inputs. */
 function DerivedBox({ value }: { value: string }) {
   return (
-    <div className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2">
+    <div className="w-full bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-2">
       {value}
     </div>
   )
