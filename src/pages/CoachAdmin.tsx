@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import type { Client } from '../lib/types'
-import { NewClientModal } from '../components/NewClientModal'
+import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
 
 type Tab = 'clients' | 'industries'
@@ -120,7 +120,11 @@ function ClientsTab({
   onViewPortal: (clientId: string) => void
 }) {
   const [filter, setFilter] = useState<ClientFilter>('active')
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalState, setModalState] = useState<
+    | { kind: 'closed' }
+    | { kind: 'create' }
+    | { kind: 'edit'; client: Client }
+  >({ kind: 'closed' })
 
   const active = (clients ?? []).filter((c) => !c.archived)
   const archived = (clients ?? []).filter((c) => c.archived)
@@ -132,7 +136,7 @@ function ClientsTab({
         <h1 className="text-ink text-base font-bold">My Clients</h1>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => setModalState({ kind: 'create' })}
           className="bg-accent text-black px-4 py-1.5 rounded text-xs font-bold hover:brightness-95"
         >
           + New Client
@@ -176,16 +180,18 @@ function ClientsTab({
               client={c}
               onChange={onChange}
               onViewPortal={() => onViewPortal(c.id)}
+              onEdit={() => setModalState({ kind: 'edit', client: c })}
             />
           ))}
         </ul>
       )}
 
-      <NewClientModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={() => {
-          setFilter('active')
+      <ClientFormModal
+        open={modalState.kind !== 'closed'}
+        editing={modalState.kind === 'edit' ? modalState.client : null}
+        onClose={() => setModalState({ kind: 'closed' })}
+        onSaved={() => {
+          if (modalState.kind === 'create') setFilter('active')
           onChange()
         }}
       />
@@ -239,10 +245,12 @@ function ClientCard({
   client,
   onChange,
   onViewPortal,
+  onEdit,
 }: {
   client: Client
   onChange: () => void
   onViewPortal: () => void
+  onEdit: () => void
 }) {
   const [busy, setBusy] = useState(false)
 
@@ -288,6 +296,13 @@ function ClientCard({
         </div>
       </div>
       <div className="flex gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="bg-transparent text-white border border-mute text-[11px] font-bold px-3 py-1.5 rounded hover:bg-white/10"
+        >
+          Edit
+        </button>
         <button
           type="button"
           onClick={onViewPortal}

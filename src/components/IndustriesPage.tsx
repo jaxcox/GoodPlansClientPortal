@@ -347,7 +347,7 @@ function IndustryEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="bg-transparent text-mute border border-line px-4 py-1.5 rounded text-xs hover:text-white"
+            className="bg-transparent text-white border border-mute px-4 py-1.5 rounded text-xs font-semibold hover:bg-white/10"
           >
             Cancel
           </button>

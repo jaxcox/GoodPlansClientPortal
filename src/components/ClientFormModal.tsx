@@ -13,11 +13,16 @@ import { Toggle } from './Toggle'
 type Props = {
   open: boolean
   onClose: () => void
-  onCreated: (client: Client) => void
+  onSaved: (client: Client) => void
+  /** When provided, the modal is in Edit mode for that client. */
+  editing?: Client | null
 }
 
-export function NewClientModal({ open, onClose, onCreated }: Props) {
+export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
   const { coach } = useAuth()
+  const isEdit = Boolean(editing)
+  const emailLocked = Boolean(editing?.activated)
+
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
   const [email, setEmail] = useState('')
@@ -29,19 +34,31 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Reset on close
+  // Reset when reopening (or seed from `editing`)
   useEffect(() => {
     if (!open) {
+      setError(null)
+      setSubmitting(false)
+      return
+    }
+    if (editing) {
+      setCompanyName(editing.company_name)
+      setContactName(editing.contact_name ?? '')
+      setEmail(editing.email ?? '')
+      setSharedFolderLink(editing.shared_folder_link ?? '')
+      setIndustryId(editing.industry_id ?? '')
+      setKpis({ ...emptyKpiDefaults(), ...(editing.kpis ?? {}) })
+    } else {
       setCompanyName('')
       setContactName('')
       setEmail('')
       setSharedFolderLink('')
       setIndustryId('')
       setKpis(emptyKpiDefaults())
-      setError(null)
-      setSubmitting(false)
     }
-  }, [open])
+    setError(null)
+    setSubmitting(false)
+  }, [open, editing])
 
   // Load industries when opened
   useEffect(() => {
@@ -80,7 +97,8 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
     [industries, industryId]
   )
 
-  // When industry changes, replace the KPI toggle state with that industry's defaults
+  // When the user actively switches industries, replace KPI toggles with that
+  // industry's defaults (matches Doc 04: "Industry change resets KPI defaults").
   const onIndustryChange = (id: string) => {
     setIndustryId(id)
     const ind = industries?.find((i) => i.id === id)
@@ -123,6 +141,35 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
     }
 
     setSubmitting(true)
+
+    if (isEdit && editing) {
+      const updates: Partial<Client> = {
+        company_name: companyName.trim(),
+        contact_name: contactName.trim() || null,
+        shared_folder_link: sharedFolderLink.trim() || null,
+        industry_id: industryId,
+        kpis,
+      }
+      if (!emailLocked) {
+        updates.email = email.trim().toLowerCase()
+      }
+      const { data, error: updateError } = await supabase
+        .from('clients')
+        .update(updates)
+        .eq('id', editing.id)
+        .select()
+        .single()
+      setSubmitting(false)
+      if (updateError) {
+        setError(updateError.message)
+        return
+      }
+      onSaved(data as Client)
+      onClose()
+      return
+    }
+
+    // Create mode
     const inviteCode = generateInviteCode()
     const expires = new Date()
     expires.setDate(expires.getDate() + 30)
@@ -152,7 +199,7 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
       return
     }
 
-    onCreated(data as Client)
+    onSaved(data as Client)
     onClose()
   }
 
@@ -166,7 +213,9 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-white text-base font-bold">Create New Client</h2>
+          <h2 className="text-white text-base font-bold">
+            {isEdit ? `Edit ${editing?.company_name ?? 'Client'}` : 'Create New Client'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -182,7 +231,18 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
             <Field label="Company Name *" value={companyName} onChange={setCompanyName} autoFocus />
             <Field label="Contact Name" value={contactName} onChange={setContactName} />
           </div>
-          <Field label="Email *" type="email" value={email} onChange={setEmail} />
+          <Field
+            label={emailLocked ? 'Email (login — locked)' : 'Email *'}
+            type="email"
+            value={email}
+            onChange={setEmail}
+            disabled={emailLocked}
+            hint={
+              emailLocked
+                ? "This client has activated. Email is the login key and can't be changed here."
+                : undefined
+            }
+          />
           <Field
             label="Shared Folder Link"
             placeholder="https://drive.google.com/..."
@@ -217,6 +277,11 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
                 ))}
               </select>
             )}
+            {isEdit && (
+              <div className="text-[10px] text-mute mt-1">
+                Switching industries replaces the KPI toggles below with that industry's defaults.
+              </div>
+            )}
           </div>
 
           {selectedIndustry && (
@@ -226,7 +291,7 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
                   KPI Defaults
                 </label>
                 <span className="text-[10px] text-mute">
-                  Pulled from “{selectedIndustry.name}” — you can override
+                  {isEdit ? 'Override per client' : `Pulled from "${selectedIndustry.name}"`}
                 </span>
               </div>
               <div className="bg-surface-2 rounded p-3 space-y-3">
@@ -266,16 +331,20 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="bg-transparent text-mute border border-line px-4 py-1.5 rounded text-xs hover:text-white"
+              className="bg-transparent text-white border border-mute px-4 py-1.5 rounded text-xs font-semibold hover:bg-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={submitting || noIndustries}
+              disabled={submitting || (!isEdit && noIndustries)}
               className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
             >
-              {submitting ? 'Creating…' : 'Create Client'}
+              {submitting
+                ? 'Saving…'
+                : isEdit
+                  ? 'Save Changes'
+                  : 'Create Client'}
             </button>
           </div>
         </form>
@@ -291,6 +360,8 @@ function Field({
   type = 'text',
   placeholder,
   autoFocus,
+  disabled,
+  hint,
 }: {
   label: string
   value: string
@@ -298,6 +369,8 @@ function Field({
   type?: string
   placeholder?: string
   autoFocus?: boolean
+  disabled?: boolean
+  hint?: string
 }) {
   return (
     <div>
@@ -310,8 +383,12 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+        disabled={disabled}
+        className={`w-full border border-line rounded text-sm px-3 py-2 focus:outline-none focus:border-accent ${
+          disabled ? 'bg-surface-1 text-mute cursor-not-allowed' : 'bg-surface-2 text-white'
+        }`}
       />
+      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
     </div>
   )
 }
