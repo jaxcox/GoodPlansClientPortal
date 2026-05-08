@@ -4,6 +4,7 @@ import {
   MONTH_LABELS,
   annualCostOfGoodsDollars,
   annualGrossProfitDollars,
+  computeBudgetView,
   costOfGoodsPct,
   distributeAcrossMonths,
   emptyMonthArray,
@@ -14,6 +15,8 @@ import {
 import type { Budget, Client, SeasonType } from '../lib/types'
 import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
+import { BudgetStatusBanners } from './BudgetStatusBanners'
+import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
 
 type Props = {
   clientId: string
@@ -55,6 +58,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
+
+  // Tab within the Budget & Goals page
+  const [budgetTab, setBudgetTab] = useState<'targets' | 'monthly'>('targets')
 
   // Save state -------------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -191,6 +197,20 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const cogsPct = costOfGoodsPct(grossProfitPct ?? null)
   const seasonalSum = seasonPct.reduce((a, b) => a + (b || 0), 0)
 
+  const view = computeBudgetView({
+    annualRevenue: annualRevenue ?? null,
+    grossProfitPct: grossProfitPct ?? null,
+    seasonType,
+    seasonPct,
+    ytdThruMonth,
+    ytdRevenueByMonth,
+    ytdCogsByMonth,
+  })
+  const hasYtdActuals =
+    ytdThruMonth !== null &&
+    (ytdRevenueByMonth.some((v) => Number(v) > 0) ||
+      ytdCogsByMonth.some((v) => Number(v) > 0))
+
   // ---- Handlers ----------------------------------------------------------
   const onSeasonTypeChange = (next: SeasonType) => {
     setSeasonType(next)
@@ -300,6 +320,24 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         </div>
       )}
 
+      {/* Budget tab nav */}
+      <div className="flex gap-1 border-b border-gray-300">
+        <BudgetTabButton
+          active={budgetTab === 'targets'}
+          onClick={() => setBudgetTab('targets')}
+        >
+          Targets &amp; Actuals
+        </BudgetTabButton>
+        <BudgetTabButton
+          active={budgetTab === 'monthly'}
+          onClick={() => setBudgetTab('monthly')}
+        >
+          Monthly Financial Goals
+        </BudgetTabButton>
+      </div>
+
+      {budgetTab === 'targets' ? (
+        <>
       {/* Annual Targets */}
       <Card title="Annual Targets">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -397,6 +435,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
+      {/* Status banners (only when YTD actuals exist + targets are set) */}
+      <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
+
       {/* Per-KPI goals */}
       <Card title="Key Performance Indicator Goals">
         <KpiGoalsCard
@@ -406,13 +447,19 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
-      {/* Capacity goals — Phase 4.4 */}
+      {/* Capacity goals — Phase 4.5 */}
       <Card title="Capacity Group Goals">
         <PhaseStub
-          phase="Phase 4.4"
+          phase="Phase 4.5"
           summary="Target % or $ per capacity group from Settings."
         />
       </Card>
+        </>
+      ) : (
+        <Card title="Monthly Financial Goals">
+          <MonthlyFinancialGoalsCard view={view} />
+        </Card>
+      )}
 
       {/* Bottom save */}
       <div className="flex justify-end pt-2">
@@ -672,6 +719,30 @@ function ModeButton({
         active
           ? 'bg-accent text-black'
           : 'bg-transparent text-white hover:bg-white/10'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function BudgetTabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2 text-xs font-bold ${
+        active
+          ? 'text-black border-b-2 border-accent -mb-px'
+          : 'text-black/60 hover:text-black'
       }`}
     >
       {children}

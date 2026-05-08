@@ -158,3 +158,168 @@ export function looksAutoDistributed(
   }
   return true
 }
+
+// =============================================================================
+// Computed budget view — Monthly Financial Goals + status banners
+// =============================================================================
+//
+// Doc 05 spec: per-month Revenue / COGS / GP / GP% tiles, with future months
+// auto-adjusted to close the GP gap when YTD actuals are behind. GP is the
+// priority — the algorithm holds the annual GP $ target constant by raising
+// remaining months' GP (and Revenue, since the GP % stays constant) so the
+// year still lands on plan.
+
+export type MonthlyGoal = {
+  monthIdx: number // 0–11
+  isPast: boolean
+  /** True for future months when the GP gap pushed targets above the baseline. */
+  isAdjusted: boolean
+  revenue: number
+  cogs: number
+  grossProfit: number
+  /** Computed margin in % (e.g. 55.0). */
+  gpPct: number
+}
+
+export type BudgetView = {
+  months: MonthlyGoal[]
+  /** YTD comparisons. Negative gap = behind plan; positive = ahead. */
+  ytdRevenueActual: number
+  ytdRevenuePlanned: number
+  revenueGap: number
+  ytdGpActual: number
+  ytdGpPlanned: number
+  gpGap: number
+  /** Remaining-year totals — useful for the "Remaining revenue: $X across N months" line. */
+  remainingMonths: number
+  remainingRevenue: number
+  remainingGrossProfit: number
+}
+
+type ComputeArgs = {
+  annualRevenue: number | null
+  /** Gross Profit % (NOT cogs %) — matches the form input. */
+  grossProfitPct: number | null
+  seasonType: SeasonType
+  seasonPct: number[]
+  /** -1 / null = no YTD set. */
+  ytdThruMonth: number | null
+  ytdRevenueByMonth: (number | null)[] | null
+  ytdCogsByMonth: (number | null)[] | null
+}
+
+export function computeBudgetView(args: ComputeArgs): BudgetView | null {
+  const {
+    annualRevenue,
+    grossProfitPct,
+    seasonType,
+    seasonPct,
+    ytdThruMonth,
+    ytdRevenueByMonth,
+    ytdCogsByMonth,
+  } = args
+
+  if (annualRevenue == null || grossProfitPct == null) return null
+
+  const gpRate = grossProfitPct / 100
+  const annualGp = annualRevenue * gpRate
+
+  // Effective season percentages (length 12, summing to 100). Even mode is a
+  // flat 1/12 each. Seasonal mode uses the saved array if valid.
+  const effectivePct = effectiveSeasonPct(seasonType, seasonPct)
+
+  // Step 1: baseline planned revenue per month from the season distribution.
+  const baselineRevenue: number[] = effectivePct.map(
+    (p) => annualRevenue * (p / 100)
+  )
+
+  // Step 2: actual YTD totals when the YTD window is set.
+  const thru = ytdThruMonth ?? -1
+  const hasYtd = thru >= 0
+  let ytdRevenueActual = 0
+  let ytdGpActual = 0
+  if (hasYtd) {
+    for (let i = 0; i <= thru && i < 12; i++) {
+      const r = Number(ytdRevenueByMonth?.[i] ?? 0)
+      const c = Number(ytdCogsByMonth?.[i] ?? 0)
+      ytdRevenueActual += r
+      ytdGpActual += r - c
+    }
+  }
+
+  // Step 3: planned YTD = sum of baseline through thru.
+  let ytdRevenuePlanned = 0
+  for (let i = 0; i <= thru && i < 12; i++) {
+    ytdRevenuePlanned += baselineRevenue[i]
+  }
+  const ytdGpPlanned = ytdRevenuePlanned * gpRate
+
+  const revenueGap = ytdRevenueActual - ytdRevenuePlanned // < 0 = behind
+  const gpGap = ytdGpActual - ytdGpPlanned
+
+  // Step 4: build the per-month view, holding annual GP $ constant by
+  // distributing the remaining GP across future months by season weight.
+  const futureIdxs: number[] = []
+  for (let i = thru + 1; i < 12; i++) futureIdxs.push(i)
+  const futurePctSum = futureIdxs.reduce(
+    (acc, i) => acc + effectivePct[i],
+    0
+  )
+  const remainingGpNeeded = annualGp - ytdGpActual
+  const remainingRevenueNeeded = gpRate > 0 ? remainingGpNeeded / gpRate : 0
+
+  let remainingRevenueSum = 0
+  let remainingGpSum = 0
+  const months: MonthlyGoal[] = []
+
+  for (let i = 0; i < 12; i++) {
+    if (i <= thru && hasYtd) {
+      const r = Number(ytdRevenueByMonth?.[i] ?? 0)
+      const c = Number(ytdCogsByMonth?.[i] ?? 0)
+      const gp = r - c
+      months.push({
+        monthIdx: i,
+        isPast: true,
+        isAdjusted: false,
+        revenue: r,
+        cogs: c,
+        grossProfit: gp,
+        gpPct: r > 0 ? (gp / r) * 100 : 0,
+      })
+    } else {
+      const weight =
+        futurePctSum > 0 && futureIdxs.length > 0
+          ? effectivePct[i] / futurePctSum
+          : 1 / Math.max(futureIdxs.length, 1)
+      const gp = remainingGpNeeded * weight
+      const revenue = gpRate > 0 ? gp / gpRate : 0
+      const cogs = revenue - gp
+      const baseline = baselineRevenue[i]
+      const isAdjusted = hasYtd && Math.abs(revenue - baseline) > 0.5
+      months.push({
+        monthIdx: i,
+        isPast: false,
+        isAdjusted,
+        revenue,
+        cogs,
+        grossProfit: gp,
+        gpPct: revenue > 0 ? (gp / revenue) * 100 : grossProfitPct,
+      })
+      remainingRevenueSum += revenue
+      remainingGpSum += gp
+    }
+  }
+
+  return {
+    months,
+    ytdRevenueActual,
+    ytdRevenuePlanned,
+    revenueGap,
+    ytdGpActual,
+    ytdGpPlanned,
+    gpGap,
+    remainingMonths: futureIdxs.length,
+    remainingRevenue: remainingRevenueSum || remainingRevenueNeeded,
+    remainingGrossProfit: remainingGpSum || remainingGpNeeded,
+  }
+}
