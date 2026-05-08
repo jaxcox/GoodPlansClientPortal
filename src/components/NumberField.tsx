@@ -83,7 +83,7 @@ export function NumberField({
   const fixText = tone === 'light' ? 'text-black' : 'text-white'
   // Light tone gets a thicker yellow ring so the "fillable" affordance reads
   // strongly against the dark card background.
-  const borderWidth = tone === 'light' ? 'border-2' : 'border'
+  const borderWidth = tone === 'light' ? 'border-4' : 'border'
 
   return (
     <div className="relative">
