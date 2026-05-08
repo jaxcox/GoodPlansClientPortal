@@ -86,6 +86,17 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           <NavLink active={tab === 'budget'} onClick={() => setTab('budget')}>Budget &amp; Goals</NavLink>
           <NavLink active={tab === 'history'} onClick={() => setTab('history')}>History</NavLink>
           <NavLink active={tab === 'settings'} onClick={() => setTab('settings')}>Settings</NavLink>
+          {client.shared_folder_link && (
+            <a
+              href={client.shared_folder_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-transparent text-ink border border-gray-300 px-3 py-1 rounded ml-2 hover:bg-gray-50"
+              title={`Open ${client.company_name}'s shared folder`}
+            >
+              Shared Drive ↗
+            </a>
+          )}
           {coachView ? (
             <button
               type="button"

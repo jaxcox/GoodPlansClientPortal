@@ -278,12 +278,12 @@ function PasswordSignInForm({
   return (
     <form onSubmit={handle} className="space-y-3">
       <Field label="Email" type="email" value={email} onChange={setEmail} required />
-      <Field
+      <PasswordField
         label="Password"
-        type="password"
         value={password}
         onChange={setPassword}
         required
+        autoComplete="current-password"
       />
       {error && <ErrorBox>{error}</ErrorBox>}
       <button

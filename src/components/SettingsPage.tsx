@@ -99,10 +99,18 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     kpis,
   ])
 
-  // Saved-banner clears the moment the form is changed again.
+  // Saved-banner clears the moment the form is changed again, and also
+  // auto-expires after a few seconds so the default state on screen is
+  // always the yellow "Save Settings" button — the green confirmation is
+  // a transient post-save flash, not the resting state.
   useEffect(() => {
     if (savedAt && isDirty) setSavedAt(null)
   }, [savedAt, isDirty])
+  useEffect(() => {
+    if (savedAt === null) return
+    const t = setTimeout(() => setSavedAt(null), 3000)
+    return () => clearTimeout(t)
+  }, [savedAt])
 
   const onIndustryChange = (id: string) => {
     if (id === CREATE_NEW_INDUSTRY) {
@@ -259,17 +267,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 : undefined
             }
           />
-          <DarkField
-            label="Shared Folder Link"
-            placeholder="https://drive.google.com/..."
+          <SharedFolderRow
             value={sharedFolderLink}
             onChange={setSharedFolderLink}
-            disabled={!canEditAll}
-            hint={
-              !canEditAll
-                ? 'Coach manages this link.'
-                : undefined
-            }
+            canEdit={canEditAll}
           />
           <div>
             <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
@@ -390,8 +391,10 @@ function SaveBar({
   onCancel: () => void
   onSave: () => void
 }) {
-  void savedAt
-  const allSaved = !isDirty
+  // Default state is yellow "Save Settings" — even when the form is clean —
+  // so the screen never looks "done" the moment you arrive. Green "Saved ✓"
+  // is a transient confirmation that fades back to yellow after a few seconds.
+  const showSaved = !isDirty && savedAt !== null
   return (
     <div className="flex items-center gap-2">
       <button
@@ -406,12 +409,12 @@ function SaveBar({
         onClick={onSave}
         disabled={saving}
         className={`px-4 py-1.5 rounded text-xs font-bold ${
-          allSaved
+          showSaved
             ? 'bg-good text-black hover:brightness-95'
             : 'bg-accent text-black hover:brightness-95'
         } disabled:opacity-60 disabled:cursor-wait`}
       >
-        {saving ? 'Saving…' : allSaved ? 'Saved ✓' : 'Save Settings'}
+        {saving ? 'Saving…' : showSaved ? 'Saved ✓' : 'Save Settings'}
       </button>
     </div>
   )
@@ -428,6 +431,72 @@ function Card({
     <div className="bg-ink border border-line rounded-lg p-5">
       <h2 className="text-white text-sm font-bold mb-4">{title}</h2>
       <div className="space-y-3">{children}</div>
+    </div>
+  )
+}
+
+function SharedFolderRow({
+  value,
+  onChange,
+  canEdit,
+}: {
+  value: string
+  onChange: (v: string) => void
+  canEdit: boolean
+}) {
+  const trimmed = value.trim()
+  const isLikelyUrl = /^https?:\/\//i.test(trimmed)
+  if (canEdit) {
+    return (
+      <div>
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+          Shared Folder Link
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="https://drive.google.com/..."
+            className="flex-1 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+          />
+          {isLikelyUrl && (
+            <a
+              href={trimmed}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-transparent text-white border border-mute px-3 py-2 rounded text-xs font-semibold hover:bg-white/10 whitespace-nowrap"
+              title="Open the link in a new tab to verify it"
+            >
+              Open ↗
+            </a>
+          )}
+        </div>
+        <div className="text-[10px] text-mute mt-1">
+          Clients see this as a "Shared Folder" button — they don't see the URL.
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+        Shared Folder
+      </label>
+      {isLikelyUrl ? (
+        <a
+          href={trimmed}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-accent text-black font-bold px-4 py-2 rounded text-sm hover:brightness-95"
+        >
+          Open Shared Folder ↗
+        </a>
+      ) : (
+        <div className="bg-surface-1 border border-line rounded text-mute text-sm px-3 py-2">
+          Your coach hasn't added a shared folder yet.
+        </div>
+      )}
     </div>
   )
 }
