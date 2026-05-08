@@ -86,7 +86,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
     if (activeList.length === 0) {
       return (
         <div className="text-white text-xs">
-          No custom Key Performance Indicators. Your coach can add custom metrics here.
+          No custom Key Performance Indicators yet.
         </div>
       )
     }

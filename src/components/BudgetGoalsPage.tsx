@@ -394,7 +394,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           {/* Row 1: Income */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Labeled label="Income Target">
-              <NumberField
+              <NumberField tone="light"
                 value={annualRevenue}
                 onChange={setAnnualRevenue}
                 format="dollars"
@@ -407,7 +407,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           {/* Row 2: Gross Profit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Labeled label="Gross Profit %">
-              <NumberField
+              <NumberField tone="light"
                 value={grossProfitPct}
                 onChange={setGrossProfitPct}
                 format="percent"
@@ -440,7 +440,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           {/* Row 4: Expenses */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Labeled label="Expenses">
-              <NumberField
+              <NumberField tone="light"
                 value={annualExpenses}
                 onChange={setAnnualExpenses}
                 format="dollars"
@@ -495,7 +495,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {MONTH_LABELS.map((m, i) => (
                 <Labeled key={m} label={m}>
-                  <NumberField
+                  <NumberField tone="light"
                     value={seasonPct[i] ?? 0}
                     onChange={(n) => setMonthPct(i, n)}
                     format="percent"
@@ -732,7 +732,7 @@ function YtdActualsBody({
               {/* Row 1: Income */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Income (YTD total)">
-                  <NumberField
+                  <NumberField tone="light"
                     value={revenueTotal === 0 ? undefined : revenueTotal}
                     onChange={setBulkRevenue}
                     format="dollars"
@@ -763,7 +763,7 @@ function YtdActualsBody({
               {/* Row 3: Cost of Goods Sold (input + derived %) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Cost of Goods Sold (YTD total)">
-                  <NumberField
+                  <NumberField tone="light"
                     value={cogsTotal === 0 ? undefined : cogsTotal}
                     onChange={setBulkCogs}
                     format="dollars"
@@ -785,7 +785,7 @@ function YtdActualsBody({
               {/* Row 4: Expenses */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Expenses (YTD total)">
-                  <NumberField
+                  <NumberField tone="light"
                     value={expensesTotal === 0 ? undefined : expensesTotal}
                     onChange={setBulkExpenses}
                     format="dollars"
@@ -864,12 +864,12 @@ function YtdActualsBody({
   )
 }
 
-/** Read-only display box that mirrors the input field's dimensions and bg
- *  but uses a gray (line) border instead of the yellow (accent) ring on
- *  fillable inputs. */
+/** Read-only display box that mirrors the input field's dimensions but uses
+ *  a gray (line) border instead of the yellow (accent) ring on fillable
+ *  inputs. White-tone variant matches the Budget & Goals card test. */
 function DerivedBox({ value }: { value: string }) {
   return (
-    <div className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2">
+    <div className="w-full bg-white border border-line rounded text-black text-sm px-3 py-2">
       {value}
     </div>
   )
@@ -977,7 +977,7 @@ function FragmentRow({
   return (
     <>
       <div className="text-white text-sm font-semibold">{month}</div>
-      <NumberField
+      <NumberField tone="light"
         value={revenue}
         onChange={onRevenueChange}
         format="dollars"
@@ -987,14 +987,14 @@ function FragmentRow({
       <div className="text-sm text-white">
         {gpDollars === null ? '—' : formatDollars(gpDollars)}
       </div>
-      <NumberField
+      <NumberField tone="light"
         value={cogs}
         onChange={onCogsChange}
         format="dollars"
         max={null}
         ariaLabel={`${month} cost of goods sold`}
       />
-      <NumberField
+      <NumberField tone="light"
         value={expenses}
         onChange={onExpensesChange}
         format="dollars"

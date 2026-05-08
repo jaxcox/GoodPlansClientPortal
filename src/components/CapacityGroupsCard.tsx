@@ -29,7 +29,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
     if (groups.length === 0) {
       return (
         <div className="text-white text-xs">
-          Your coach hasn't set up capacity tracking for this portal yet.
+          No capacity tracking set up yet.
         </div>
       )
     }

@@ -13,6 +13,9 @@ type Props = {
   /** Override the default max — defaults to 100 for percent, otherwise unbounded. Pass null for unbounded. */
   max?: number | null
   ariaLabel?: string
+  /** Visual treatment. 'dark' (default) = bg-surface-2 + white text;
+   *  'light' = bg-white + black text (for cards on light surfaces). */
+  tone?: 'dark' | 'light'
 }
 
 /**
@@ -31,6 +34,7 @@ export function NumberField({
   min,
   max,
   ariaLabel,
+  tone = 'dark',
 }: Props) {
   const [display, setDisplay] = useState(() => formatForDisplay(value, format))
   const [focused, setFocused] = useState(false)
@@ -74,10 +78,16 @@ export function NumberField({
   const padLeft = prefix ? 'pl-6' : 'pl-3'
   const padRight = suffix ? 'pr-6' : 'pr-3'
 
+  const inputClasses =
+    tone === 'light' ? 'bg-white text-black' : 'bg-surface-2 text-white'
+  const fixText = tone === 'light' ? 'text-black' : 'text-white'
+
   return (
     <div className="relative">
       {prefix && (
-        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-white text-sm">
+        <span
+          className={`pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm ${fixText}`}
+        >
           {prefix}
         </span>
       )}
@@ -90,10 +100,12 @@ export function NumberField({
         onFocus={handleFocus}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full bg-surface-2 border border-accent rounded text-white text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
+        className={`w-full ${inputClasses} border border-accent rounded text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
       />
       {suffix && (
-        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white text-sm">
+        <span
+          className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm ${fixText}`}
+        >
           {suffix}
         </span>
       )}

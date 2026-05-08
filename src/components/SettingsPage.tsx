@@ -225,12 +225,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
           <h1 className="text-lg font-bold text-ink">Company Settings</h1>
-          {!coachView && (
-            <p className="text-xs text-black mt-0.5">
-              You can update your company details below. Your coach manages the
-              rest.
-            </p>
-          )}
         </div>
         <SaveBar
           isDirty={isDirty}
@@ -268,10 +262,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             onChange={setEmail}
             disabled={!emailEditable}
             hint={
-              emailLocked
-                ? coachView
-                  ? "Locked — this client has activated. Email is the login key and can't be changed here."
-                  : 'Your coach manages your login email.'
+              emailLocked && coachView
+                ? "Locked — this client has activated. Email is the login key and can't be changed here."
                 : undefined
             }
           />
@@ -311,20 +303,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 Switching industry replaces the indicator toggles on the right.
               </div>
             )}
-            {!canEditAll && (
-              <div className="text-xs text-white mt-1">
-                Coach manages your industry assignment.
-              </div>
-            )}
           </div>
         </Card>
 
         <Card title="Active Key Performance Indicators">
-          {!canEditAll && (
-            <div className="text-xs text-white -mt-1 mb-2">
-              Coach manages which Key Performance Indicators your portal tracks.
-            </div>
-          )}
           <div className="text-xs text-white mb-3 leading-relaxed">
             Revenue, COGS, Gross Profit, and GP Margin are always on.
           </div>
@@ -503,7 +485,7 @@ function SharedFolderRow({
         </a>
       ) : (
         <div className="bg-surface-1 border border-line rounded text-white text-sm px-3 py-2">
-          Your coach hasn't added a shared folder yet.
+          No shared folder added yet.
         </div>
       )}
     </div>
