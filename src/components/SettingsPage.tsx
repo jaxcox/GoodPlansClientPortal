@@ -73,7 +73,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   // ---- Editability rules per Doc 04 PC #7 --------------------------------
   // Client view: only Company Name + Contact Name are editable.
   // Coach view: everything below the company-info card is editable too.
-  const canEditAll = coachView
+  // Doc 04 PC #7 originally restricted client editing to Contact + Company
+  // Name. Jackie removed that restriction — clients now have the same edit
+  // permissions as the coach. The COACH VIEW badge and Reset Password
+  // button still differentiate context, but the form fields don't.
+  const canEditAll = true
+  void coachView
   const emailEditable = coachView && !client?.activated
   const emailLocked = !coachView || (coachView && Boolean(client?.activated))
 

@@ -34,7 +34,7 @@ type Props = {
   onLeave: () => void
 }
 
-export function BudgetGoalsPage({ clientId, coachView, onLeave }: Props) {
+export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -568,14 +568,15 @@ export function BudgetGoalsPage({ clientId, coachView, onLeave }: Props) {
         />
       </Card>
 
-      {/* Capacity & Utilization (setup + goals merged) */}
+      {/* Capacity & Utilization (setup + goals merged). Editable by both
+          coach and client — Budget & Goals is fully client-editable. */}
       <Card title="Capacity & Utilization Tracking">
         <CapacityGroupsCard
           groups={capacityGroups}
           onChange={setCapacityGroups}
           goals={capacityGoals}
           onGoalsChange={setCapacityGoals}
-          coachView={coachView}
+          coachView={true}
         />
       </Card>
         </>
