@@ -692,7 +692,7 @@ function YtdActualsBody({
         <select
           value={ytdThruMonth ?? 'none'}
           onChange={(e) => onThruMonthChange(e.target.value)}
-          className="w-48 bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+          className="w-48 bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
         >
           <option value="none">— Pick one —</option>
           {MONTH_LABELS.map((m, i) => (

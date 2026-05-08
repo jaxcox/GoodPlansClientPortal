@@ -34,7 +34,7 @@ export function NumberField({
   min,
   max,
   ariaLabel,
-  tone = 'dark',
+  tone = 'light',
 }: Props) {
   const [display, setDisplay] = useState(() => formatForDisplay(value, format))
   const [focused, setFocused] = useState(false)

@@ -189,7 +189,7 @@ function AddRow({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. NPS Score"
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           />
         </FieldGroup>
         <FieldGroup label="Category">
@@ -198,7 +198,7 @@ function AddRow({
             onChange={(e) =>
               setCategory(e.target.value as KpiCategory | '')
             }
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             <option value="">— Pick one —</option>
             {CATEGORIES.map((c) => (
@@ -212,7 +212,7 @@ function AddRow({
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as KpiFormat | '')}
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             <option value="">— Pick one —</option>
             {FORMATS.map((f) => (
@@ -342,14 +342,14 @@ function EditRow({
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           />
         </FieldGroup>
         <FieldGroup label="Category">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as KpiCategory)}
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -362,7 +362,7 @@ function EditRow({
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as KpiFormat)}
-            className="w-full bg-surface-1 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             {FORMATS.map((f) => (
               <option key={f.value} value={f.value}>

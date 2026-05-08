@@ -294,7 +294,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
               <select
                 value={industryId}
                 onChange={(e) => onIndustryChange(e.target.value)}
-                className="w-full bg-surface-2 border border-accent rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+                className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
               >
                 <option value="">— Pick one —</option>
                 {industries.map((i) => (
@@ -422,8 +422,10 @@ function Field({
         placeholder={placeholder}
         autoFocus={autoFocus}
         disabled={disabled}
-        className={`w-full border border-line rounded text-sm px-3 py-2 focus:outline-none focus:border-accent ${
-          disabled ? 'bg-surface-1 text-white cursor-not-allowed' : 'bg-surface-2 text-white'
+        className={`w-full rounded text-sm px-3 py-2 focus:outline-none ${
+          disabled
+            ? 'bg-surface-1 border border-line text-white cursor-not-allowed'
+            : 'bg-white border-2 border-accent ring-1 ring-inset ring-black text-black focus:border-accent'
         }`}
       />
       {hint && <div className="text-xs text-white mt-1">{hint}</div>}
