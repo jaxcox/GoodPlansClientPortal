@@ -6,8 +6,6 @@ import type { Client, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 import { CustomKpisCard } from './CustomKpisCard'
-import { CapacityGroupsCard } from './CapacityGroupsCard'
-import type { CapacityGroup } from '../lib/types'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -33,7 +31,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [sharedFolderLink, setSharedFolderLink] = useState('')
   const [industryId, setIndustryId] = useState<string>('')
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
-  const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -48,7 +45,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setSharedFolderLink(c.shared_folder_link ?? '')
     setIndustryId(c.industry_id ?? '')
     setKpis({ ...emptyKpiDefaults(), ...(c.kpis ?? {}) })
-    setCapacityGroups(c.capacity_groups ?? [])
     setSavedAt(null)
     setSaveError(null)
   }
@@ -92,8 +88,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       industryId !== (client.industry_id ?? '') ||
       JSON.stringify(kpis) !==
         JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) }) ||
-      JSON.stringify(capacityGroups) !==
-        JSON.stringify(client.capacity_groups ?? [])
+      false
     )
   }, [
     client,
@@ -103,7 +98,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     sharedFolderLink,
     industryId,
     kpis,
-    capacityGroups,
   ])
 
   // Saved-banner clears the moment the form is changed again, and also
@@ -179,7 +173,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       updates.shared_folder_link = sharedFolderLink.trim() || null
       updates.industry_id = industryId || null
       updates.kpis = kpis
-      updates.capacity_groups = capacityGroups
     }
     if (emailEditable) {
       updates.email = email.trim().toLowerCase()
@@ -323,15 +316,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           )}
         </Card>
       </div>
-
-      {/* ===== Row 2: Capacity Groups ===== */}
-      <Card title="Capacity & Utilization Tracking">
-        <CapacityGroupsCard
-          groups={capacityGroups}
-          onChange={setCapacityGroups}
-          coachView={canEditAll}
-        />
-      </Card>
 
       {/* ===== Row 3: Custom KPIs ===== */}
       <Card title="Custom Key Performance Indicators">
@@ -525,7 +509,7 @@ function DarkField({
         disabled={disabled}
         className={`w-full rounded text-sm px-3 py-2 focus:outline-none ${
           disabled
-            ? 'bg-surface-1 border border-line text-white cursor-not-allowed'
+            ? 'bg-surface-2 border-[0.5px] border-accent text-white cursor-not-allowed'
             : 'bg-white border-2 border-accent ring-1 ring-inset ring-black text-black focus:border-accent'
         }`}
       />

@@ -13,6 +13,7 @@ import type {
   CapacityDepartment,
   CapacityEmployee,
   CapacityGroup,
+  CapacityGroupGoal,
   CapacityMethod,
 } from '../lib/types'
 import { NumberField } from './NumberField'
@@ -20,10 +21,20 @@ import { NumberField } from './NumberField'
 type Props = {
   groups: CapacityGroup[]
   onChange: (next: CapacityGroup[]) => void
+  /** Per-group capacity goals — kept alongside the group definitions so the
+   *  goal sits in the same panel as the setup. */
+  goals: Record<string, CapacityGroupGoal>
+  onGoalsChange: (next: Record<string, CapacityGroupGoal>) => void
   coachView: boolean
 }
 
-export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
+export function CapacityGroupsCard({
+  groups,
+  onChange,
+  goals,
+  onGoalsChange,
+  coachView,
+}: Props) {
   // Read-only client view ----------------------------------------------------
   if (!coachView) {
     if (groups.length === 0) {
@@ -71,6 +82,19 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
     )
       return
     onChange(groups.filter((x) => x.id !== id))
+    // Drop the goal for the removed group so it doesn't orphan in storage.
+    if (goals[id]) {
+      const next = { ...goals }
+      delete next[id]
+      onGoalsChange(next)
+    }
+  }
+
+  const setGoal = (groupId: string, patch: CapacityGroupGoal | null) => {
+    const next = { ...goals }
+    if (patch === null) delete next[groupId]
+    else next[groupId] = patch
+    onGoalsChange(next)
   }
 
   const addGroup = () => {
@@ -106,8 +130,10 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
             <GroupPanel
               key={g.id}
               group={g}
+              goal={goals[g.id]}
               onChange={(patch) => updateGroup(g.id, patch)}
               onMethodChange={(m) => changeMethod(g.id, m)}
+              onGoalChange={(patch) => setGoal(g.id, patch)}
               onRemove={() => removeGroup(g.id)}
             />
           ))}
@@ -123,13 +149,17 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
 
 function GroupPanel({
   group,
+  goal,
   onChange,
   onMethodChange,
+  onGoalChange,
   onRemove,
 }: {
   group: CapacityGroup
+  goal: CapacityGroupGoal | undefined
   onChange: (patch: Partial<CapacityGroup>) => void
   onMethodChange: (m: CapacityMethod) => void
+  onGoalChange: (patch: CapacityGroupGoal | null) => void
   onRemove: () => void
 }) {
   const meta = methodMeta(group.method)
@@ -169,7 +199,15 @@ function GroupPanel({
       </div>
 
       {group.method ? (
-        <MethodBody group={group} onChange={onChange} />
+        <>
+          <MethodBody group={group} onChange={onChange} />
+          <CapacityGoalField
+            method={group.method}
+            staticUtilPct={group.staticUtilPct}
+            goal={goal}
+            onChange={onGoalChange}
+          />
+        </>
       ) : (
         <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
           Pick a tracking method above to continue.
@@ -186,6 +224,57 @@ function GroupPanel({
         </button>
       </div>
     </div>
+  )
+}
+
+function CapacityGoalField({
+  method,
+  staticUtilPct,
+  goal,
+  onChange,
+}: {
+  method: CapacityMethod
+  staticUtilPct: number | undefined
+  goal: CapacityGroupGoal | undefined
+  onChange: (patch: CapacityGroupGoal | null) => void
+}) {
+  // Manual % → goal is the static utilization itself; nothing to set here.
+  if (method === 'manual') {
+    return (
+      <FieldGroup label="Capacity Goal">
+        <div className="text-xs text-white italic mb-2">
+          What is considered maximum capacity for this group
+        </div>
+        <div className="bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-2 max-w-xs">
+          {staticUtilPct ?? 0}%{' '}
+          <span className="text-xs italic">(static)</span>
+        </div>
+      </FieldGroup>
+    )
+  }
+
+  const isRevenue = method === 'revenue'
+  return (
+    <FieldGroup label="Capacity Goal">
+      <div className="text-xs text-white italic mb-2">
+        What is considered maximum capacity for this group
+      </div>
+      <div className="max-w-xs">
+        <NumberField
+          value={goal?.target}
+          onChange={(n) =>
+            onChange(
+              n === undefined
+                ? null
+                : { target: n, format: isRevenue ? '$' : '%' }
+            )
+          }
+          format={isRevenue ? 'dollars' : 'percent'}
+          max={isRevenue ? null : 100}
+          ariaLabel={`Capacity goal (${isRevenue ? 'dollars' : 'percent'})`}
+        />
+      </div>
+    </FieldGroup>
   )
 }
 
@@ -589,7 +678,7 @@ function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
   const meta = methodMeta(group.method)
   const titleFallback = meta?.label ? `Untitled (${meta.label})` : 'Untitled'
   return (
-    <div className="bg-surface-2 rounded p-3">
+    <div className="bg-surface-2 border-[0.5px] border-accent rounded p-3">
       <div className="flex justify-between items-baseline mb-1.5">
         <div className="text-white text-sm font-semibold">
           {group.name || titleFallback}

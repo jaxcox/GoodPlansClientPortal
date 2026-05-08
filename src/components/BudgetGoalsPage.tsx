@@ -16,6 +16,7 @@ import {
 } from '../lib/budget'
 import type {
   Budget,
+  CapacityGroup,
   CapacityGroupGoal,
   Client,
   SeasonType,
@@ -24,7 +25,7 @@ import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
 import { BudgetStatusBanners } from './BudgetStatusBanners'
 import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
-import { CapacityGroupGoalsCard } from './CapacityGroupGoalsCard'
+import { CapacityGroupsCard } from './CapacityGroupsCard'
 
 type Props = {
   clientId: string
@@ -33,7 +34,7 @@ type Props = {
   onLeave: () => void
 }
 
-export function BudgetGoalsPage({ clientId, onLeave }: Props) {
+export function BudgetGoalsPage({ clientId, coachView, onLeave }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -76,6 +77,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [capacityGoals, setCapacityGoals] = useState<
     Record<string, CapacityGroupGoal>
   >({})
+  // Capacity groups themselves (definitions, employee tables, etc.)
+  // Lives on the client record but managed here on the Budget & Goals tab —
+  // the structural setup and the per-group goals are now one card.
+  const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
 
   // Tab within the Budget & Goals page
   const [budgetTab, setBudgetTab] = useState<'targets' | 'monthly'>('targets')
@@ -123,6 +128,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
     setCapacityGoals(b?.capacity_group_goals ?? {})
+    // capacityGroups is seeded from the client record, not the budget.
+    // It's mirrored from the client load in the useEffect below.
     setSavedAt(null)
     setSaveError(null)
   }
@@ -143,6 +150,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         return
       }
       setClient(clientData as Client)
+      setCapacityGroups((clientData as Client).capacity_groups ?? [])
 
       const { data: budgetData, error: budgetErr } = await supabase
         .from('budgets')
@@ -196,10 +204,13 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         JSON.stringify(savedExpensesByMonth) ||
       JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {}) ||
       JSON.stringify(capacityGoals) !==
-        JSON.stringify(budget?.capacity_group_goals ?? {})
+        JSON.stringify(budget?.capacity_group_goals ?? {}) ||
+      JSON.stringify(capacityGroups) !==
+        JSON.stringify(client?.capacity_groups ?? [])
     )
   }, [
     budget,
+    client,
     annualRevenue,
     draftCogsPct,
     annualExpenses,
@@ -211,6 +222,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdExpensesByMonth,
     kpiGoals,
     capacityGoals,
+    capacityGroups,
   ])
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
@@ -320,12 +332,29 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       : supabase.from('budgets').insert(payload)
     const { data, error } = await op.select().single()
 
-    setSaving(false)
     if (error) {
+      setSaving(false)
       setSaveError(error.message)
       return
     }
+
+    // Capacity groups live on the client record, not the budget. Save them
+    // here too so the merged "Capacity & Utilization Tracking" card on the
+    // Targets tab persists structure + goals in one user action.
+    const { data: clientUpdated, error: clientErr } = await supabase
+      .from('clients')
+      .update({ capacity_groups: capacityGroups })
+      .eq('id', client.id)
+      .select()
+      .single()
+
+    setSaving(false)
+    if (clientErr) {
+      setSaveError(clientErr.message)
+      return
+    }
     setBudget(data as Budget)
+    setClient(clientUpdated as Client)
     seedDraftFromBudget(data as Budget)
     setSavedAt(Date.now())
   }
@@ -539,12 +568,14 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
-      {/* Capacity goals */}
-      <Card title="Capacity Group Goals">
-        <CapacityGroupGoalsCard
-          client={client}
+      {/* Capacity & Utilization (setup + goals merged) */}
+      <Card title="Capacity & Utilization Tracking">
+        <CapacityGroupsCard
+          groups={capacityGroups}
+          onChange={setCapacityGroups}
           goals={capacityGoals}
-          onChange={setCapacityGoals}
+          onGoalsChange={setCapacityGoals}
+          coachView={coachView}
         />
       </Card>
         </>
@@ -840,19 +871,19 @@ function YtdActualsBody({
                 {/* Totals row */}
                 <TotalCell>Total</TotalCell>
                 <TotalCell>{formatDollars(revenueTotal)}</TotalCell>
-                <TotalCell>
+                <DerivedTotal>
                   {formatDollars(revenueTotal - cogsTotal)}
-                </TotalCell>
+                </DerivedTotal>
                 <TotalCell>{formatDollars(cogsTotal)}</TotalCell>
                 <TotalCell>{formatDollars(expensesTotal)}</TotalCell>
-                <TotalCell>
+                <DerivedTotal>
                   {formatDollars(revenueTotal - cogsTotal - expensesTotal)}
-                </TotalCell>
-                <TotalCell>
+                </DerivedTotal>
+                <DerivedTotal>
                   {revenueTotal > 0
                     ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
                     : '—'}
-                </TotalCell>
+                </DerivedTotal>
               </div>
             </div>
           )}
@@ -887,6 +918,26 @@ function HeaderCell({ children }: { children: React.ReactNode }) {
 function TotalCell({ children }: { children: React.ReactNode }) {
   return (
     <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+      {children}
+    </div>
+  )
+}
+
+/** Per-cell derived display (Gross Profit, Net Profit, NP %) — same dark
+ *  surface + 0.5px yellow outline as the standalone DerivedBox so it lines
+ *  up visually with the input cells in the row. */
+function DerivedCell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-1.5">
+      {children}
+    </div>
+  )
+}
+
+/** Totals-row variant — same outline as DerivedCell but bold. */
+function DerivedTotal({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm font-semibold px-3 py-1.5 mt-2">
       {children}
     </div>
   )
@@ -985,9 +1036,9 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} revenue`}
       />
-      <div className="text-sm text-white">
+      <DerivedCell>
         {gpDollars === null ? '—' : formatDollars(gpDollars)}
-      </div>
+      </DerivedCell>
       <NumberField tone="light"
         value={cogs}
         onChange={onCogsChange}
@@ -1002,12 +1053,12 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} expenses`}
       />
-      <div className="text-sm text-white">
+      <DerivedCell>
         {npDollars === null ? '—' : formatDollars(npDollars)}
-      </div>
-      <div className="text-sm text-white">
+      </DerivedCell>
+      <DerivedCell>
         {npPct === null ? '—' : `${npPct.toFixed(1)}%`}
-      </div>
+      </DerivedCell>
     </>
   )
 }
