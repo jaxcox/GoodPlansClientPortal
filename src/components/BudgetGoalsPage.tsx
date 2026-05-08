@@ -584,8 +584,8 @@ function YtdActualsBody({
               </Labeled>
             </div>
           ) : (
-            <div className="bg-surface-2 rounded p-3">
-              <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-3 gap-y-1.5 items-center">
+            <div className="bg-[#0a0a0a] border border-line rounded p-3">
+              <div className="grid grid-cols-[0.7fr_1.3fr_1.3fr_1.1fr_0.7fr] gap-x-3 gap-y-1.5 items-center">
                 <div className="text-xs font-semibold uppercase tracking-wider text-white">
                   Month
                 </div>
@@ -594,6 +594,12 @@ function YtdActualsBody({
                 </div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-white">
                   Cost of Goods Sold
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-white">
+                  Gross Profit
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-white">
+                  GP %
                 </div>
                 {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
                   <FragmentRow
@@ -605,6 +611,7 @@ function YtdActualsBody({
                     onCogsChange={(n) => setMonthValue('cogs', i, n)}
                   />
                 ))}
+                {/* Totals row */}
                 <div className="text-xs font-bold uppercase tracking-wider text-white pt-2 border-t border-line">
                   Total
                 </div>
@@ -613,6 +620,14 @@ function YtdActualsBody({
                 </div>
                 <div className="text-sm text-white font-semibold pt-2 border-t border-line">
                   {formatDollars(cogsTotal)}
+                </div>
+                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                  {formatDollars(revenueTotal - cogsTotal)}
+                </div>
+                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                  {revenueTotal > 0
+                    ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                    : '—'}
                 </div>
               </div>
             </div>
@@ -677,9 +692,15 @@ function FragmentRow({
   onRevenueChange: (n: number | undefined) => void
   onCogsChange: (n: number | undefined) => void
 }) {
+  const hasAny = revenue !== undefined || cogs !== undefined
+  const gpDollars = hasAny ? (revenue ?? 0) - (cogs ?? 0) : null
+  const gpPct =
+    revenue !== undefined && revenue > 0
+      ? ((revenue - (cogs ?? 0)) / revenue) * 100
+      : null
   return (
     <>
-      <div className="text-white text-xs font-semibold">{month}</div>
+      <div className="text-white text-sm font-semibold">{month}</div>
       <NumberField
         value={revenue}
         onChange={onRevenueChange}
@@ -694,6 +715,12 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} cost of goods sold`}
       />
+      <div className="text-sm text-white">
+        {gpDollars === null ? '—' : formatDollars(gpDollars)}
+      </div>
+      <div className="text-sm text-white">
+        {gpPct === null ? '—' : `${gpPct.toFixed(1)}%`}
+      </div>
     </>
   )
 }
