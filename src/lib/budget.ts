@@ -58,15 +58,28 @@ export function emptyBudget(
   }
 }
 
-export function annualGrossProfit(
+/** Annual GP $ from Revenue × Gross-Profit %. */
+export function annualGrossProfitDollars(
   annualRevenue: number | null,
-  cogsTargetPct: number | null
+  grossProfitPct: number | null
 ): number | null {
-  if (annualRevenue == null || cogsTargetPct == null) return null
-  return annualRevenue * (1 - cogsTargetPct / 100)
+  if (annualRevenue == null || grossProfitPct == null) return null
+  return annualRevenue * (grossProfitPct / 100)
 }
 
-export function annualGpMargin(cogsTargetPct: number | null): number | null {
-  if (cogsTargetPct == null) return null
-  return 100 - cogsTargetPct
+/** Cost of Goods Sold $ = Revenue − GP $. */
+export function annualCostOfGoodsDollars(
+  annualRevenue: number | null,
+  grossProfitPct: number | null
+): number | null {
+  if (annualRevenue == null || grossProfitPct == null) return null
+  return annualRevenue * (1 - grossProfitPct / 100)
+}
+
+/** Cost of Goods Sold % = 100% − Gross Profit %. (cogs_target_pct in the
+ *  database is still the source of truth — Gross Profit % is just the inverse
+ *  presentation in the UI.) */
+export function costOfGoodsPct(grossProfitPct: number | null): number | null {
+  if (grossProfitPct == null) return null
+  return 100 - grossProfitPct
 }

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   MONTH_LABELS,
-  annualGpMargin,
-  annualGrossProfit,
+  annualCostOfGoodsDollars,
+  annualGrossProfitDollars,
+  costOfGoodsPct,
   evenSeasonPct,
 } from '../lib/budget'
 import type { Budget, Client, SeasonType } from '../lib/types'
@@ -22,10 +23,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Form draft -------------------------------------------------------------
+  // The user enters Gross Profit % directly. The database column is still
+  // cogs_target_pct (= 100 − GP%) so the math elsewhere doesn't shift.
   const [annualRevenue, setAnnualRevenue] = useState<number | undefined>(
     undefined
   )
-  const [cogsTargetPct, setCogsTargetPct] = useState<number | undefined>(
+  const [grossProfitPct, setGrossProfitPct] = useState<number | undefined>(
     undefined
   )
   const [seasonType, setSeasonType] = useState<SeasonType>('even')
@@ -40,7 +43,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   const seedDraftFromBudget = (b: Budget | null) => {
     setAnnualRevenue(b?.annual_revenue ?? undefined)
-    setCogsTargetPct(b?.cogs_target_pct ?? undefined)
+    setGrossProfitPct(
+      b?.cogs_target_pct == null ? undefined : 100 - b.cogs_target_pct
+    )
     setSeasonType(b?.season_type ?? 'even')
     setSeasonPct(
       b?.season_type === 'seasonal' && b.season_pct.length === 12
@@ -89,15 +94,18 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   }, [clientId, year])
 
   // ---- Dirty tracking -----------------------------------------------------
+  const draftCogsPct =
+    grossProfitPct === undefined ? null : 100 - grossProfitPct
+
   const isDirty = useMemo(() => {
     return (
       (annualRevenue ?? null) !== (budget?.annual_revenue ?? null) ||
-      (cogsTargetPct ?? null) !== (budget?.cogs_target_pct ?? null) ||
+      draftCogsPct !== (budget?.cogs_target_pct ?? null) ||
       seasonType !== (budget?.season_type ?? 'even') ||
       JSON.stringify(seasonPct) !==
         JSON.stringify(budget?.season_pct ?? evenSeasonPct())
     )
-  }, [budget, annualRevenue, cogsTargetPct, seasonType, seasonPct])
+  }, [budget, annualRevenue, draftCogsPct, seasonType, seasonPct])
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
   useEffect(() => {
@@ -110,11 +118,15 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   }, [savedAt])
 
   // ---- Derived display ---------------------------------------------------
-  const grossProfit = annualGrossProfit(
+  const gpDollars = annualGrossProfitDollars(
     annualRevenue ?? null,
-    cogsTargetPct ?? null
+    grossProfitPct ?? null
   )
-  const gpMargin = annualGpMargin(cogsTargetPct ?? null)
+  const cogsDollars = annualCostOfGoodsDollars(
+    annualRevenue ?? null,
+    grossProfitPct ?? null
+  )
+  const cogsPct = costOfGoodsPct(grossProfitPct ?? null)
   const seasonalSum = seasonPct.reduce((a, b) => a + (b || 0), 0)
 
   // ---- Handlers ----------------------------------------------------------
@@ -161,7 +173,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       coach_id: client.coach_id,
       year,
       annual_revenue: annualRevenue ?? null,
-      cogs_target_pct: cogsTargetPct ?? null,
+      cogs_target_pct: draftCogsPct,
       season_type: seasonType,
       season_pct: seasonType === 'seasonal' ? seasonPct : [],
     }
@@ -233,25 +245,30 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
               ariaLabel="Annual revenue"
             />
           </Labeled>
-          <Labeled label="COGS as % of Revenue">
+          <Labeled label="Gross Profit %">
             <NumberField
-              value={cogsTargetPct}
-              onChange={setCogsTargetPct}
+              value={grossProfitPct}
+              onChange={setGrossProfitPct}
               format="percent"
-              ariaLabel="COGS target percent"
+              ariaLabel="Gross profit percent"
             />
           </Labeled>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-line">
           <Derived
             label="Annual Gross Profit"
-            value={grossProfit !== null ? formatDollars(grossProfit) : '—'}
-            hint="Revenue × (1 − COGS%)"
+            value={gpDollars !== null ? formatDollars(gpDollars) : '—'}
+            hint="Revenue × Gross Profit %"
           />
           <Derived
-            label="GP Margin"
-            value={gpMargin !== null ? `${gpMargin.toFixed(1)}%` : '—'}
-            hint="100% − COGS%"
+            label="Cost of Goods Sold %"
+            value={cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—'}
+            hint="100% − Gross Profit %"
+          />
+          <Derived
+            label="Cost of Goods Sold $"
+            value={cogsDollars !== null ? formatDollars(cogsDollars) : '—'}
+            hint="Revenue − Gross Profit $"
           />
         </div>
       </Card>
