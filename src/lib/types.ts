@@ -14,6 +14,57 @@ export type CustomKpi = {
   active: boolean
 }
 
+// =============================================================================
+// Capacity Groups
+// =============================================================================
+// One client can have multiple capacity groups; each group uses ONE tracking
+// method. The "By Working Hours" method from the original prototype is dropped
+// per Doc 04 PC #4 — its math is covered by Labor Hours + Efficiency.
+
+export type CapacityMethod =
+  | 'manual'
+  | 'slots'
+  | 'labor'
+  | 'revenue'
+  | 'headcount'
+
+export type CapacityEmployee = {
+  id: string
+  name: string
+  role: string
+  /** 'labor' method: target produced-hours capacity per week. */
+  capacityHoursPerWeek?: number
+  /** 'labor' method: actual scheduled time per week — drives Labor Efficiency
+   * (produced ÷ working) per Doc 04 PC #1–#2. */
+  weeklyWorkingHours?: number
+  /** 'revenue' method: revenue capacity per week (in dollars). */
+  revenueCapacityPerWeek?: number
+}
+
+export type CapacityDepartment = {
+  id: string
+  name: string
+  fullTimeCount: number
+  partTimeCount: number
+}
+
+export type CapacityGroup = {
+  id: string
+  name: string
+  method: CapacityMethod
+  /** 'manual' method: single static utilization % stored once in Settings
+   * (Doc 04 PC #3 — no longer a weekly entry input). */
+  staticUtilPct?: number
+  /** 'slots' method: 30 or 60 minutes per slot. */
+  slotDurationMinutes?: 30 | 60
+  /** 'headcount' method: hours/week per FTE. */
+  weeklyHoursPerFTE?: number
+  /** 'labor' or 'revenue' methods. */
+  employees?: CapacityEmployee[]
+  /** 'headcount' method. */
+  departments?: CapacityDepartment[]
+}
+
 export type Coach = {
   id: string
   brand_name: string
@@ -52,7 +103,7 @@ export type Client = {
   archived: boolean
   kpis: Record<string, number>
   custom_kpis: CustomKpi[]
-  capacity_groups: unknown[]
+  capacity_groups: CapacityGroup[]
   dashboard_order: unknown
   coach_note: string | null
   coach_note_updated_at: string | null

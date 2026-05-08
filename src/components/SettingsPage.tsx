@@ -6,6 +6,8 @@ import type { Client, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 import { CustomKpisCard } from './CustomKpisCard'
+import { CapacityGroupsCard } from './CapacityGroupsCard'
+import type { CapacityGroup } from '../lib/types'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -31,6 +33,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [sharedFolderLink, setSharedFolderLink] = useState('')
   const [industryId, setIndustryId] = useState<string>('')
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
+  const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -45,6 +48,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setSharedFolderLink(c.shared_folder_link ?? '')
     setIndustryId(c.industry_id ?? '')
     setKpis({ ...emptyKpiDefaults(), ...(c.kpis ?? {}) })
+    setCapacityGroups(c.capacity_groups ?? [])
     setSavedAt(null)
     setSaveError(null)
   }
@@ -87,7 +91,9 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       sharedFolderLink !== (client.shared_folder_link ?? '') ||
       industryId !== (client.industry_id ?? '') ||
       JSON.stringify(kpis) !==
-        JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) })
+        JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) }) ||
+      JSON.stringify(capacityGroups) !==
+        JSON.stringify(client.capacity_groups ?? [])
     )
   }, [
     client,
@@ -97,6 +103,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     sharedFolderLink,
     industryId,
     kpis,
+    capacityGroups,
   ])
 
   // Saved-banner clears the moment the form is changed again, and also
@@ -172,6 +179,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       updates.shared_folder_link = sharedFolderLink.trim() || null
       updates.industry_id = industryId || null
       updates.kpis = kpis
+      updates.capacity_groups = capacityGroups
     }
     if (emailEditable) {
       updates.email = email.trim().toLowerCase()
@@ -334,11 +342,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         </Card>
       </div>
 
-      {/* ===== Row 2: Capacity Groups (stub for Phase 3.4) ===== */}
+      {/* ===== Row 2: Capacity Groups ===== */}
       <Card title="Capacity & Utilization Tracking">
-        <ComingSoon
-          phase="Phase 3.4"
-          summary="Set up departments or teams, choose how their utilization is tracked (manual %, time slots, labor hours, revenue, headcount), and target a goal — all wired into Doc 04 PC #1–#6."
+        <CapacityGroupsCard
+          groups={capacityGroups}
+          onChange={setCapacityGroups}
+          coachView={canEditAll}
         />
       </Card>
 
@@ -611,19 +620,3 @@ function KpiTogglesReadOnly({
   )
 }
 
-function ComingSoon({
-  phase,
-  summary,
-}: {
-  phase: string
-  summary: string
-}) {
-  return (
-    <div className="bg-surface-2 border border-line rounded p-4 text-mute text-xs leading-relaxed">
-      <div className="text-accent font-bold uppercase tracking-wider text-[10px] mb-1">
-        {phase}
-      </div>
-      {summary}
-    </div>
-  )
-}
