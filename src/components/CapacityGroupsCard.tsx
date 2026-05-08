@@ -348,17 +348,23 @@ function EmployeesBody({
           No rows yet — click + Add to start.
         </div>
       ) : (
-        <div className="space-y-1.5">
-          <RowHeader method={method} />
-          {employees.map((e) => (
-            <EmployeeRow
-              key={e.id}
-              method={method}
-              employee={e}
-              onChange={(patch) => updateEmployee(e.id, patch)}
-              onRemove={() => removeEmployee(e.id)}
-            />
-          ))}
+        <div className="overflow-x-auto">
+          <div
+            className={`space-y-1.5 ${
+              method === 'labor' ? 'min-w-[540px]' : 'min-w-[440px]'
+            }`}
+          >
+            <RowHeader method={method} />
+            {employees.map((e) => (
+              <EmployeeRow
+                key={e.id}
+                method={method}
+                employee={e}
+                onChange={(patch) => updateEmployee(e.id, patch)}
+                onRemove={() => removeEmployee(e.id)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -536,7 +542,8 @@ function HeadcountBody({
             No departments yet — click + Add to start.
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="overflow-x-auto">
+            <div className="space-y-1.5 min-w-[440px]">
             <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
               <div>Department</div>
               <div>Full Time #</div>
@@ -574,6 +581,7 @@ function HeadcountBody({
                 <RemoveX onClick={() => removeDept(d.id)} />
               </div>
             ))}
+            </div>
           </div>
         )}
       </div>
