@@ -555,24 +555,24 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       {/* Status banners (only when YTD actuals exist + targets are set) */}
       <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
 
-      {/* Row 2: KPI Goals + Capacity & Utilization side-by-side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <Card title="Key Performance Indicator Goals">
-          <KpiGoalsCard
-            client={client}
-            goals={kpiGoals}
-            onChange={setKpiGoals}
-          />
-        </Card>
+      {/* Row 2: KPI Goals (full width) */}
+      <Card title="Key Performance Indicator Goals">
+        <KpiGoalsCard
+          client={client}
+          goals={kpiGoals}
+          onChange={setKpiGoals}
+        />
+      </Card>
 
-        <Card title="Capacity & Utilization Tracking">
-          <CapacityGroupsCard
-            groups={capacityGroups}
-            onChange={setCapacityGroups}
-            coachView={true}
-          />
-        </Card>
-      </div>
+      {/* Row 3: Capacity & Utilization (full width — group panels with
+          employee tables don't fit comfortably at half width). */}
+      <Card title="Capacity & Utilization Tracking">
+        <CapacityGroupsCard
+          groups={capacityGroups}
+          onChange={setCapacityGroups}
+          coachView={true}
+        />
+      </Card>
         </>
       ) : (
         <Card title="Monthly Financial Goals">
