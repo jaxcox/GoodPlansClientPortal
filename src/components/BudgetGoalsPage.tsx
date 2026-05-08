@@ -13,6 +13,7 @@ import {
 } from '../lib/budget'
 import type { Budget, Client, SeasonType } from '../lib/types'
 import { NumberField } from './NumberField'
+import { KpiGoalsCard } from './KpiGoalsCard'
 
 type Props = {
   clientId: string
@@ -49,6 +50,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   )
   const [showMonthlyBreakdown, setShowMonthlyBreakdown] = useState(false)
 
+  // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
+  const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
+
   // Save state -------------------------------------------------------------
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -79,6 +83,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         : emptyMonthArray()
     )
     setShowMonthlyBreakdown(false)
+    setKpiGoals(b?.goals ?? {})
     setSavedAt(null)
     setSaveError(null)
   }
@@ -141,7 +146,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         JSON.stringify(budget?.season_pct ?? evenSeasonPct()) ||
       ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
       JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRevByMonth) ||
-      JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth)
+      JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth) ||
+      JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {})
     )
   }, [
     budget,
@@ -152,6 +158,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdThruMonth,
     ytdRevenueByMonth,
     ytdCogsByMonth,
+    kpiGoals,
   ])
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
@@ -227,6 +234,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       ytd_revenue_by_month:
         ytdThruMonth === null ? null : ytdRevenueByMonth,
       ytd_cogs_by_month: ytdThruMonth === null ? null : ytdCogsByMonth,
+      goals: kpiGoals,
     }
 
     const op = budget
@@ -381,11 +389,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         />
       </Card>
 
-      {/* Per-KPI goals — Phase 4.2 */}
+      {/* Per-KPI goals */}
       <Card title="KPI Goals">
-        <PhaseStub
-          phase="Phase 4.2"
-          summary="Goal numbers for each active KPI on this client (Marketing, Sales, Operations, Team) — including auto-derived KPIs per Doc 04 PC #14."
+        <KpiGoalsCard
+          client={client}
+          goals={kpiGoals}
+          onChange={setKpiGoals}
         />
       </Card>
 
