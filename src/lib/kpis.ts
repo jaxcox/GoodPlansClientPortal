@@ -362,3 +362,106 @@ export function emptyKpiDefaults(): Record<string, number> {
   })
   return out
 }
+
+/** All auto-KPIs that depend on `inputId` (excluding always-on KPIs). */
+function dependentsOf(inputId: string): KpiDef[] {
+  return KPIS.filter(
+    (k) => !k.always && k.auto && (k.dependsOn ?? []).includes(inputId)
+  )
+}
+
+/**
+ * Apply a KPI on/off toggle with the dependency-cascade rules from Doc 04 PC #9.
+ *
+ *   - Turning an auto-KPI ON → auto-enables any of its toggleable inputs that
+ *     are currently off. Reports those input labels so the UI can say
+ *     "Also enabled: X, Y."
+ *   - Turning an input KPI OFF when active auto-KPIs depend on it → returns
+ *     `{ requiresConfirm: true, dependents: [...] }`. Caller is expected to
+ *     show a confirmation; on confirm, call this again with `confirmed: true`
+ *     to actually apply the cascade.
+ *   - Turning an auto-KPI OFF → just turns it off; inputs are left alone
+ *     (they're real KPIs in their own right).
+ *   - Turning an input ON → no cascade.
+ */
+export type ApplyToggleResult =
+  | {
+      kind: 'applied'
+      defaults: Record<string, number>
+      autoEnabled: string[]
+      autoDisabled: string[]
+    }
+  | {
+      kind: 'requiresConfirm'
+      kpi: KpiDef
+      dependents: KpiDef[]
+    }
+
+export function applyKpiToggle(
+  defaults: Record<string, number>,
+  kpiId: string,
+  on: boolean,
+  opts: { confirmed?: boolean } = {}
+): ApplyToggleResult {
+  const kpi = findKpi(kpiId)
+  if (!kpi) {
+    return {
+      kind: 'applied',
+      defaults,
+      autoEnabled: [],
+      autoDisabled: [],
+    }
+  }
+
+  // ----- Turning ON -----
+  if (on) {
+    const next = { ...defaults, [kpiId]: 1 }
+    const autoEnabled: string[] = []
+    if (kpi.auto && kpi.dependsOn) {
+      for (const depId of kpi.dependsOn) {
+        const dep = findKpi(depId)
+        if (!dep || dep.always) continue
+        if (Number(next[depId]) !== 1) {
+          next[depId] = 1
+          autoEnabled.push(dep.label)
+        }
+      }
+    }
+    return { kind: 'applied', defaults: next, autoEnabled, autoDisabled: [] }
+  }
+
+  // ----- Turning OFF -----
+  // Auto-KPIs: just off, no cascade (inputs are independent KPIs).
+  if (kpi.auto) {
+    return {
+      kind: 'applied',
+      defaults: { ...defaults, [kpiId]: 0 },
+      autoEnabled: [],
+      autoDisabled: [],
+    }
+  }
+  // Input KPI: check for active dependents.
+  const activeDeps = dependentsOf(kpiId).filter(
+    (d) => Number(defaults[d.id]) === 1
+  )
+  if (activeDeps.length === 0) {
+    return {
+      kind: 'applied',
+      defaults: { ...defaults, [kpiId]: 0 },
+      autoEnabled: [],
+      autoDisabled: [],
+    }
+  }
+  if (!opts.confirmed) {
+    return { kind: 'requiresConfirm', kpi, dependents: activeDeps }
+  }
+  // Confirmed cascade
+  const next = { ...defaults, [kpiId]: 0 }
+  for (const d of activeDeps) next[d.id] = 0
+  return {
+    kind: 'applied',
+    defaults: next,
+    autoEnabled: [],
+    autoDisabled: activeDeps.map((d) => d.label),
+  }
+}

@@ -6,6 +6,7 @@ import {
   emptyKpiDefaults,
   toggleableByCategory,
 } from '../lib/kpis'
+import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 
@@ -90,6 +91,11 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
     }
   }
 
+  const { onToggle: onKpiToggle, feedback: kpiFeedback } = useKpiToggle(
+    kpis,
+    setKpis
+  )
+
   if (!open) return null
 
   const noIndustries = industries !== null && industries.length === 0
@@ -152,7 +158,7 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
@@ -234,15 +240,18 @@ export function NewClientModal({ open, onClose, onCreated }: Props) {
                         <Toggle
                           key={k.id}
                           checked={Number(kpis[k.id]) === 1}
-                          onChange={(on) =>
-                            setKpis((prev) => ({ ...prev, [k.id]: on ? 1 : 0 }))
-                          }
+                          onChange={(on) => onKpiToggle(k.id, on)}
                           label={k.label}
                         />
                       ))}
                     </div>
                   </div>
                 ))}
+                {kpiFeedback && (
+                  <div className="text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+                    {kpiFeedback}
+                  </div>
+                )}
               </div>
             </div>
           )}

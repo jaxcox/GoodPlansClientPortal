@@ -6,6 +6,7 @@ import {
   findKpi,
   toggleableByCategory,
 } from '../lib/kpis'
+import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 
@@ -241,10 +242,7 @@ function IndustryEditor({
 
   const groups = toggleableByCategory()
   const activeCount = Object.values(defaults).filter((v) => Number(v) === 1).length
-
-  const setKpi = (id: string, on: boolean) => {
-    setDefaults((d) => ({ ...d, [id]: on ? 1 : 0 }))
-  }
+  const { onToggle, feedback } = useKpiToggle(defaults, setDefaults)
 
   const onSave = async () => {
     setError(null)
@@ -324,7 +322,7 @@ function IndustryEditor({
                     <Toggle
                       key={k.id}
                       checked={Number(defaults[k.id]) === 1}
-                      onChange={(on) => setKpi(k.id, on)}
+                      onChange={(on) => onToggle(k.id, on)}
                       label={k.label}
                     />
                   ))}
@@ -332,6 +330,11 @@ function IndustryEditor({
               </div>
             ))}
           </div>
+          {feedback && (
+            <div className="mt-3 text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+              {feedback}
+            </div>
+          )}
         </div>
 
         {error && (
