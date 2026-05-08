@@ -406,6 +406,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
       {budgetTab === 'targets' ? (
         <>
+      {/* Row 1: Annual Targets + Monthly Distribution side-by-side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Annual Targets */}
       <Card title="Annual Targets">
         <div className="space-y-4">
@@ -510,7 +512,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
         {seasonType === 'seasonal' && (
           <div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {MONTH_LABELS.map((m, i) => (
                 <Labeled key={m} label={m}>
                   <NumberField tone="light"
@@ -526,6 +528,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           </div>
         )}
       </Card>
+      </div>
+      {/* end Row 1 grid */}
 
       {/* YTD actuals */}
       <Card title="YTD Actuals">
