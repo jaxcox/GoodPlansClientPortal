@@ -12,9 +12,12 @@ type Props = {
   clientId: string
   /** True when a coach is operating on this client's behalf via View Portal. */
   coachView: boolean
+  /** Cancel calls this to leave Settings (returns to Coach Admin in coach view,
+   *  switches back to Dashboard in client view). */
+  onLeave: () => void
 }
 
-export function SettingsPage({ clientId, coachView }: Props) {
+export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   // ---- Loaded state -------------------------------------------------------
   const [client, setClient] = useState<Client | null>(null)
   const [industries, setIndustries] = useState<Industry[] | null>(null)
@@ -128,10 +131,14 @@ export function SettingsPage({ clientId, coachView }: Props) {
     setKpis
   )
 
+  // Cancel = exit Settings. If the form is dirty, confirm before leaving.
+  // Always enabled regardless of dirty state.
   const onCancel = () => {
-    if (!client) return
-    if (isDirty && !confirm('Discard your unsaved changes?')) return
-    seedDraft(client)
+    if (isDirty && !confirm('Discard your unsaved changes and leave Settings?')) {
+      return
+    }
+    if (client) seedDraft(client)
+    onLeave()
   }
 
   const onSave = async () => {
@@ -386,8 +393,7 @@ function SaveBar({
       <button
         type="button"
         onClick={onCancel}
-        disabled={!isDirty}
-        className="bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
       >
         Cancel
       </button>

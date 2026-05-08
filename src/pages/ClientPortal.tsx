@@ -109,7 +109,17 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
       {/* Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
         {tab === 'settings' ? (
-          <SettingsPage clientId={clientId} coachView={coachView} />
+          <SettingsPage
+            clientId={clientId}
+            coachView={coachView}
+            onLeave={() => {
+              if (coachView && onBack) {
+                onBack()
+              } else {
+                setTab('dashboard')
+              }
+            }}
+          />
         ) : (
           <Body tab={tab} />
         )}
