@@ -34,6 +34,10 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
           Remaining gross profit:{' '}
           <strong>{formatDollars(view.remainingGrossProfit)}</strong>
         </div>
+        <div className="text-white text-xs">
+          Remaining net profit:{' '}
+          <strong>{formatDollars(view.remainingNetProfit)}</strong>
+        </div>
       </div>
       {anyAdjusted && (
         <div className="text-white text-xs italic">
@@ -41,6 +45,10 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
           to close the YTD GP gap.
         </div>
       )}
+      <div className="text-white text-xs italic">
+        Numbers are rounded to whole dollars; per-month figures may differ
+        from totals by a dollar or two.
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
         {view.months.map((m) => (
@@ -84,9 +92,12 @@ function MonthTile({
         value={formatDollars(month.cogs)}
         sub={`(${(100 - month.gpPct).toFixed(1)}%)`}
       />
+      <Row label="Expenses" value={formatDollars(month.expenses)} />
       <hr className="border-line my-2" />
       <Row label="Gross Profit" value={formatDollars(month.grossProfit)} bold />
       <Row label="GP %" value={`${month.gpPct.toFixed(1)}%`} bold />
+      <Row label="Net Profit" value={formatDollars(month.netProfit)} bold />
+      <Row label="NP %" value={`${month.netProfitPct.toFixed(1)}%`} bold />
     </div>
   )
 }

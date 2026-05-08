@@ -64,25 +64,23 @@ function Banner({
   const isBehind = kind === 'behind'
   return (
     <div
-      className={`flex gap-3 items-start rounded p-3 border ${
+      className={`flex gap-3 items-start rounded p-3 border-2 ${
         isBehind
-          ? 'bg-bad/10 border-bad'
-          : 'bg-good/10 border-good'
+          ? 'bg-red-100 border-bad'
+          : 'bg-green-100 border-good'
       }`}
     >
       <div
-        className={`text-base font-bold leading-none ${
-          isBehind ? 'text-white' : 'text-white'
-        }`}
+        className="text-base font-bold leading-none text-black"
         aria-hidden="true"
       >
         {isBehind ? '!' : '✓'}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-white text-sm font-bold">
+        <div className="text-black text-sm font-bold">
           {label} — {isBehind ? 'Behind Budget' : 'On Track'}
         </div>
-        <div className="text-white text-xs mt-0.5">
+        <div className="text-black text-xs mt-0.5">
           Planned to date: {formatDollars(planned)} · Actual:{' '}
           {formatDollars(actual)} ·{' '}
           <span className="font-semibold">
@@ -91,7 +89,7 @@ function Banner({
           </span>
         </div>
         {adjustedNote && (
-          <div className="text-white text-xs italic mt-1">{adjustedNote}</div>
+          <div className="text-black text-xs italic mt-1">{adjustedNote}</div>
         )}
       </div>
     </div>

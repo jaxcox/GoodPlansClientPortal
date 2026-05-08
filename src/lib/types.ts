@@ -141,6 +141,8 @@ export type Budget = {
   year: number
   annual_revenue: number | null
   cogs_target_pct: number | null
+  /** Operating expenses (everything below the Cost of Goods line) for the year. */
+  annual_expenses: number | null
   season_type: SeasonType
   /** 12 percentages summing to 100 in 'seasonal' mode; empty array in 'even'. */
   season_pct: number[]
@@ -148,6 +150,7 @@ export type Budget = {
   ytd_thru_month: number | null
   ytd_revenue_by_month: (number | null)[] | null
   ytd_cogs_by_month: (number | null)[] | null
+  ytd_expenses_by_month: (number | null)[] | null
   /** Per-KPI goal value, keyed by kpi id (standard or custom). */
   goals: Record<string, number>
   /** Keyed by capacity group id. */

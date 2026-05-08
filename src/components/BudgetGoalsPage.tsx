@@ -4,6 +4,8 @@ import {
   MONTH_LABELS,
   annualCostOfGoodsDollars,
   annualGrossProfitDollars,
+  annualNetProfitDollars,
+  annualNetProfitPct,
   computeBudgetView,
   costOfGoodsPct,
   distributeAcrossMonths,
@@ -39,6 +41,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [grossProfitPct, setGrossProfitPct] = useState<number | undefined>(
     undefined
   )
+  const [annualExpenses, setAnnualExpenses] = useState<number | undefined>(
+    undefined
+  )
   const [seasonType, setSeasonType] = useState<SeasonType>('even')
   const [seasonPct, setSeasonPct] = useState<number[]>(evenSeasonPct())
 
@@ -51,6 +56,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [ytdCogsByMonth, setYtdCogsByMonth] = useState<(number | null)[]>(
     emptyMonthArray()
   )
+  const [ytdExpensesByMonth, setYtdExpensesByMonth] = useState<
+    (number | null)[]
+  >(emptyMonthArray())
   // YTD entry method — explicit choice instead of a hybrid "single total +
   // expand for overrides" UI. Defaults from the data: months that look
   // auto-distributed → bulk; mixed values → monthly.
@@ -74,6 +82,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     setGrossProfitPct(
       b?.cogs_target_pct == null ? undefined : 100 - b.cogs_target_pct
     )
+    setAnnualExpenses(b?.annual_expenses ?? undefined)
     setSeasonType(b?.season_type ?? 'even')
     setSeasonPct(
       b?.season_type === 'seasonal' && b.season_pct.length === 12
@@ -91,6 +100,11 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         : emptyMonthArray()
     setYtdRevenueByMonth(seededRevenue)
     setYtdCogsByMonth(seededCogs)
+    const seededExpenses =
+      b?.ytd_expenses_by_month && b.ytd_expenses_by_month.length === 12
+        ? b.ytd_expenses_by_month
+        : emptyMonthArray()
+    setYtdExpensesByMonth(seededExpenses)
     // If either array shows manual overrides, default to monthly entry so the
     // coach can see what's actually stored. Otherwise prefer bulk.
     const looksBulk =
@@ -152,26 +166,36 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       budget?.ytd_cogs_by_month && budget.ytd_cogs_by_month.length === 12
         ? budget.ytd_cogs_by_month
         : emptyMonthArray()
+    const savedExpensesByMonth =
+      budget?.ytd_expenses_by_month &&
+      budget.ytd_expenses_by_month.length === 12
+        ? budget.ytd_expenses_by_month
+        : emptyMonthArray()
     return (
       (annualRevenue ?? null) !== (budget?.annual_revenue ?? null) ||
       draftCogsPct !== (budget?.cogs_target_pct ?? null) ||
+      (annualExpenses ?? null) !== (budget?.annual_expenses ?? null) ||
       seasonType !== (budget?.season_type ?? 'even') ||
       JSON.stringify(seasonPct) !==
         JSON.stringify(budget?.season_pct ?? evenSeasonPct()) ||
       ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
       JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRevByMonth) ||
       JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth) ||
+      JSON.stringify(ytdExpensesByMonth) !==
+        JSON.stringify(savedExpensesByMonth) ||
       JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {})
     )
   }, [
     budget,
     annualRevenue,
     draftCogsPct,
+    annualExpenses,
     seasonType,
     seasonPct,
     ytdThruMonth,
     ytdRevenueByMonth,
     ytdCogsByMonth,
+    ytdExpensesByMonth,
     kpiGoals,
   ])
 
@@ -195,21 +219,29 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     grossProfitPct ?? null
   )
   const cogsPct = costOfGoodsPct(grossProfitPct ?? null)
+  const npDollars = annualNetProfitDollars(
+    gpDollars,
+    annualExpenses ?? null
+  )
+  const npPct = annualNetProfitPct(npDollars, annualRevenue ?? null)
   const seasonalSum = seasonPct.reduce((a, b) => a + (b || 0), 0)
 
   const view = computeBudgetView({
     annualRevenue: annualRevenue ?? null,
     grossProfitPct: grossProfitPct ?? null,
+    annualExpenses: annualExpenses ?? null,
     seasonType,
     seasonPct,
     ytdThruMonth,
     ytdRevenueByMonth,
     ytdCogsByMonth,
+    ytdExpensesByMonth,
   })
   const hasYtdActuals =
     ytdThruMonth !== null &&
     (ytdRevenueByMonth.some((v) => Number(v) > 0) ||
-      ytdCogsByMonth.some((v) => Number(v) > 0))
+      ytdCogsByMonth.some((v) => Number(v) > 0) ||
+      ytdExpensesByMonth.some((v) => Number(v) > 0))
 
   // ---- Handlers ----------------------------------------------------------
   const onSeasonTypeChange = (next: SeasonType) => {
@@ -258,10 +290,13 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       cogs_target_pct: draftCogsPct,
       season_type: seasonType,
       season_pct: seasonType === 'seasonal' ? seasonPct : [],
+      annual_expenses: annualExpenses ?? null,
       ytd_thru_month: ytdThruMonth,
       ytd_revenue_by_month:
         ytdThruMonth === null ? null : ytdRevenueByMonth,
       ytd_cogs_by_month: ytdThruMonth === null ? null : ytdCogsByMonth,
+      ytd_expenses_by_month:
+        ytdThruMonth === null ? null : ytdExpensesByMonth,
       goals: kpiGoals,
     }
 
@@ -340,7 +375,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         <>
       {/* Annual Targets */}
       <Card title="Annual Targets">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Labeled label="Annual Revenue Target">
             <NumberField
               value={annualRevenue}
@@ -356,6 +391,15 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
               onChange={setGrossProfitPct}
               format="percent"
               ariaLabel="Gross profit percent"
+            />
+          </Labeled>
+          <Labeled label="Annual Expenses">
+            <NumberField
+              value={annualExpenses}
+              onChange={setAnnualExpenses}
+              format="dollars"
+              max={null}
+              ariaLabel="Annual operating expenses"
             />
           </Labeled>
         </div>
@@ -375,7 +419,18 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
             value={cogsDollars !== null ? formatDollars(cogsDollars) : '—'}
             hint="Revenue − Gross Profit $"
           />
+          <Derived
+            label="Annual Net Profit"
+            value={npDollars !== null ? formatDollars(npDollars) : '—'}
+            hint="Gross Profit − Expenses"
+          />
+          <Derived
+            label="Net Profit %"
+            value={npPct !== null ? `${npPct.toFixed(1)}%` : '—'}
+            hint="Net Profit ÷ Revenue"
+          />
         </div>
+        <RoundingNote />
       </Card>
 
       {/* Monthly Distribution */}
@@ -428,6 +483,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           setRevenueByMonth={setYtdRevenueByMonth}
           cogsByMonth={ytdCogsByMonth}
           setCogsByMonth={setYtdCogsByMonth}
+          expensesByMonth={ytdExpensesByMonth}
+          setExpensesByMonth={setYtdExpensesByMonth}
           entryMode={ytdEntryMode}
           setEntryMode={setYtdEntryMode}
           seasonType={seasonType}
@@ -486,6 +543,8 @@ function YtdActualsBody({
   setRevenueByMonth,
   cogsByMonth,
   setCogsByMonth,
+  expensesByMonth,
+  setExpensesByMonth,
   entryMode,
   setEntryMode,
   seasonType,
@@ -497,6 +556,8 @@ function YtdActualsBody({
   setRevenueByMonth: (arr: (number | null)[]) => void
   cogsByMonth: (number | null)[]
   setCogsByMonth: (arr: (number | null)[]) => void
+  expensesByMonth: (number | null)[]
+  setExpensesByMonth: (arr: (number | null)[]) => void
   entryMode: 'bulk' | 'monthly'
   setEntryMode: (m: 'bulk' | 'monthly') => void
   seasonType: SeasonType
@@ -505,17 +566,18 @@ function YtdActualsBody({
   const enabled = ytdThruMonth !== null
   const revenueTotal = sumMonthsThru(revenueByMonth, ytdThruMonth)
   const cogsTotal = sumMonthsThru(cogsByMonth, ytdThruMonth)
+  const expensesTotal = sumMonthsThru(expensesByMonth, ytdThruMonth)
 
   const onThruMonthChange = (raw: string) => {
     if (raw === '' || raw === 'none') {
       setYtdThruMonth(null)
       setRevenueByMonth(emptyMonthArray())
       setCogsByMonth(emptyMonthArray())
+      setExpensesByMonth(emptyMonthArray())
       return
     }
     const next = Number(raw)
     setYtdThruMonth(next)
-    // If shrinking the window, null out months past the new range.
     if (revenueByMonth.some((v, i) => i > next && v != null)) {
       const trimmed = revenueByMonth.map((v, i) => (i > next ? null : v))
       setRevenueByMonth(trimmed)
@@ -523,6 +585,10 @@ function YtdActualsBody({
     if (cogsByMonth.some((v, i) => i > next && v != null)) {
       const trimmed = cogsByMonth.map((v, i) => (i > next ? null : v))
       setCogsByMonth(trimmed)
+    }
+    if (expensesByMonth.some((v, i) => i > next && v != null)) {
+      const trimmed = expensesByMonth.map((v, i) => (i > next ? null : v))
+      setExpensesByMonth(trimmed)
     }
   }
 
@@ -549,17 +615,33 @@ function YtdActualsBody({
       distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
     )
   }
+  const setBulkExpenses = (n: number | undefined) => {
+    if (ytdThruMonth === null) return
+    if (n === undefined) {
+      setExpensesByMonth(emptyMonthArray())
+      return
+    }
+    setExpensesByMonth(
+      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
+    )
+  }
 
   const setMonthValue = (
-    which: 'revenue' | 'cogs',
+    which: 'revenue' | 'cogs' | 'expenses',
     idx: number,
     value: number | undefined
   ) => {
-    const arr = which === 'revenue' ? revenueByMonth : cogsByMonth
+    const arr =
+      which === 'revenue'
+        ? revenueByMonth
+        : which === 'cogs'
+          ? cogsByMonth
+          : expensesByMonth
     const next = [...arr]
     next[idx] = value ?? null
     if (which === 'revenue') setRevenueByMonth(next)
-    else setCogsByMonth(next)
+    else if (which === 'cogs') setCogsByMonth(next)
+    else setExpensesByMonth(next)
   }
 
   return (
@@ -610,7 +692,7 @@ function YtdActualsBody({
           </Labeled>
 
           {entryMode === 'bulk' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Labeled label="Revenue (YTD total)">
                 <NumberField
                   value={revenueTotal === 0 ? undefined : revenueTotal}
@@ -629,58 +711,59 @@ function YtdActualsBody({
                   ariaLabel="YTD cost of goods sold total"
                 />
               </Labeled>
+              <Labeled label="Expenses (YTD total)">
+                <NumberField
+                  value={expensesTotal === 0 ? undefined : expensesTotal}
+                  onChange={setBulkExpenses}
+                  format="dollars"
+                  max={null}
+                  ariaLabel="YTD expenses total"
+                />
+              </Labeled>
             </div>
           ) : (
-            <div className="bg-[#0a0a0a] border border-line rounded p-3">
-              <div className="grid grid-cols-[0.7fr_1.3fr_1.3fr_1.1fr_0.7fr] gap-x-3 gap-y-1.5 items-center">
-                <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                  Month
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                  Revenue
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                  Cost of Goods Sold
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                  Gross Profit
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-white">
-                  GP %
-                </div>
+            <div className="bg-[#0a0a0a] border border-line rounded p-3 overflow-x-auto">
+              <div className="grid grid-cols-[0.6fr_1.1fr_1.1fr_1.1fr_1.1fr_1fr_0.6fr] gap-x-3 gap-y-1.5 items-center min-w-[640px]">
+                <HeaderCell>Month</HeaderCell>
+                <HeaderCell>Revenue</HeaderCell>
+                <HeaderCell>Cost of Goods Sold</HeaderCell>
+                <HeaderCell>Expenses</HeaderCell>
+                <HeaderCell>Gross Profit</HeaderCell>
+                <HeaderCell>Net Profit</HeaderCell>
+                <HeaderCell>NP %</HeaderCell>
                 {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
                   <FragmentRow
                     key={m}
                     month={m}
                     revenue={revenueByMonth[i] ?? undefined}
                     cogs={cogsByMonth[i] ?? undefined}
+                    expenses={expensesByMonth[i] ?? undefined}
                     onRevenueChange={(n) => setMonthValue('revenue', i, n)}
                     onCogsChange={(n) => setMonthValue('cogs', i, n)}
+                    onExpensesChange={(n) => setMonthValue('expenses', i, n)}
                   />
                 ))}
                 {/* Totals row */}
-                <div className="text-xs font-bold uppercase tracking-wider text-white pt-2 border-t border-line">
-                  Total
-                </div>
-                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
-                  {formatDollars(revenueTotal)}
-                </div>
-                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
-                  {formatDollars(cogsTotal)}
-                </div>
-                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                <TotalCell>Total</TotalCell>
+                <TotalCell>{formatDollars(revenueTotal)}</TotalCell>
+                <TotalCell>{formatDollars(cogsTotal)}</TotalCell>
+                <TotalCell>{formatDollars(expensesTotal)}</TotalCell>
+                <TotalCell>
                   {formatDollars(revenueTotal - cogsTotal)}
-                </div>
-                <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+                </TotalCell>
+                <TotalCell>
+                  {formatDollars(revenueTotal - cogsTotal - expensesTotal)}
+                </TotalCell>
+                <TotalCell>
                   {revenueTotal > 0
-                    ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                    ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
                     : '—'}
-                </div>
+                </TotalCell>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-line">
             <Derived
               label="YTD Gross Profit"
               value={formatDollars(revenueTotal - cogsTotal)}
@@ -695,9 +778,51 @@ function YtdActualsBody({
               }
               hint="Gross Profit ÷ Revenue"
             />
+            <Derived
+              label="YTD Net Profit"
+              value={formatDollars(
+                revenueTotal - cogsTotal - expensesTotal
+              )}
+              hint="Gross Profit − Expenses"
+            />
+            <Derived
+              label="YTD Net Profit %"
+              value={
+                revenueTotal > 0
+                  ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
+                  : '—'
+              }
+              hint="Net Profit ÷ Revenue"
+            />
           </div>
+          <RoundingNote />
         </>
       )}
+    </div>
+  )
+}
+
+function HeaderCell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-xs font-semibold uppercase tracking-wider text-white">
+      {children}
+    </div>
+  )
+}
+
+function TotalCell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-sm text-white font-semibold pt-2 border-t border-line">
+      {children}
+    </div>
+  )
+}
+
+function RoundingNote() {
+  return (
+    <div className="text-xs text-white italic pt-2">
+      Numbers are rounded to whole dollars; per-month figures may differ from
+      totals by a dollar or two.
     </div>
   )
 }
@@ -754,20 +879,27 @@ function FragmentRow({
   month,
   revenue,
   cogs,
+  expenses,
   onRevenueChange,
   onCogsChange,
+  onExpensesChange,
 }: {
   month: string
   revenue: number | undefined
   cogs: number | undefined
+  expenses: number | undefined
   onRevenueChange: (n: number | undefined) => void
   onCogsChange: (n: number | undefined) => void
+  onExpensesChange: (n: number | undefined) => void
 }) {
-  const hasAny = revenue !== undefined || cogs !== undefined
+  const hasAny =
+    revenue !== undefined || cogs !== undefined || expenses !== undefined
   const gpDollars = hasAny ? (revenue ?? 0) - (cogs ?? 0) : null
-  const gpPct =
-    revenue !== undefined && revenue > 0
-      ? ((revenue - (cogs ?? 0)) / revenue) * 100
+  const npDollars =
+    gpDollars === null ? null : gpDollars - (expenses ?? 0)
+  const npPct =
+    revenue !== undefined && revenue > 0 && npDollars !== null
+      ? (npDollars / revenue) * 100
       : null
   return (
     <>
@@ -786,11 +918,21 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} cost of goods sold`}
       />
+      <NumberField
+        value={expenses}
+        onChange={onExpensesChange}
+        format="dollars"
+        max={null}
+        ariaLabel={`${month} expenses`}
+      />
       <div className="text-sm text-white">
         {gpDollars === null ? '—' : formatDollars(gpDollars)}
       </div>
       <div className="text-sm text-white">
-        {gpPct === null ? '—' : `${gpPct.toFixed(1)}%`}
+        {npDollars === null ? '—' : formatDollars(npDollars)}
+      </div>
+      <div className="text-sm text-white">
+        {npPct === null ? '—' : `${npPct.toFixed(1)}%`}
       </div>
     </>
   )

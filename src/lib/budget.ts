@@ -48,11 +48,13 @@ export function emptyBudget(
     year,
     annual_revenue: null,
     cogs_target_pct: null,
+    annual_expenses: null,
     season_type: 'even',
     season_pct: [],
     ytd_thru_month: null,
     ytd_revenue_by_month: null,
     ytd_cogs_by_month: null,
+    ytd_expenses_by_month: null,
     goals: {},
     capacity_group_goals: {},
   }
@@ -82,6 +84,26 @@ export function annualCostOfGoodsDollars(
 export function costOfGoodsPct(grossProfitPct: number | null): number | null {
   if (grossProfitPct == null) return null
   return 100 - grossProfitPct
+}
+
+/** Annual Net Profit $ = Gross Profit $ − Expenses $. Null until both inputs
+ *  exist. */
+export function annualNetProfitDollars(
+  annualGpDollars: number | null,
+  annualExpenses: number | null
+): number | null {
+  if (annualGpDollars == null || annualExpenses == null) return null
+  return annualGpDollars - annualExpenses
+}
+
+/** Annual Net Profit % = Net Profit $ ÷ Revenue × 100. */
+export function annualNetProfitPct(
+  annualNpDollars: number | null,
+  annualRevenue: number | null
+): number | null {
+  if (annualNpDollars == null || annualRevenue == null || annualRevenue === 0)
+    return null
+  return (annualNpDollars / annualRevenue) * 100
 }
 
 // =============================================================================
@@ -179,6 +201,10 @@ export type MonthlyGoal = {
   grossProfit: number
   /** Computed margin in % (e.g. 55.0). */
   gpPct: number
+  expenses: number
+  netProfit: number
+  /** Computed Net Profit margin: NP$ ÷ Revenue × 100. 0 when revenue is 0. */
+  netProfitPct: number
 }
 
 export type BudgetView = {
@@ -190,39 +216,50 @@ export type BudgetView = {
   ytdGpActual: number
   ytdGpPlanned: number
   gpGap: number
+  ytdExpensesActual: number
+  ytdNetProfitActual: number
   /** Remaining-year totals — useful for the "Remaining revenue: $X across N months" line. */
   remainingMonths: number
   remainingRevenue: number
   remainingGrossProfit: number
+  remainingNetProfit: number
 }
 
 type ComputeArgs = {
   annualRevenue: number | null
   /** Gross Profit % (NOT cogs %) — matches the form input. */
   grossProfitPct: number | null
+  /** Annual operating expenses (below COGS). null when not yet entered. */
+  annualExpenses: number | null
   seasonType: SeasonType
   seasonPct: number[]
   /** -1 / null = no YTD set. */
   ytdThruMonth: number | null
   ytdRevenueByMonth: (number | null)[] | null
   ytdCogsByMonth: (number | null)[] | null
+  ytdExpensesByMonth: (number | null)[] | null
 }
 
 export function computeBudgetView(args: ComputeArgs): BudgetView | null {
   const {
     annualRevenue,
     grossProfitPct,
+    annualExpenses,
     seasonType,
     seasonPct,
     ytdThruMonth,
     ytdRevenueByMonth,
     ytdCogsByMonth,
+    ytdExpensesByMonth,
   } = args
 
   if (annualRevenue == null || grossProfitPct == null) return null
 
   const gpRate = grossProfitPct / 100
   const annualGp = annualRevenue * gpRate
+  // Expenses default to 0 when not yet entered, so Net Profit just collapses
+  // to Gross Profit. We surface a "—" in the UI when expenses is null.
+  const totalAnnualExpenses = annualExpenses ?? 0
 
   // Per-month share as fractions summing to 1 — the math uses these directly
   // so the per-month tiles always sum exactly to the annual targets. Even
@@ -250,14 +287,18 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
   const hasYtd = thru >= 0
   let ytdRevenueActual = 0
   let ytdGpActual = 0
+  let ytdExpensesActual = 0
   if (hasYtd) {
     for (let i = 0; i <= thru && i < 12; i++) {
       const r = Number(ytdRevenueByMonth?.[i] ?? 0)
       const c = Number(ytdCogsByMonth?.[i] ?? 0)
+      const e = Number(ytdExpensesByMonth?.[i] ?? 0)
       ytdRevenueActual += r
       ytdGpActual += r - c
+      ytdExpensesActual += e
     }
   }
+  const ytdNetProfitActual = ytdGpActual - ytdExpensesActual
 
   // Step 3: planned YTD = sum of baseline through thru.
   let ytdRevenuePlanned = 0
@@ -282,13 +323,22 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
 
   let remainingRevenueSum = 0
   let remainingGpSum = 0
+  let remainingNpSum = 0
   const months: MonthlyGoal[] = []
+
+  // Expenses are distributed by the same monthShare as revenue, but unlike GP
+  // they aren't auto-adjusted to close the YTD gap — they're an independent
+  // operating-cost target. Past months show actual expenses; future months
+  // show their share of the remaining annual expense pool.
+  const remainingAnnualExpenses = totalAnnualExpenses - ytdExpensesActual
 
   for (let i = 0; i < 12; i++) {
     if (i <= thru && hasYtd) {
       const r = Number(ytdRevenueByMonth?.[i] ?? 0)
       const c = Number(ytdCogsByMonth?.[i] ?? 0)
+      const e = Number(ytdExpensesByMonth?.[i] ?? 0)
       const gp = r - c
+      const np = gp - e
       months.push({
         monthIdx: i,
         isPast: true,
@@ -297,6 +347,9 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
         cogs: c,
         grossProfit: gp,
         gpPct: r > 0 ? (gp / r) * 100 : 0,
+        expenses: e,
+        netProfit: np,
+        netProfitPct: r > 0 ? (np / r) * 100 : 0,
       })
     } else {
       const weight =
@@ -306,6 +359,8 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
       const gp = remainingGpNeeded * weight
       const revenue = gpRate > 0 ? gp / gpRate : 0
       const cogs = revenue - gp
+      const expenses = remainingAnnualExpenses * weight
+      const np = gp - expenses
       const baseline = baselineRevenue[i]
       const isAdjusted = hasYtd && Math.abs(revenue - baseline) > 0.5
       months.push({
@@ -316,9 +371,13 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
         cogs,
         grossProfit: gp,
         gpPct: revenue > 0 ? (gp / revenue) * 100 : grossProfitPct,
+        expenses,
+        netProfit: np,
+        netProfitPct: revenue > 0 ? (np / revenue) * 100 : 0,
       })
       remainingRevenueSum += revenue
       remainingGpSum += gp
+      remainingNpSum += np
     }
   }
 
@@ -330,8 +389,11 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
     ytdGpActual,
     ytdGpPlanned,
     gpGap,
+    ytdExpensesActual,
+    ytdNetProfitActual,
     remainingMonths: futureIdxs.length,
     remainingRevenue: remainingRevenueSum || remainingRevenueNeeded,
     remainingGrossProfit: remainingGpSum || remainingGpNeeded,
+    remainingNetProfit: remainingNpSum,
   }
 }
