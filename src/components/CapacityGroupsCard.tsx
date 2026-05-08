@@ -1,8 +1,6 @@
-import { useMemo } from 'react'
 import {
   CAPACITY_METHODS,
   methodMeta,
-  methodsInUse,
   newCapacityGroup,
   newDepartment,
   newEmployee,
@@ -25,8 +23,6 @@ type Props = {
 }
 
 export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
-  const inUse = useMemo(() => methodsInUse(groups), [groups])
-
   // Read-only client view ----------------------------------------------------
   if (!coachView) {
     if (groups.length === 0) {
@@ -46,8 +42,21 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   }
 
   // ----- Coach edit view ----------------------------------------------------
+  /** Replace one field on one group. */
   const updateGroup = (id: string, patch: Partial<CapacityGroup>) => {
     onChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)))
+  }
+
+  /** Switching a group's tracking method clears method-specific fields and
+   * seeds fresh defaults for the new method (preserving the name + id). */
+  const changeMethod = (id: string, nextMethod: CapacityMethod) => {
+    onChange(
+      groups.map((g) => {
+        if (g.id !== id) return g
+        const fresh = newCapacityGroup(nextMethod)
+        return { ...fresh, id: g.id, name: g.name }
+      })
+    )
   }
 
   const removeGroup = (id: string) => {
@@ -55,87 +64,52 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
     if (!g) return
     if (
       !confirm(
-        `Remove the "${g.name || methodMeta(g.method).label} group"? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked.`
+        `Remove the "${g.name || methodMeta(g.method).label}" group? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked.`
       )
     )
       return
     onChange(groups.filter((x) => x.id !== id))
   }
 
-  const addGroupForMethod = (method: CapacityMethod) => {
-    onChange([...groups, newCapacityGroup(method)])
+  const addGroup = () => {
+    // Default to Labor Hours — the most common method. Coach can switch via
+    // the per-group method dropdown.
+    onChange([...groups, newCapacityGroup('labor')])
   }
-
-  // Group by method for the section headers
-  const sections: { method: CapacityMethod; groups: CapacityGroup[] }[] = []
-  for (const m of CAPACITY_METHODS) {
-    const subset = groups.filter((g) => g.method === m.value)
-    if (subset.length > 0) {
-      sections.push({ method: m.value, groups: subset })
-    }
-  }
-
-  const unusedMethods = CAPACITY_METHODS.filter((m) => !inUse.has(m.value))
 
   return (
-    <div className="space-y-5">
-      <p className="text-[11px] text-mute leading-relaxed">
-        Define teams or departments and how to track their utilization. Goals
-        for each capacity group are set in <strong>Budget &amp; Goals</strong>.
-      </p>
+    <div className="space-y-3">
+      <div className="flex justify-between items-start gap-3">
+        <p className="text-[11px] text-mute leading-relaxed">
+          Define teams or departments and how to track their utilization. Goals
+          for each capacity group are set in{' '}
+          <strong>Budget &amp; Goals</strong>.
+        </p>
+        <button
+          type="button"
+          onClick={addGroup}
+          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-[11px] hover:brightness-95 whitespace-nowrap shrink-0"
+        >
+          + Add Group
+        </button>
+      </div>
 
-      {sections.map((section) => {
-        const meta = methodMeta(section.method)
-        return (
-          <section key={section.method} className="space-y-2">
-            <header className="flex justify-between items-center pb-1.5 border-b border-line">
-              <div>
-                <div className="text-[10px] font-bold text-accent uppercase tracking-wider">
-                  {meta.label}
-                </div>
-                <div className="text-[10px] text-mute">{meta.description}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => addGroupForMethod(section.method)}
-                className="bg-accent text-black font-bold px-3 py-1 rounded text-[11px] hover:brightness-95"
-              >
-                + Add
-              </button>
-            </header>
-            <div className="space-y-2">
-              {section.groups.map((g) => (
-                <GroupPanel
-                  key={g.id}
-                  group={g}
-                  onChange={(patch) => updateGroup(g.id, patch)}
-                  onRemove={() => removeGroup(g.id)}
-                />
-              ))}
-            </div>
-          </section>
-        )
-      })}
-
-      {unusedMethods.length > 0 && (
-        <section>
-          <div className="text-[10px] font-semibold text-mute uppercase tracking-wider mb-2">
-            Add Tracking Method
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {unusedMethods.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => addGroupForMethod(m.value)}
-                title={m.description}
-                className="border border-line bg-transparent text-white px-3 py-1.5 rounded text-[11px] hover:bg-white/10"
-              >
-                + {m.label}
-              </button>
-            ))}
-          </div>
-        </section>
+      {groups.length === 0 ? (
+        <div className="bg-surface-2 rounded p-4 text-mute text-xs text-center">
+          No capacity groups yet. Click <strong>+ Add Group</strong> to start.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {groups.map((g) => (
+            <GroupPanel
+              key={g.id}
+              group={g}
+              onChange={(patch) => updateGroup(g.id, patch)}
+              onMethodChange={(m) => changeMethod(g.id, m)}
+              onRemove={() => removeGroup(g.id)}
+            />
+          ))}
+        </div>
       )}
     </div>
   )
@@ -148,15 +122,18 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
 function GroupPanel({
   group,
   onChange,
+  onMethodChange,
   onRemove,
 }: {
   group: CapacityGroup
   onChange: (patch: Partial<CapacityGroup>) => void
+  onMethodChange: (m: CapacityMethod) => void
   onRemove: () => void
 }) {
+  const meta = methodMeta(group.method)
   return (
     <div className="bg-[#0f0f0f] border border-accent/30 rounded-lg p-3 space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-[2fr_1.2fr] gap-3">
         <FieldGroup label="Department / Team Name">
           <input
             type="text"
@@ -166,9 +143,20 @@ function GroupPanel({
             className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
           />
         </FieldGroup>
-        <FieldGroup label="Method">
-          <div className="bg-surface-2 border border-line rounded text-mute text-sm px-3 py-2">
-            {methodMeta(group.method).label}
+        <FieldGroup label="Tracking Method">
+          <select
+            value={group.method}
+            onChange={(e) => onMethodChange(e.target.value as CapacityMethod)}
+            className="w-full bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+          >
+            {CAPACITY_METHODS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <div className="text-[10px] text-mute mt-1 leading-relaxed">
+            {meta.description}
           </div>
         </FieldGroup>
       </div>
