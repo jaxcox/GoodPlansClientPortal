@@ -67,7 +67,7 @@ function MonthTile({
   const label = MONTH_LABELS[month.monthIdx]
   return (
     <div
-      className={`bg-surface-2 rounded-lg p-3 border ${
+      className={`rounded-lg border overflow-hidden ${
         month.isPast
           ? 'border-line opacity-60'
           : month.isAdjusted
@@ -75,39 +75,44 @@ function MonthTile({
             : 'border-line'
       }`}
     >
-      <div className="flex justify-between items-baseline mb-2">
-        <div className="text-white text-sm font-bold">
+      {/* White header — month label */}
+      <div className="bg-white px-3 py-2 flex justify-between items-baseline border-b border-line">
+        <div className="text-black text-sm font-bold">
           {label}
           {month.isPast && ' ✓'}
         </div>
         {month.isAdjusted && !month.isPast && (
-          <div className="text-white text-xs font-semibold uppercase tracking-wider">
+          <div className="text-black text-xs font-semibold uppercase tracking-wider">
             Adjusted
           </div>
         )}
       </div>
-      <Row label="Income" value={formatDollars(month.revenue)} bold />
-      <hr className="border-line my-2" />
-      <Row
-        label="Gross Profit"
-        value={formatDollars(month.grossProfit)}
-        sub={`(${month.gpPct.toFixed(1)}%)`}
-        bold
-      />
-      <hr className="border-line my-2" />
-      <Row
-        label="Cost of Goods"
-        value={formatDollars(month.cogs)}
-        sub={`(${(100 - month.gpPct).toFixed(1)}%)`}
-      />
-      <hr className="border-line my-2" />
-      <Row label="Expenses" value={formatDollars(month.expenses)} />
-      <Row
-        label="Net Profit"
-        value={formatDollars(month.netProfit)}
-        sub={`(${month.netProfitPct.toFixed(1)}%)`}
-        bold
-      />
+
+      {/* Dark body — financial values */}
+      <div className="bg-surface-2 p-3">
+        <Row label="Income" value={formatDollars(month.revenue)} bold />
+        <hr className="border-line my-2" />
+        <Row
+          label="Gross Profit"
+          value={formatDollars(month.grossProfit)}
+          sub={`(${month.gpPct.toFixed(1)}%)`}
+          bold
+        />
+        <hr className="border-line my-2" />
+        <Row
+          label="Cost of Goods"
+          value={formatDollars(month.cogs)}
+          sub={`(${(100 - month.gpPct).toFixed(1)}%)`}
+        />
+        <hr className="border-line my-2" />
+        <Row label="Expenses" value={formatDollars(month.expenses)} />
+        <Row
+          label="Net Profit"
+          value={formatDollars(month.netProfit)}
+          sub={`(${month.netProfitPct.toFixed(1)}%)`}
+          bold
+        />
+      </div>
     </div>
   )
 }
