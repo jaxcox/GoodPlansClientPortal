@@ -12,7 +12,7 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
   if (!view) {
     return (
       <div className="text-white text-xs leading-relaxed">
-        Set <strong>Annual Revenue</strong> and{' '}
+        Set <strong>Income Target</strong> and{' '}
         <strong>Gross Profit %</strong> on the Targets tab to see your monthly
         financial goals here.
       </div>
@@ -25,7 +25,7 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <div className="text-white text-xs">
-          Remaining revenue to produce:{' '}
+          Remaining income to produce:{' '}
           <strong>{formatDollars(view.remainingRevenue)}</strong> across{' '}
           {view.remainingMonths} month
           {view.remainingMonths === 1 ? '' : 's'}
@@ -86,7 +86,7 @@ function MonthTile({
           </div>
         )}
       </div>
-      <Row label="Revenue" value={formatDollars(month.revenue)} bold />
+      <Row label="Income" value={formatDollars(month.revenue)} bold />
       <hr className="border-line my-2" />
       <Row
         label="Gross Profit"

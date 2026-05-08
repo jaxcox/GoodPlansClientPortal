@@ -25,7 +25,7 @@ export function BudgetStatusBanners({ view, hasYtdActuals }: Props) {
     <div className="space-y-2">
       <Banner
         kind={revenueBehind ? 'behind' : 'on'}
-        label="Revenue"
+        label="Income"
         planned={view.ytdRevenuePlanned}
         actual={view.ytdRevenueActual}
         gap={view.revenueGap}
