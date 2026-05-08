@@ -708,12 +708,6 @@ function YtdActualsBody({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-white leading-relaxed">
-        Year-to-date actuals from outside the portal — typically used when
-        you start coaching a client mid-year. Pick the most recent completed
-        month, then choose how to enter the numbers.
-      </p>
-
       <Labeled label="YTD Through">
         <select
           value={ytdThruMonth ?? 'none'}
@@ -846,8 +840,8 @@ function YtdActualsBody({
               <div className="grid grid-cols-[0.6fr_1.1fr_1.1fr_1.1fr_1.1fr_1fr_0.6fr] gap-x-3 gap-y-1.5 items-center min-w-[640px]">
                 <HeaderCell>Month</HeaderCell>
                 <HeaderCell>Income</HeaderCell>
-                <HeaderCell>Gross Profit</HeaderCell>
                 <HeaderCell>Cost of Goods Sold</HeaderCell>
+                <HeaderCell>Gross Profit</HeaderCell>
                 <HeaderCell>Expenses</HeaderCell>
                 <HeaderCell>Net Profit</HeaderCell>
                 <HeaderCell>NP %</HeaderCell>
@@ -863,14 +857,15 @@ function YtdActualsBody({
                     onExpensesChange={(n) => setMonthValue('expenses', i, n)}
                   />
                 ))}
-                {/* Totals row */}
-                <TotalCell>Total</TotalCell>
-                <TotalCell>{formatDollars(revenueTotal)}</TotalCell>
+                {/* Totals row — every cell outlined to match the per-row
+                    DerivedCell styling for visual consistency. */}
+                <DerivedTotal>Total</DerivedTotal>
+                <DerivedTotal>{formatDollars(revenueTotal)}</DerivedTotal>
+                <DerivedTotal>{formatDollars(cogsTotal)}</DerivedTotal>
                 <DerivedTotal>
                   {formatDollars(revenueTotal - cogsTotal)}
                 </DerivedTotal>
-                <TotalCell>{formatDollars(cogsTotal)}</TotalCell>
-                <TotalCell>{formatDollars(expensesTotal)}</TotalCell>
+                <DerivedTotal>{formatDollars(expensesTotal)}</DerivedTotal>
                 <DerivedTotal>
                   {formatDollars(revenueTotal - cogsTotal - expensesTotal)}
                 </DerivedTotal>
@@ -905,14 +900,6 @@ function DerivedBox({ value }: { value: string }) {
 function HeaderCell({ children }: { children: React.ReactNode }) {
   return (
     <div className="text-xs font-semibold uppercase tracking-wider text-white">
-      {children}
-    </div>
-  )
-}
-
-function TotalCell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-sm text-white font-semibold pt-2 border-t border-line">
       {children}
     </div>
   )
@@ -1031,9 +1018,6 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} revenue`}
       />
-      <DerivedCell>
-        {gpDollars === null ? '—' : formatDollars(gpDollars)}
-      </DerivedCell>
       <NumberField tone="light"
         value={cogs}
         onChange={onCogsChange}
@@ -1041,6 +1025,9 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} cost of goods sold`}
       />
+      <DerivedCell>
+        {gpDollars === null ? '—' : formatDollars(gpDollars)}
+      </DerivedCell>
       <NumberField tone="light"
         value={expenses}
         onChange={onExpensesChange}
