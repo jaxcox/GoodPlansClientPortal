@@ -121,3 +121,37 @@ export type Industry = {
   created_at: string
   updated_at: string
 }
+
+// =============================================================================
+// Budgets & Goals
+// =============================================================================
+
+export type SeasonType = 'even' | 'seasonal'
+
+export type CapacityGroupGoal = {
+  target: number
+  /** '%' = utilization target, '$' = weekly dollar capacity target. */
+  format: '%' | '$'
+}
+
+export type Budget = {
+  id: string
+  client_id: string
+  coach_id: string
+  year: number
+  annual_revenue: number | null
+  cogs_target_pct: number | null
+  season_type: SeasonType
+  /** 12 percentages summing to 100 in 'seasonal' mode; empty array in 'even'. */
+  season_pct: number[]
+  /** 0–11 (Jan = 0). null = no YTD actuals captured yet. */
+  ytd_thru_month: number | null
+  ytd_revenue_by_month: (number | null)[] | null
+  ytd_cogs_by_month: (number | null)[] | null
+  /** Per-KPI goal value, keyed by kpi id (standard or custom). */
+  goals: Record<string, number>
+  /** Keyed by capacity group id. */
+  capacity_group_goals: Record<string, CapacityGroupGoal>
+  created_at: string
+  updated_at: string
+}

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import type { Client } from '../lib/types'
 import { SettingsPage } from '../components/SettingsPage'
+import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
 
 type Props = {
   clientId: string
@@ -131,6 +132,18 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               }
             }}
           />
+        ) : tab === 'budget' ? (
+          <BudgetGoalsPage
+            clientId={clientId}
+            coachView={coachView}
+            onLeave={() => {
+              if (coachView && onBack) {
+                onBack()
+              } else {
+                setTab('dashboard')
+              }
+            }}
+          />
         ) : (
           <Body tab={tab} />
         )}
@@ -177,7 +190,7 @@ function Body({ tab }: { tab: NavTab }) {
   const subtitles: Record<NavTab, string> = {
     dashboard: 'No entries yet — Weekly Dashboard lands in Phase 5.',
     entry: 'Weekly Entry form lands in Phase 5.',
-    budget: 'Budget & Goals lands in Phase 4.',
+    budget: '',
     history: 'History view lands in Phase 7.',
     settings: '',
   }
