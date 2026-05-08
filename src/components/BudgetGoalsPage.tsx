@@ -406,8 +406,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
       {budgetTab === 'targets' ? (
         <>
-      {/* Row 1: Annual Targets + Monthly Distribution side-by-side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Row 1: Left col [Annual Targets, Monthly Distribution] | Right col [YTD Actuals] */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="space-y-4">
       {/* Annual Targets */}
       <Card title="Annual Targets">
         <div className="space-y-4">
@@ -529,9 +530,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         )}
       </Card>
       </div>
-      {/* end Row 1 grid */}
+      {/* end left column */}
 
-      {/* YTD actuals */}
+      {/* Right column: YTD Actuals */}
       <Card title="YTD Actuals">
         <YtdActualsBody
           ytdThruMonth={ytdThruMonth}
@@ -548,27 +549,30 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           seasonPct={seasonPct}
         />
       </Card>
+      </div>
+      {/* end Row 1 grid */}
 
       {/* Status banners (only when YTD actuals exist + targets are set) */}
       <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
 
-      {/* Per-KPI goals */}
-      <Card title="Key Performance Indicator Goals">
-        <KpiGoalsCard
-          client={client}
-          goals={kpiGoals}
-          onChange={setKpiGoals}
-        />
-      </Card>
+      {/* Row 2: KPI Goals + Capacity & Utilization side-by-side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <Card title="Key Performance Indicator Goals">
+          <KpiGoalsCard
+            client={client}
+            goals={kpiGoals}
+            onChange={setKpiGoals}
+          />
+        </Card>
 
-      {/* Capacity & Utilization. Editable by both coach and client. */}
-      <Card title="Capacity & Utilization Tracking">
-        <CapacityGroupsCard
-          groups={capacityGroups}
-          onChange={setCapacityGroups}
-          coachView={true}
-        />
-      </Card>
+        <Card title="Capacity & Utilization Tracking">
+          <CapacityGroupsCard
+            groups={capacityGroups}
+            onChange={setCapacityGroups}
+            coachView={true}
+          />
+        </Card>
+      </div>
         </>
       ) : (
         <Card title="Monthly Financial Goals">
