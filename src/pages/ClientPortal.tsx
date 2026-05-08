@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import type { Client } from '../lib/types'
+import { SettingsPage } from '../components/SettingsPage'
 
 type Props = {
   clientId: string
@@ -107,7 +108,11 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
       {/* Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
-        <Body tab={tab} />
+        {tab === 'settings' ? (
+          <SettingsPage clientId={clientId} coachView={coachView} />
+        ) : (
+          <Body tab={tab} />
+        )}
       </main>
 
       {/* Footer — brand mark per Doc 03 PC */}
@@ -153,7 +158,7 @@ function Body({ tab }: { tab: NavTab }) {
     entry: 'Weekly Entry form lands in Phase 5.',
     budget: 'Budget & Goals lands in Phase 4.',
     history: 'History view lands in Phase 7.',
-    settings: 'Settings lands in Phase 3.',
+    settings: '',
   }
   return (
     <section>
