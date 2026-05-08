@@ -39,11 +39,6 @@ export function CapacityGroupGoalsCard({ client, goals, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-white leading-relaxed">
-        Target for each capacity group from Settings. Manual % groups don't
-        have a separate goal — their static utilization is the value the
-        dashboard shows every week.
-      </p>
       {groups.map((g) => (
         <GoalRow
           key={g.id}
@@ -55,6 +50,8 @@ export function CapacityGroupGoalsCard({ client, goals, onChange }: Props) {
     </div>
   )
 }
+
+const CAPACITY_HINT = 'What is considered maximum capacity for this group'
 
 function GoalRow({
   group,
@@ -91,11 +88,14 @@ function GoalRow({
     return (
       <div className="bg-surface-2 border border-line rounded p-3">
         <div className="text-white text-sm font-bold mb-2">{name}</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-              Weekly Revenue Goal
-            </div>
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+            Capacity Goal
+          </div>
+          <div className="text-xs text-white italic mb-2">
+            {CAPACITY_HINT}
+          </div>
+          <div className="max-w-xs">
             <NumberField
               value={goal?.target}
               onChange={(n) =>
@@ -105,11 +105,8 @@ function GoalRow({
               }
               format="dollars"
               max={null}
-              ariaLabel={`Weekly revenue goal for ${name}`}
+              ariaLabel={`Capacity goal for ${name}`}
             />
-          </div>
-          <div className="text-white text-xs">
-            {meta?.description}
           </div>
         </div>
       </div>
@@ -120,21 +117,23 @@ function GoalRow({
   return (
     <div className="bg-surface-2 border border-line rounded p-3">
       <div className="text-white text-sm font-bold mb-2">{name}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-            Utilization Goal
-          </div>
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+          Capacity Goal
+        </div>
+        <div className="text-xs text-white italic mb-2">
+          {CAPACITY_HINT}
+        </div>
+        <div className="max-w-xs">
           <NumberField
             value={goal?.target}
             onChange={(n) =>
               onChange(n === undefined ? null : { target: n, format: '%' })
             }
             format="percent"
-            ariaLabel={`Utilization goal for ${name}`}
+            ariaLabel={`Capacity goal for ${name}`}
           />
         </div>
-        <div className="text-white text-xs">{meta?.description}</div>
       </div>
     </div>
   )
