@@ -44,10 +44,10 @@ export function CoachAdmin({ onViewPortal }: Props) {
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center">
         <div>
           <span className="text-base font-extrabold text-ink">{brandName}</span>
-          <span className="text-xs text-gray-500 ml-3">Admin Panel</span>
+          <span className="text-xs text-black ml-3">Admin Panel</span>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-gray-500">
+          <span className="text-black">
             {profile?.display_name ?? 'Coach'}
           </span>
           <button
@@ -101,7 +101,7 @@ function TabButton({
       className={`text-xs py-2.5 ${
         active
           ? 'font-bold text-ink border-b-2 border-accent -mb-px'
-          : 'text-gray-600'
+          : 'text-black'
       }`}
     >
       {children}
@@ -169,7 +169,7 @@ function ClientsTab({
       )}
 
       {clients === null ? (
-        <div className="bg-white border border-gray-200 rounded p-6 text-sm text-gray-500">
+        <div className="bg-white border border-gray-200 rounded p-6 text-sm text-black">
           Loading…
         </div>
       ) : visible.length === 0 ? (
@@ -226,8 +226,8 @@ function FilterButton({
       onClick={onClick}
       className={`px-3 py-1.5 ${
         active
-          ? 'bg-ink text-accent font-bold'
-          : 'bg-white text-gray-600 hover:bg-gray-50'
+          ? 'bg-ink text-white font-bold'
+          : 'bg-white text-black hover:bg-gray-50'
       }`}
     >
       {children} ({count})
@@ -242,7 +242,7 @@ function EmptyState({ filter }: { filter: ClientFilter }) {
       <div className="text-white font-bold text-sm mb-1">
         {filter === 'active' ? 'No active clients yet' : 'No archived clients'}
       </div>
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         {filter === 'active'
           ? 'Click “+ New Client” to add your first.'
           : 'Archived clients live here.'}
@@ -294,7 +294,7 @@ function ClientCard({
         <div className="text-white font-bold text-sm mb-1">
           {client.company_name}
         </div>
-        <div className="text-mute text-xs mb-2">
+        <div className="text-white text-xs mb-2">
           {[client.contact_name, client.email].filter(Boolean).join(' · ') ||
             '—'}
         </div>
@@ -336,7 +336,7 @@ function ClientCard({
             type="button"
             onClick={() => setArchived(false)}
             disabled={busy}
-            className="bg-transparent text-good border border-good text-[11px] font-bold px-3 py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-good text-[11px] font-bold px-3 py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
           >
             Restore
           </button>
@@ -345,7 +345,7 @@ function ClientCard({
             type="button"
             onClick={() => setArchived(true)}
             disabled={busy}
-            className="bg-transparent text-bad-soft border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
           >
             Archive
           </button>
@@ -364,20 +364,20 @@ function StatusPill({
 }) {
   if (archived) {
     return (
-      <span className="bg-line text-mute rounded px-2 py-0.5 text-[10px] font-semibold">
+      <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
         Archived
       </span>
     )
   }
   if (activated) {
     return (
-      <span className="bg-line text-good rounded px-2 py-0.5 text-[10px] font-semibold">
+      <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
         Active
       </span>
     )
   }
   return (
-    <span className="bg-line text-mute rounded px-2 py-0.5 text-[10px] font-semibold">
+    <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
       Pending
     </span>
   )

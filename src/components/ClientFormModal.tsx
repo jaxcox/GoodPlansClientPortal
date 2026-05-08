@@ -240,7 +240,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="text-white text-xl leading-none px-2 hover:text-mute"
+            className="text-white text-xl leading-none px-2 hover:text-white"
             aria-label="Close"
           >
             ×
@@ -276,10 +276,10 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
               Industry *
             </label>
             {industries === null ? (
-              <div className="text-mute text-xs italic">Loading…</div>
+              <div className="text-white text-xs italic">Loading…</div>
             ) : noIndustries ? (
               <div className="space-y-2">
-                <div className="text-xs text-gray-300 bg-line/40 border border-line rounded px-3 py-2 leading-relaxed">
+                <div className="text-xs text-black bg-line/40 border border-line rounded px-3 py-2 leading-relaxed">
                   No industries defined yet — create one to continue.
                 </div>
                 <button
@@ -307,7 +307,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
               </select>
             )}
             {isEdit && (
-              <div className="text-[10px] text-mute mt-1">
+              <div className="text-[10px] text-white mt-1">
                 Switching industries replaces the indicator toggles below with that industry's defaults.
               </div>
             )}
@@ -319,14 +319,14 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-white">
                   Key Performance Indicator Defaults
                 </label>
-                <span className="text-[10px] text-mute">
+                <span className="text-[10px] text-white">
                   {isEdit ? 'Override per client' : `Pulled from "${selectedIndustry.name}"`}
                 </span>
               </div>
               <div className="bg-surface-2 rounded p-3 space-y-3">
                 {groups.map((group) => (
                   <div key={group.category}>
-                    <div className="text-[10px] font-bold text-accent uppercase tracking-wider mb-1.5">
+                    <div className="text-[10px] font-bold text-white uppercase tracking-wider mb-1.5">
                       {group.category}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
@@ -342,7 +342,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
                   </div>
                 ))}
                 {kpiFeedback && (
-                  <div className="text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+                  <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
                     {kpiFeedback}
                   </div>
                 )}
@@ -351,7 +351,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           )}
 
           {error && (
-            <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+            <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
               {error}
             </div>
           )}
@@ -423,10 +423,10 @@ function Field({
         autoFocus={autoFocus}
         disabled={disabled}
         className={`w-full border border-line rounded text-sm px-3 py-2 focus:outline-none focus:border-accent ${
-          disabled ? 'bg-surface-1 text-mute cursor-not-allowed' : 'bg-surface-2 text-white'
+          disabled ? 'bg-surface-1 text-white cursor-not-allowed' : 'bg-surface-2 text-white'
         }`}
       />
-      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
     </div>
   )
 }

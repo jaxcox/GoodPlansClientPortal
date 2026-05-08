@@ -69,7 +69,7 @@ export function IndustriesPage() {
       <div className="flex justify-between items-start mb-1">
         <div>
           <h1 className="text-ink text-base font-bold">Custom Industries</h1>
-          <p className="text-gray-500 text-xs">
+          <p className="text-black text-xs">
             Define industries and their default Key Performance Indicator sets for new clients.
           </p>
         </div>
@@ -111,7 +111,7 @@ export function IndustriesPage() {
 
 function Loading() {
   return (
-    <div className="bg-white border border-gray-200 rounded p-6 text-sm text-gray-500">
+    <div className="bg-white border border-gray-200 rounded p-6 text-sm text-black">
       Loading…
     </div>
   )
@@ -124,7 +124,7 @@ function Empty() {
       <div className="text-white font-bold text-sm mb-1">
         No custom industries yet
       </div>
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         Add one to set default Key Performance Indicators for new clients in that industry.
       </div>
     </div>
@@ -184,7 +184,7 @@ function IndustryCard({
     <div className="bg-ink border border-line rounded-lg p-4 flex justify-between items-start gap-3">
       <div className="flex-1 min-w-0">
         <div className="text-white font-bold text-sm mb-1">{industry.name}</div>
-        <div className="text-mute text-[11px] mb-2">
+        <div className="text-white text-[11px] mb-2">
           {activeKpis.length} Key Performance Indicator{activeKpis.length === 1 ? '' : 's'} active by default
           {clientCount > 0 && ` · ${clientCount} client${clientCount === 1 ? '' : 's'}`}
         </div>
@@ -193,7 +193,7 @@ function IndustryCard({
             {byCategory.map(([cat, labels]) => (
               <span
                 key={cat}
-                className="bg-line text-accent rounded px-2 py-0.5 text-[10px] font-semibold"
+                className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold"
               >
                 {cat}: {labels.join(', ')}
               </span>
@@ -213,7 +213,7 @@ function IndustryCard({
           type="button"
           onClick={onDelete}
           disabled={busy}
-          className="bg-transparent text-bad-soft border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+          className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
         >
           Delete
         </button>
@@ -277,7 +277,7 @@ function IndustryEditor({
         <button
           type="button"
           onClick={onCancel}
-          className="bg-transparent text-gray-600 border border-gray-300 px-3 py-1.5 rounded text-xs hover:bg-gray-50"
+          className="bg-transparent text-black border border-gray-300 px-3 py-1.5 rounded text-xs hover:bg-gray-50"
         >
           ← Back
         </button>
@@ -302,11 +302,11 @@ function IndustryEditor({
             <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
               Key Performance Indicator Defaults for New Clients
             </div>
-            <div className="text-[10px] text-accent font-bold">
+            <div className="text-[10px] text-white font-bold">
               {activeCount} active
             </div>
           </div>
-          <p className="text-[11px] text-mute mb-3 leading-relaxed">
+          <p className="text-[11px] text-white mb-3 leading-relaxed">
             Revenue, COGS, Gross Profit, and GP Margin are always on for every
             client. Toggle the rest to set this industry's defaults.
           </p>
@@ -314,7 +314,7 @@ function IndustryEditor({
           <div className="space-y-4">
             {groups.map((group) => (
               <div key={group.category}>
-                <div className="text-[10px] font-bold text-accent uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
                   {group.category}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
@@ -331,14 +331,14 @@ function IndustryEditor({
             ))}
           </div>
           {feedback && (
-            <div className="mt-3 text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+            <div className="mt-3 text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
               {feedback}
             </div>
           )}
         </div>
 
         {error && (
-          <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+          <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
             {error}
           </div>
         )}

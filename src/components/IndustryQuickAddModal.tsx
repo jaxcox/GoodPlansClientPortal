@@ -87,7 +87,7 @@ export function IndustryQuickAddModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-white text-xl leading-none px-2 hover:text-mute"
+            className="text-white text-xl leading-none px-2 hover:text-white"
             aria-label="Close"
           >
             ×
@@ -113,17 +113,17 @@ export function IndustryQuickAddModal({
               <label className="block text-[10px] font-semibold uppercase tracking-wider text-white">
                 Key Performance Indicator Defaults for New Clients
               </label>
-              <span className="text-[10px] text-accent font-bold">
+              <span className="text-[10px] text-white font-bold">
                 {activeCount} active
               </span>
             </div>
-            <p className="text-[11px] text-mute mb-3 leading-relaxed">
+            <p className="text-[11px] text-white mb-3 leading-relaxed">
               Revenue, COGS, Gross Profit, and GP Margin are always on.
             </p>
             <div className="bg-surface-2 rounded p-3 space-y-3">
               {groups.map((group) => (
                 <div key={group.category}>
-                  <div className="text-[10px] font-bold text-accent uppercase tracking-wider mb-1.5">
+                  <div className="text-[10px] font-bold text-white uppercase tracking-wider mb-1.5">
                     {group.category}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
@@ -139,7 +139,7 @@ export function IndustryQuickAddModal({
                 </div>
               ))}
               {feedback && (
-                <div className="text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+                <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
                   {feedback}
                 </div>
               )}
@@ -147,7 +147,7 @@ export function IndustryQuickAddModal({
           </div>
 
           {error && (
-            <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+            <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
               {error}
             </div>
           )}

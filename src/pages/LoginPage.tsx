@@ -16,7 +16,7 @@ export function LoginPage() {
           <div className="text-2xl font-extrabold tracking-tight text-ink">
             The Good Plans Co
           </div>
-          <div className="text-sm text-mute mt-1">Client Performance Portal</div>
+          <div className="text-sm text-white mt-1">Client Performance Portal</div>
         </div>
 
         <div className="bg-ink rounded-xl p-6 shadow-xl">
@@ -51,8 +51,8 @@ function TabHead({
       onClick={onClick}
       className={`flex-1 py-2 text-xs font-bold tracking-wide ${
         active
-          ? 'text-accent border-b-2 border-accent -mb-px'
-          : 'text-mute'
+          ? 'text-white border-b-2 border-accent -mb-px'
+          : 'text-white'
       }`}
     >
       {children}
@@ -106,8 +106,8 @@ function SubTab({
       onClick={onClick}
       className={`flex-1 px-2 py-1.5 rounded text-[10px] font-bold border ${
         active
-          ? 'border-accent bg-accent/10 text-accent'
-          : 'border-line bg-transparent text-mute'
+          ? 'border-accent bg-accent/10 text-white'
+          : 'border-line bg-transparent text-white'
       }`}
     >
       {children}
@@ -246,7 +246,7 @@ function PasswordMatch({
   return (
     <div
       className={`text-xs -mt-2 ${
-        matches ? 'text-good' : 'text-bad-soft'
+        matches ? 'text-white' : 'text-white'
       }`}
     >
       {matches ? '✓ Passwords match' : "Passwords don't match"}
@@ -335,7 +335,7 @@ function Field({
               : 'off'
         }
       />
-      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
     </div>
   )
 }
@@ -346,7 +346,7 @@ function PasswordRequirement({ value }: { value: string }) {
   return (
     <div
       className={`text-xs -mt-2 ${
-        tooShort ? 'text-bad-soft' : ok ? 'text-good' : 'text-mute'
+        tooShort ? 'text-white' : ok ? 'text-white' : 'text-white'
       }`}
     >
       {ok ? '✓ ' : ''}Password must be at least 8 characters
@@ -357,7 +357,7 @@ function PasswordRequirement({ value }: { value: string }) {
 
 function ErrorBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+    <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
       {children}
     </div>
   )

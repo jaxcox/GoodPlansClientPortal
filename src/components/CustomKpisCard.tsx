@@ -85,7 +85,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
     const activeList = list.filter((k) => k.active !== false)
     if (activeList.length === 0) {
       return (
-        <div className="text-mute text-xs">
+        <div className="text-white text-xs">
           No custom Key Performance Indicators. Your coach can add custom metrics here.
         </div>
       )
@@ -104,13 +104,13 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
       <AddRow onAdd={addKpi} />
 
       {error && (
-        <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+        <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
           {error}
         </div>
       )}
 
       {list.length === 0 ? (
-        <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
+        <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
           No custom Key Performance Indicators. Add one above.
         </div>
       ) : (
@@ -278,13 +278,13 @@ function DisplayRow({
         <span className="text-white text-sm font-semibold truncate">
           {kpi.name}
         </span>
-        <span className="text-mute text-xs whitespace-nowrap">
+        <span className="text-white text-xs whitespace-nowrap">
           {kpi.category} · {formatLabel(kpi.format)}
         </span>
       </button>
       <span
         className={`text-[10px] font-bold whitespace-nowrap ${
-          kpi.direction === 'hi' ? 'text-good' : 'text-bad-soft'
+          kpi.direction === 'hi' ? 'text-white' : 'text-white'
         }`}
       >
         {kpi.direction === 'hi' ? 'Higher Better' : 'Lower Better'}
@@ -292,7 +292,7 @@ function DisplayRow({
       <button
         type="button"
         onClick={onDelete}
-        className="text-bad-soft text-base leading-none hover:bg-bad/10 px-1.5 py-0.5 rounded"
+        className="text-white text-base leading-none hover:bg-bad/10 px-1.5 py-0.5 rounded"
         aria-label={`Delete ${kpi.name}`}
         title={`Delete ${kpi.name}`}
       >
@@ -408,13 +408,13 @@ function ReadOnlyRow({ kpi }: { kpi: CustomKpi }) {
     <div className="bg-surface-2 rounded px-3 py-2 flex items-center justify-between gap-3">
       <div className="flex-1 min-w-0 flex items-center gap-3">
         <span className="text-white text-sm">{kpi.name}</span>
-        <span className="text-mute text-xs">
+        <span className="text-white text-xs">
           {kpi.category} · {formatLabel(kpi.format)}
         </span>
       </div>
       <span
         className={`text-[10px] font-bold ${
-          kpi.direction === 'hi' ? 'text-good' : 'text-bad-soft'
+          kpi.direction === 'hi' ? 'text-white' : 'text-white'
         }`}
       >
         {kpi.direction === 'hi' ? 'Higher Better' : 'Lower Better'}
@@ -482,9 +482,9 @@ function DirectionPill({
 }) {
   const toneClasses = active
     ? tone === 'good'
-      ? 'border-good bg-good/15 text-good'
-      : 'border-bad-soft bg-bad/15 text-bad-soft'
-    : 'border-line bg-transparent text-mute hover:text-white'
+      ? 'border-good bg-good/15 text-white'
+      : 'border-bad-soft bg-bad/15 text-white'
+    : 'border-line bg-transparent text-white hover:text-white'
   return (
     <button
       type="button"

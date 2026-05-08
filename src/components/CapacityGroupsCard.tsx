@@ -28,7 +28,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   if (!coachView) {
     if (groups.length === 0) {
       return (
-        <div className="text-mute text-xs">
+        <div className="text-white text-xs">
           Your coach hasn't set up capacity tracking for this portal yet.
         </div>
       )
@@ -82,7 +82,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-start gap-3">
-        <p className="text-[11px] text-mute leading-relaxed">
+        <p className="text-[11px] text-white leading-relaxed">
           Define teams or departments and how to track their utilization. Goals
           for each capacity group are set in{' '}
           <strong>Budget &amp; Goals</strong>.
@@ -97,7 +97,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
       </div>
 
       {groups.length === 0 ? (
-        <div className="bg-surface-2 rounded p-4 text-mute text-xs text-center">
+        <div className="bg-surface-2 rounded p-4 text-white text-xs text-center">
           No capacity groups yet. Click <strong>+ Add Group</strong> to start.
         </div>
       ) : (
@@ -161,7 +161,7 @@ function GroupPanel({
             ))}
           </select>
           {meta && (
-            <div className="text-[10px] text-mute mt-1 leading-relaxed">
+            <div className="text-[10px] text-white mt-1 leading-relaxed">
               {meta.description}
             </div>
           )}
@@ -171,7 +171,7 @@ function GroupPanel({
       {group.method ? (
         <MethodBody group={group} onChange={onChange} />
       ) : (
-        <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
+        <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
           Pick a tracking method above to continue.
         </div>
       )}
@@ -180,7 +180,7 @@ function GroupPanel({
         <button
           type="button"
           onClick={onRemove}
-          className="bg-transparent text-bad-soft border border-bad-soft text-[11px] font-bold px-3 py-1 rounded hover:bg-bad/10"
+          className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1 rounded hover:bg-bad/10"
         >
           Remove Group
         </button>
@@ -244,7 +244,7 @@ function ManualBody({
             ariaLabel="Static utilization percent"
           />
         </div>
-        <span className="text-mute text-xs">
+        <span className="text-white text-xs">
           shown every week until you change it
         </span>
       </div>
@@ -282,7 +282,7 @@ function SlotsBody({
           </button>
         ))}
       </div>
-      <div className="text-[10px] text-mute mt-1.5">
+      <div className="text-[10px] text-white mt-1.5">
         Slots filled and total slots are entered each week.
       </div>
     </FieldGroup>
@@ -328,7 +328,7 @@ function EmployeesBody({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
             {isLabor ? 'Employees' : 'Revenue Earners'}
           </div>
-          <div className="text-[11px] text-accent font-semibold">
+          <div className="text-[11px] text-white font-semibold">
             {isLabor
               ? `${totalCapacity} hrs/wk capacity`
               : `${formatDollars(totalCapacity)}/wk capacity`}
@@ -344,7 +344,7 @@ function EmployeesBody({
       </div>
 
       {employees.length === 0 ? (
-        <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
+        <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
           No rows yet — click + Add to start.
         </div>
       ) : (
@@ -368,7 +368,7 @@ function EmployeesBody({
 function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
   if (method === 'labor') {
     return (
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-mute">
+      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
         <div>Name</div>
         <div>Role</div>
         <div>Capacity Hrs/Wk</div>
@@ -378,7 +378,7 @@ function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
     )
   }
   return (
-    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-mute">
+    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
       <div>Name</div>
       <div>Role</div>
       <div>$ Cap/Wk</div>
@@ -467,7 +467,7 @@ function RemoveX({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label="Remove row"
-      className="text-bad-soft text-base leading-none w-6 hover:bg-bad/10 rounded"
+      className="text-white text-base leading-none w-6 hover:bg-bad/10 rounded"
     >
       ×
     </button>
@@ -518,7 +518,7 @@ function HeadcountBody({
             <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
               Departments
             </div>
-            <div className="text-[11px] text-accent font-semibold">
+            <div className="text-[11px] text-white font-semibold">
               {totalHeadcountCapacityHours(group)} hrs/wk capacity
             </div>
           </div>
@@ -532,12 +532,12 @@ function HeadcountBody({
         </div>
 
         {departments.length === 0 ? (
-          <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
+          <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
             No departments yet — click + Add to start.
           </div>
         ) : (
           <div className="space-y-1.5">
-            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-mute">
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
               <div>Department</div>
               <div>Full Time #</div>
               <div>Part Time #</div>
@@ -595,7 +595,7 @@ function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
           {group.name || titleFallback}
         </div>
         {meta && (
-          <div className="text-[10px] text-accent font-bold uppercase tracking-wider">
+          <div className="text-[10px] text-white font-bold uppercase tracking-wider">
             {meta.short}
           </div>
         )}
@@ -603,7 +603,7 @@ function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
       {meta ? (
         <ReadOnlySummary group={group} meta={meta} />
       ) : (
-        <div className="text-mute text-xs italic">
+        <div className="text-white text-xs italic">
           Tracking method not yet picked.
         </div>
       )}
@@ -620,21 +620,21 @@ function ReadOnlySummary({
 }) {
   if (meta.value === 'manual') {
     return (
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         Static utilization: <strong className="text-white">{group.staticUtilPct ?? '—'}%</strong>
       </div>
     )
   }
   if (meta.value === 'slots') {
     return (
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         Slot duration: <strong className="text-white">{group.slotDurationMinutes ?? 30} min</strong>
       </div>
     )
   }
   if (meta.value === 'labor') {
     return (
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         {group.employees?.length ?? 0} {(group.employees?.length ?? 0) === 1 ? 'person' : 'people'} ·{' '}
         <strong className="text-white">{totalCapacityHours(group)} hrs/wk</strong>{' '}
         capacity
@@ -643,7 +643,7 @@ function ReadOnlySummary({
   }
   if (meta.value === 'revenue') {
     return (
-      <div className="text-mute text-xs">
+      <div className="text-white text-xs">
         {group.employees?.length ?? 0} {(group.employees?.length ?? 0) === 1 ? 'person' : 'people'} ·{' '}
         <strong className="text-white">
           {formatDollars(totalRevenueCapacity(group))}/wk
@@ -654,7 +654,7 @@ function ReadOnlySummary({
   }
   // headcount
   return (
-    <div className="text-mute text-xs">
+    <div className="text-white text-xs">
       {group.departments?.length ?? 0} dept ·{' '}
       <strong className="text-white">{group.weeklyHoursPerFTE ?? 0} hrs/FTE</strong> ·{' '}
       <strong className="text-white">

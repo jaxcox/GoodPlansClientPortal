@@ -105,7 +105,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="text-white text-xl leading-none px-2 hover:text-mute"
+            className="text-white text-xl leading-none px-2 hover:text-white"
             aria-label="Close"
           >
             ×
@@ -114,7 +114,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
 
         {done ? (
           <div className="space-y-4">
-            <div className="text-good bg-good/10 border border-good/40 rounded px-3 py-2 text-sm">
+            <div className="text-white bg-good/10 border border-good/40 rounded px-3 py-2 text-sm">
               ✓ Password updated. Share it with the client however you usually
               do (text, email, in-call).
             </div>
@@ -130,7 +130,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-3">
-            <p className="text-mute text-xs leading-relaxed">
+            <p className="text-white text-xs leading-relaxed">
               Set a new password for <strong className="text-white">{client.email}</strong>.
               The old password stops working immediately.
             </p>
@@ -144,10 +144,10 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
             <div
               className={`text-xs -mt-2 ${
                 password.length === 0
-                  ? 'text-mute'
+                  ? 'text-white'
                   : longEnough
-                    ? 'text-good'
-                    : 'text-bad-soft'
+                    ? 'text-white'
+                    : 'text-white'
               }`}
             >
               {longEnough ? '✓ ' : ''}Password must be at least 8 characters
@@ -163,7 +163,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
             {confirm.length > 0 && password.length > 0 && (
               <div
                 className={`text-xs -mt-2 ${
-                  matches ? 'text-good' : 'text-bad-soft'
+                  matches ? 'text-white' : 'text-white'
                 }`}
               >
                 {matches ? '✓ Passwords match' : "Passwords don't match"}
@@ -171,7 +171,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
             )}
 
             {error && (
-              <div className="text-xs text-bad-soft bg-bad/10 border border-bad/40 rounded px-3 py-2">
+              <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
                 {error}
               </div>
             )}

@@ -254,14 +254,14 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   if (loadError) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-600">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-black">
         Couldn't load: {loadError}
       </div>
     )
   }
   if (!client) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-500">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-black">
         Loading…
       </div>
     )
@@ -273,7 +273,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
           <h1 className="text-lg font-bold text-ink">Budget &amp; Goals</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-black mt-0.5">
             Annual targets and how they're spread across the year. {year} budget.
           </p>
         </div>
@@ -334,7 +334,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
       {/* Monthly Distribution */}
       <Card title="Monthly Distribution">
-        <p className="text-[11px] text-mute leading-relaxed">
+        <p className="text-[11px] text-white leading-relaxed">
           How is your annual revenue spread across the year? Pick <em>Even</em>{' '}
           if it's roughly the same every month, or <em>Seasonal</em> to enter
           a per-month percentage.
@@ -524,7 +524,7 @@ function YtdActualsBody({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-mute leading-relaxed">
+      <p className="text-[11px] text-white leading-relaxed">
         Year-to-date actuals from outside the portal — typically used when
         you start coaching a client mid-year. Pick the most recent completed
         month, then enter the totals (or expand for per-month overrides).
@@ -589,7 +589,7 @@ function YtdActualsBody({
             <button
               type="button"
               onClick={() => setShowMonthly(!showMonthly)}
-              className="text-[11px] text-mute hover:text-white"
+              className="text-[11px] text-white hover:text-white"
             >
               {showMonthly ? '▾ Hide monthly breakdown' : '▸ Show monthly breakdown'}
             </button>
@@ -597,18 +597,18 @@ function YtdActualsBody({
 
           {showMonthly && (
             <div className="bg-surface-2 rounded p-3">
-              <div className="text-[10px] text-mute mb-2 leading-relaxed">
+              <div className="text-[10px] text-white mb-2 leading-relaxed">
                 Override individual months below. Editing a YTD total above
                 will warn before replacing your overrides.
               </div>
               <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-3 gap-y-1.5 items-center">
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-white">
                   Month
                 </div>
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-white">
                   Revenue
                 </div>
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-white">
                   Cost of Goods Sold
                 </div>
                 {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
@@ -683,7 +683,7 @@ function SaveBar({
       <button
         type="button"
         onClick={onCancel}
-        className="bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
+        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
       >
         Cancel
       </button>
@@ -750,11 +750,11 @@ function Derived({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-mute mb-1">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </div>
       <div className="text-white text-base font-semibold">{value}</div>
-      <div className="text-[10px] text-mute italic">{hint}</div>
+      <div className="text-[10px] text-white italic">{hint}</div>
     </div>
   )
 }
@@ -788,7 +788,7 @@ function SeasonalSum({ sum }: { sum: number }) {
   return (
     <div
       className={`mt-3 text-xs font-semibold ${
-        ok ? 'text-good' : 'text-bad-soft'
+        ok ? 'text-white' : 'text-white'
       }`}
     >
       {ok ? '✓ ' : ''}Sum of months: {sum.toFixed(1)}%
@@ -805,8 +805,8 @@ function PhaseStub({
   summary: string
 }) {
   return (
-    <div className="bg-surface-2 border border-line rounded p-4 text-mute text-xs leading-relaxed">
-      <div className="text-accent font-bold uppercase tracking-wider text-[10px] mb-1">
+    <div className="bg-surface-2 border border-line rounded p-4 text-white text-xs leading-relaxed">
+      <div className="text-white font-bold uppercase tracking-wider text-[10px] mb-1">
         {phase}
       </div>
       {summary}

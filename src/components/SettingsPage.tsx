@@ -204,14 +204,14 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 
   if (loadError) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-600">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-black">
         Couldn't load: {loadError}
       </div>
     )
   }
   if (!client) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-500">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm text-black">
         Loading…
       </div>
     )
@@ -226,7 +226,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         <div>
           <h1 className="text-lg font-bold text-ink">Company Settings</h1>
           {!coachView && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-black mt-0.5">
               You can update your company details below. Your coach manages the
               rest.
             </p>
@@ -302,17 +302,17 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 </option>
               </select>
             ) : (
-              <div className="bg-surface-1 border border-line rounded text-mute text-sm px-3 py-2">
+              <div className="bg-surface-1 border border-line rounded text-white text-sm px-3 py-2">
                 {industries?.find((i) => i.id === industryId)?.name ?? '—'}
               </div>
             )}
             {canEditAll && (
-              <div className="text-[10px] text-mute mt-1">
+              <div className="text-[10px] text-white mt-1">
                 Switching industry replaces the indicator toggles on the right.
               </div>
             )}
             {!canEditAll && (
-              <div className="text-[10px] text-mute mt-1">
+              <div className="text-[10px] text-white mt-1">
                 Coach manages your industry assignment.
               </div>
             )}
@@ -321,11 +321,11 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 
         <Card title="Active Key Performance Indicators">
           {!canEditAll && (
-            <div className="text-xs text-mute -mt-1 mb-2">
+            <div className="text-xs text-white -mt-1 mb-2">
               Coach manages which Key Performance Indicators your portal tracks.
             </div>
           )}
-          <div className="text-[11px] text-mute mb-3 leading-relaxed">
+          <div className="text-[11px] text-white mb-3 leading-relaxed">
             Revenue, COGS, Gross Profit, and GP Margin are always on.
           </div>
 
@@ -409,7 +409,7 @@ function SaveBar({
       <button
         type="button"
         onClick={onCancel}
-        className="bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
+        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
       >
         Cancel
       </button>
@@ -481,7 +481,7 @@ function SharedFolderRow({
             </a>
           )}
         </div>
-        <div className="text-[10px] text-mute mt-1">
+        <div className="text-[10px] text-white mt-1">
           Clients see this as a "Shared Folder" button — they don't see the URL.
         </div>
       </div>
@@ -502,7 +502,7 @@ function SharedFolderRow({
           Open Shared Folder ↗
         </a>
       ) : (
-        <div className="bg-surface-1 border border-line rounded text-mute text-sm px-3 py-2">
+        <div className="bg-surface-1 border border-line rounded text-white text-sm px-3 py-2">
           Your coach hasn't added a shared folder yet.
         </div>
       )}
@@ -542,10 +542,10 @@ function DarkField({
         required={required}
         disabled={disabled}
         className={`w-full border border-line rounded text-sm px-3 py-2 focus:outline-none focus:border-accent ${
-          disabled ? 'bg-surface-1 text-mute cursor-not-allowed' : 'bg-surface-2 text-white'
+          disabled ? 'bg-surface-1 text-white cursor-not-allowed' : 'bg-surface-2 text-white'
         }`}
       />
-      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
     </div>
   )
 }
@@ -565,7 +565,7 @@ function KpiTogglesGrouped({
     <div className="space-y-3">
       {groups.map((g) => (
         <div key={g.category}>
-          <div className="text-[10px] font-bold text-accent uppercase tracking-wider pb-1 mb-2 border-b border-line">
+          <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
             {g.category}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
@@ -581,7 +581,7 @@ function KpiTogglesGrouped({
         </div>
       ))}
       {feedback && (
-        <div className="text-[11px] text-accent bg-accent/10 border border-accent/40 rounded px-3 py-2">
+        <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
           {feedback}
         </div>
       )}
@@ -603,13 +603,13 @@ function KpiTogglesReadOnly({
         if (active.length === 0) return null
         return (
           <div key={g.category}>
-            <div className="text-[10px] font-bold text-accent uppercase tracking-wider pb-1 mb-2 border-b border-line">
+            <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
               {g.category}
             </div>
             <ul className="text-xs text-white space-y-1">
               {active.map((k) => (
                 <li key={k.id} className="flex items-center gap-2">
-                  <span className="text-good">✓</span> {k.label}
+                  <span className="text-white">✓</span> {k.label}
                 </li>
               ))}
             </ul>

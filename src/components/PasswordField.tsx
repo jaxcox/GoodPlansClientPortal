@@ -46,12 +46,12 @@ export function PasswordField({
           onClick={toggle}
           aria-label={show ? 'Hide password' : 'Show password'}
           title={show ? 'Hide password' : 'Show password'}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-mute hover:text-white p-1"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-white p-1"
         >
           {show ? <EyeOffIcon /> : <EyeIcon />}
         </button>
       </div>
-      {hint && <div className="text-[10px] text-mute mt-1">{hint}</div>}
+      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
     </div>
   )
 }

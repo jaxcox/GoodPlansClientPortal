@@ -41,10 +41,10 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-black">
         <div className="text-center">
           <div className="font-bold mb-2">Couldn't load client</div>
-          <div className="text-xs text-gray-500 mb-4">{error}</div>
+          <div className="text-xs text-black mb-4">{error}</div>
           {coachView && onBack && (
             <button
               type="button"
@@ -61,7 +61,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   if (!client) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-gray-500">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-black">
         Loading…
       </div>
     )
@@ -76,7 +76,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             {client.company_name}
           </span>
           {coachView && (
-            <span className="bg-ink text-accent border border-line rounded px-2 py-0.5 text-[10px] font-bold">
+            <span className="bg-ink text-white border border-line rounded px-2 py-0.5 text-[10px] font-bold">
               COACH VIEW
             </span>
           )}
@@ -150,7 +150,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
       </main>
 
       {/* Footer — brand mark per Doc 03 PC */}
-      <footer className="text-center text-[11px] text-gray-400 py-4">
+      <footer className="text-center text-[11px] text-black py-4">
         Powered by {coach?.brand_name ?? 'The Good Plans Co'}
       </footer>
     </div>
@@ -171,7 +171,7 @@ function NavLink({
       type="button"
       onClick={onClick}
       className={`px-2 py-0.5 ${
-        active ? 'font-bold text-ink border-b-2 border-accent' : 'text-gray-600'
+        active ? 'font-bold text-ink border-b-2 border-accent' : 'text-black'
       }`}
     >
       {children}
@@ -197,8 +197,8 @@ function Body({ tab }: { tab: NavTab }) {
   return (
     <section>
       <h1 className="text-lg font-bold text-ink mb-1">{titles[tab]}</h1>
-      <p className="text-sm text-gray-500 mb-6">{subtitles[tab]}</p>
-      <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-gray-500">
+      <p className="text-sm text-black mb-6">{subtitles[tab]}</p>
+      <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
         Coming soon.
       </div>
     </section>

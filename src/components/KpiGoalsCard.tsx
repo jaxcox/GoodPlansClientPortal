@@ -87,7 +87,7 @@ export function KpiGoalsCard({ client, goals, onChange }: Props) {
 
   if (totalRows === 0) {
     return (
-      <div className="text-mute text-xs leading-relaxed">
+      <div className="text-white text-xs leading-relaxed">
         No active indicators to set goals for. Toggle some on under{' '}
         <strong className="text-white">
           Settings → Active Key Performance Indicators
@@ -111,7 +111,7 @@ export function KpiGoalsCard({ client, goals, onChange }: Props) {
         if (!rows || rows.length === 0) return null
         return (
           <div key={cat}>
-            <div className="text-[10px] font-bold text-accent uppercase tracking-wider pb-1 mb-2 border-b border-line">
+            <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
               {cat}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
@@ -121,7 +121,7 @@ export function KpiGoalsCard({ client, goals, onChange }: Props) {
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
                       {row.label}
                     </div>
-                    <div className="text-[10px] text-mute italic whitespace-nowrap">
+                    <div className="text-[10px] text-white italic whitespace-nowrap">
                       {row.hint}
                     </div>
                   </div>

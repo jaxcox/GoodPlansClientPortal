@@ -77,7 +77,7 @@ export function NumberField({
   return (
     <div className="relative">
       {prefix && (
-        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-mute text-sm">
+        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-white text-sm">
           {prefix}
         </span>
       )}
@@ -93,7 +93,7 @@ export function NumberField({
         className={`w-full bg-surface-2 border border-line rounded text-white text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
       />
       {suffix && (
-        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-mute text-sm">
+        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white text-sm">
           {suffix}
         </span>
       )}
