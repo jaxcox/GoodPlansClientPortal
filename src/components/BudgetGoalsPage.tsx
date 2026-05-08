@@ -375,16 +375,19 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         <>
       {/* Annual Targets */}
       <Card title="Annual Targets">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Labeled label="Annual Revenue Target">
-            <NumberField
-              value={annualRevenue}
-              onChange={setAnnualRevenue}
-              format="dollars"
-              max={null}
-              ariaLabel="Annual revenue"
-            />
-          </Labeled>
+        {/* Row 1: Revenue */}
+        <Labeled label="Annual Revenue Target">
+          <NumberField
+            value={annualRevenue}
+            onChange={setAnnualRevenue}
+            format="dollars"
+            max={null}
+            ariaLabel="Annual revenue"
+          />
+        </Labeled>
+
+        {/* Row 2: Gross Profit */}
+        <SectionRow title="Gross Profit">
           <Labeled label="Gross Profit %">
             <NumberField
               value={grossProfitPct}
@@ -393,22 +396,15 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
               ariaLabel="Gross profit percent"
             />
           </Labeled>
-          <Labeled label="Annual Expenses">
-            <NumberField
-              value={annualExpenses}
-              onChange={setAnnualExpenses}
-              format="dollars"
-              max={null}
-              ariaLabel="Annual operating expenses"
-            />
-          </Labeled>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-line">
           <Derived
-            label="Annual Gross Profit"
+            label="Annual Gross Profit $"
             value={gpDollars !== null ? formatDollars(gpDollars) : '—'}
             hint="Revenue × Gross Profit %"
           />
+        </SectionRow>
+
+        {/* Row 3: Cost of Goods Sold */}
+        <SectionRow title="Cost of Goods Sold">
           <Derived
             label="Cost of Goods Sold %"
             value={cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—'}
@@ -419,8 +415,21 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
             value={cogsDollars !== null ? formatDollars(cogsDollars) : '—'}
             hint="Revenue − Gross Profit $"
           />
+        </SectionRow>
+
+        {/* Row 4: Net Profit (Expenses + derived NP $/NP%) */}
+        <SectionRow title="Net Profit" cols={3}>
+          <Labeled label="Annual Expenses">
+            <NumberField
+              value={annualExpenses}
+              onChange={setAnnualExpenses}
+              format="dollars"
+              max={null}
+              ariaLabel="Annual operating expenses"
+            />
+          </Labeled>
           <Derived
-            label="Annual Net Profit"
+            label="Annual Net Profit $"
             value={npDollars !== null ? formatDollars(npDollars) : '—'}
             hint="Gross Profit − Expenses"
           />
@@ -429,7 +438,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
             value={npPct !== null ? `${npPct.toFixed(1)}%` : '—'}
             hint="Net Profit ÷ Revenue"
           />
-        </div>
+        </SectionRow>
+
         <RoundingNote />
       </Card>
 
@@ -692,7 +702,8 @@ function YtdActualsBody({
           </Labeled>
 
           {entryMode === 'bulk' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-4">
+              {/* Row 1: Revenue */}
               <Labeled label="Revenue (YTD total)">
                 <NumberField
                   value={revenueTotal === 0 ? undefined : revenueTotal}
@@ -702,33 +713,84 @@ function YtdActualsBody({
                   ariaLabel="YTD revenue total"
                 />
               </Labeled>
-              <Labeled label="Cost of Goods Sold (YTD total)">
-                <NumberField
-                  value={cogsTotal === 0 ? undefined : cogsTotal}
-                  onChange={setBulkCogs}
-                  format="dollars"
-                  max={null}
-                  ariaLabel="YTD cost of goods sold total"
+
+              {/* Row 2: Gross Profit (derived) */}
+              <SectionRow title="Gross Profit">
+                <Derived
+                  label="YTD Gross Profit $"
+                  value={formatDollars(revenueTotal - cogsTotal)}
+                  hint="Revenue − Cost of Goods Sold"
                 />
-              </Labeled>
-              <Labeled label="Expenses (YTD total)">
-                <NumberField
-                  value={expensesTotal === 0 ? undefined : expensesTotal}
-                  onChange={setBulkExpenses}
-                  format="dollars"
-                  max={null}
-                  ariaLabel="YTD expenses total"
+                <Derived
+                  label="YTD Gross Profit %"
+                  value={
+                    revenueTotal > 0
+                      ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                      : '—'
+                  }
+                  hint="Gross Profit ÷ Revenue"
                 />
-              </Labeled>
+              </SectionRow>
+
+              {/* Row 3: Cost of Goods Sold (input) */}
+              <SectionRow title="Cost of Goods Sold">
+                <Labeled label="Cost of Goods Sold (YTD total)">
+                  <NumberField
+                    value={cogsTotal === 0 ? undefined : cogsTotal}
+                    onChange={setBulkCogs}
+                    format="dollars"
+                    max={null}
+                    ariaLabel="YTD cost of goods sold total"
+                  />
+                </Labeled>
+                <Derived
+                  label="Cost of Goods Sold % (of Revenue)"
+                  value={
+                    revenueTotal > 0
+                      ? `${((cogsTotal / revenueTotal) * 100).toFixed(1)}%`
+                      : '—'
+                  }
+                  hint="Cost of Goods Sold ÷ Revenue"
+                />
+              </SectionRow>
+
+              {/* Row 4: Net Profit (Expenses input + derived) */}
+              <SectionRow title="Net Profit" cols={3}>
+                <Labeled label="Expenses (YTD total)">
+                  <NumberField
+                    value={expensesTotal === 0 ? undefined : expensesTotal}
+                    onChange={setBulkExpenses}
+                    format="dollars"
+                    max={null}
+                    ariaLabel="YTD expenses total"
+                  />
+                </Labeled>
+                <Derived
+                  label="YTD Net Profit $"
+                  value={formatDollars(
+                    revenueTotal - cogsTotal - expensesTotal
+                  )}
+                  hint="Gross Profit − Expenses"
+                />
+                <Derived
+                  label="YTD Net Profit %"
+                  value={
+                    revenueTotal > 0
+                      ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
+                      : '—'
+                  }
+                  hint="Net Profit ÷ Revenue"
+                />
+              </SectionRow>
             </div>
           ) : (
             <div className="bg-[#0a0a0a] border border-line rounded p-3 overflow-x-auto">
               <div className="grid grid-cols-[0.6fr_1.1fr_1.1fr_1.1fr_1.1fr_1fr_0.6fr] gap-x-3 gap-y-1.5 items-center min-w-[640px]">
                 <HeaderCell>Month</HeaderCell>
                 <HeaderCell>Revenue</HeaderCell>
+                <HeaderCell>Gross Profit</HeaderCell>
                 <HeaderCell>Cost of Goods Sold</HeaderCell>
                 <HeaderCell>Expenses</HeaderCell>
-                <HeaderCell>Gross Profit</HeaderCell>
                 <HeaderCell>Net Profit</HeaderCell>
                 <HeaderCell>NP %</HeaderCell>
                 {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
@@ -746,11 +808,11 @@ function YtdActualsBody({
                 {/* Totals row */}
                 <TotalCell>Total</TotalCell>
                 <TotalCell>{formatDollars(revenueTotal)}</TotalCell>
-                <TotalCell>{formatDollars(cogsTotal)}</TotalCell>
-                <TotalCell>{formatDollars(expensesTotal)}</TotalCell>
                 <TotalCell>
                   {formatDollars(revenueTotal - cogsTotal)}
                 </TotalCell>
+                <TotalCell>{formatDollars(cogsTotal)}</TotalCell>
+                <TotalCell>{formatDollars(expensesTotal)}</TotalCell>
                 <TotalCell>
                   {formatDollars(revenueTotal - cogsTotal - expensesTotal)}
                 </TotalCell>
@@ -763,41 +825,34 @@ function YtdActualsBody({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-line">
-            <Derived
-              label="YTD Gross Profit"
-              value={formatDollars(revenueTotal - cogsTotal)}
-              hint="Revenue − Cost of Goods Sold"
-            />
-            <Derived
-              label="YTD GP Margin"
-              value={
-                revenueTotal > 0
-                  ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
-                  : '—'
-              }
-              hint="Gross Profit ÷ Revenue"
-            />
-            <Derived
-              label="YTD Net Profit"
-              value={formatDollars(
-                revenueTotal - cogsTotal - expensesTotal
-              )}
-              hint="Gross Profit − Expenses"
-            />
-            <Derived
-              label="YTD Net Profit %"
-              value={
-                revenueTotal > 0
-                  ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
-                  : '—'
-              }
-              hint="Net Profit ÷ Revenue"
-            />
-          </div>
           <RoundingNote />
         </>
       )}
+    </div>
+  )
+}
+
+function SectionRow({
+  title,
+  cols = 2,
+  children,
+}: {
+  title: string
+  cols?: 2 | 3
+  children: React.ReactNode
+}) {
+  return (
+    <div className="pt-3 border-t border-line">
+      <div className="text-xs font-bold uppercase tracking-wider text-white mb-2">
+        {title}
+      </div>
+      <div
+        className={`grid grid-cols-1 ${
+          cols === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+        } gap-4`}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -911,6 +966,9 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} revenue`}
       />
+      <div className="text-sm text-white">
+        {gpDollars === null ? '—' : formatDollars(gpDollars)}
+      </div>
       <NumberField
         value={cogs}
         onChange={onCogsChange}
@@ -925,9 +983,6 @@ function FragmentRow({
         max={null}
         ariaLabel={`${month} expenses`}
       />
-      <div className="text-sm text-white">
-        {gpDollars === null ? '—' : formatDollars(gpDollars)}
-      </div>
       <div className="text-sm text-white">
         {npDollars === null ? '—' : formatDollars(npDollars)}
       </div>

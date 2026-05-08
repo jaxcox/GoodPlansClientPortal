@@ -86,18 +86,28 @@ function MonthTile({
           </div>
         )}
       </div>
-      <Row label="Revenue" value={formatDollars(month.revenue)} />
+      <Row label="Revenue" value={formatDollars(month.revenue)} bold />
+      <hr className="border-line my-2" />
+      <Row
+        label="Gross Profit"
+        value={formatDollars(month.grossProfit)}
+        sub={`(${month.gpPct.toFixed(1)}%)`}
+        bold
+      />
+      <hr className="border-line my-2" />
       <Row
         label="Cost of Goods"
         value={formatDollars(month.cogs)}
         sub={`(${(100 - month.gpPct).toFixed(1)}%)`}
       />
-      <Row label="Expenses" value={formatDollars(month.expenses)} />
       <hr className="border-line my-2" />
-      <Row label="Gross Profit" value={formatDollars(month.grossProfit)} bold />
-      <Row label="GP %" value={`${month.gpPct.toFixed(1)}%`} bold />
-      <Row label="Net Profit" value={formatDollars(month.netProfit)} bold />
-      <Row label="NP %" value={`${month.netProfitPct.toFixed(1)}%`} bold />
+      <Row label="Expenses" value={formatDollars(month.expenses)} />
+      <Row
+        label="Net Profit"
+        value={formatDollars(month.netProfit)}
+        sub={`(${month.netProfitPct.toFixed(1)}%)`}
+        bold
+      />
     </div>
   )
 }
