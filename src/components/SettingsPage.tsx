@@ -5,6 +5,7 @@ import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
+import { CustomKpisCard } from './CustomKpisCard'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -339,11 +340,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         />
       </Card>
 
-      {/* ===== Row 3: Custom KPIs (stub for Phase 3.3) ===== */}
+      {/* ===== Row 3: Custom KPIs ===== */}
       <Card title="Custom KPIs">
-        <ComingSoon
-          phase="Phase 3.3"
-          summary="Add your own KPIs by name, category, format, and direction (higher / lower is better). Confirmation-on-delete with a cascade warning per Doc 04 PC #16."
+        <CustomKpisCard
+          client={client}
+          coachView={coachView}
+          onChange={(c) => setClient(c)}
         />
       </Card>
 

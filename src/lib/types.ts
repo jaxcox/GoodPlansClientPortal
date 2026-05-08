@@ -1,4 +1,14 @@
+import type { KpiCategory, KpiFormat, KpiDirection } from './kpis'
+
 export type UserRole = 'super_admin' | 'coach' | 'client'
+
+export type CustomKpi = {
+  id: string
+  name: string
+  category: KpiCategory
+  format: KpiFormat
+  direction: KpiDirection
+}
 
 export type Coach = {
   id: string
@@ -37,7 +47,7 @@ export type Client = {
   activated: boolean
   archived: boolean
   kpis: Record<string, number>
-  custom_kpis: unknown[]
+  custom_kpis: CustomKpi[]
   capacity_groups: unknown[]
   dashboard_order: unknown
   coach_note: string | null
