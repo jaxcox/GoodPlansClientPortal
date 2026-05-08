@@ -308,7 +308,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             )}
             {canEditAll && (
               <div className="text-[10px] text-mute mt-1">
-                Switching industry replaces the KPI toggles on the right.
+                Switching industry replaces the indicator toggles on the right.
               </div>
             )}
             {!canEditAll && (
@@ -319,10 +319,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           </div>
         </Card>
 
-        <Card title="Active KPIs">
+        <Card title="Active Key Performance Indicators">
           {!canEditAll && (
             <div className="text-xs text-mute -mt-1 mb-2">
-              Coach manages which KPIs your portal tracks.
+              Coach manages which Key Performance Indicators your portal tracks.
             </div>
           )}
           <div className="text-[11px] text-mute mb-3 leading-relaxed">
@@ -352,7 +352,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       </Card>
 
       {/* ===== Row 3: Custom KPIs ===== */}
-      <Card title="Custom KPIs">
+      <Card title="Custom Key Performance Indicators">
         <CustomKpisCard
           client={client}
           coachView={coachView}

@@ -88,9 +88,11 @@ export function KpiGoalsCard({ client, goals, onChange }: Props) {
   if (totalRows === 0) {
     return (
       <div className="text-mute text-xs leading-relaxed">
-        No active KPIs to set goals for. Toggle some on under{' '}
-        <strong className="text-white">Settings → Active KPIs</strong>, then
-        come back here to set their targets.
+        No active indicators to set goals for. Toggle some on under{' '}
+        <strong className="text-white">
+          Settings → Active Key Performance Indicators
+        </strong>
+        , then come back here to set their targets.
       </div>
     )
   }
@@ -104,14 +106,6 @@ export function KpiGoalsCard({ client, goals, onChange }: Props) {
 
   return (
     <div className="space-y-5">
-      <p className="text-[11px] text-mute leading-relaxed">
-        Each KPI's hint below tells you exactly what number to type.{' '}
-        <strong className="text-white">Monthly</strong> targets get pro-rated
-        to weekly on the dashboard;{' '}
-        <strong className="text-white">target percent</strong> and{' '}
-        <strong className="text-white">target value at any point</strong> are
-        used as-is. Leave blank if there's no goal.
-      </p>
       {CATEGORIES.map((cat) => {
         const rows = grouped.get(cat)
         if (!rows || rows.length === 0) return null

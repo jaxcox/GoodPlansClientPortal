@@ -72,7 +72,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
     // Doc 04 PC #16 will get the entry-count variant when Phase 5 lands.
     if (
       !confirm(
-        `Delete "${k.name}"? This custom KPI has no historical data yet, but if you re-add it later, it'll be a new KPI — old values won't return.`
+        `Delete "${k.name}"? This custom indicator has no historical data yet, but if you re-add it later, it'll be a new indicator — old values won't return.`
       )
     )
       return
@@ -86,7 +86,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
     if (activeList.length === 0) {
       return (
         <div className="text-mute text-xs">
-          No custom KPIs. Your coach can add custom metrics here.
+          No custom Key Performance Indicators. Your coach can add custom metrics here.
         </div>
       )
     }
@@ -111,7 +111,7 @@ export function CustomKpisCard({ client, coachView, onChange }: Props) {
 
       {list.length === 0 ? (
         <div className="bg-surface-2 rounded p-3 text-mute text-xs text-center">
-          No custom KPIs. Add one above.
+          No custom Key Performance Indicators. Add one above.
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -183,7 +183,7 @@ function AddRow({
       className="bg-surface-2 rounded p-3 space-y-3"
     >
       <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto] gap-2 items-end">
-        <FieldGroup label="KPI Name">
+        <FieldGroup label="Indicator Name">
           <input
             type="text"
             value={name}
@@ -336,7 +336,7 @@ function EditRow({
   return (
     <div className="bg-surface-2 rounded p-3 border border-accent/40 space-y-2.5">
       <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-2">
-        <FieldGroup label="KPI Name">
+        <FieldGroup label="Indicator Name">
           <input
             type="text"
             value={name}

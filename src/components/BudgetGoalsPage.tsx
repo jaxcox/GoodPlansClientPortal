@@ -390,7 +390,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       </Card>
 
       {/* Per-KPI goals */}
-      <Card title="KPI Goals">
+      <Card title="Key Performance Indicator Goals">
         <KpiGoalsCard
           client={client}
           goals={kpiGoals}

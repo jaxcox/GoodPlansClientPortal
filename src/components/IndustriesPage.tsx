@@ -70,7 +70,7 @@ export function IndustriesPage() {
         <div>
           <h1 className="text-ink text-base font-bold">Custom Industries</h1>
           <p className="text-gray-500 text-xs">
-            Define industries and their default KPI sets for new clients.
+            Define industries and their default Key Performance Indicator sets for new clients.
           </p>
         </div>
         <button
@@ -125,7 +125,7 @@ function Empty() {
         No custom industries yet
       </div>
       <div className="text-mute text-xs">
-        Add one to set default KPIs for new clients in that industry.
+        Add one to set default Key Performance Indicators for new clients in that industry.
       </div>
     </div>
   )
@@ -185,7 +185,7 @@ function IndustryCard({
       <div className="flex-1 min-w-0">
         <div className="text-white font-bold text-sm mb-1">{industry.name}</div>
         <div className="text-mute text-[11px] mb-2">
-          {activeKpis.length} KPI{activeKpis.length === 1 ? '' : 's'} active by default
+          {activeKpis.length} Key Performance Indicator{activeKpis.length === 1 ? '' : 's'} active by default
           {clientCount > 0 && ` · ${clientCount} client${clientCount === 1 ? '' : 's'}`}
         </div>
         {byCategory.length > 0 && (
@@ -300,7 +300,7 @@ function IndustryEditor({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
-              KPI Defaults for New Clients
+              Key Performance Indicator Defaults for New Clients
             </div>
             <div className="text-[10px] text-accent font-bold">
               {activeCount} active

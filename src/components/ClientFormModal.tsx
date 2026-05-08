@@ -308,7 +308,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             )}
             {isEdit && (
               <div className="text-[10px] text-mute mt-1">
-                Switching industries replaces the KPI toggles below with that industry's defaults.
+                Switching industries replaces the indicator toggles below with that industry's defaults.
               </div>
             )}
           </div>
@@ -317,7 +317,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-white">
-                  KPI Defaults
+                  Key Performance Indicator Defaults
                 </label>
                 <span className="text-[10px] text-mute">
                   {isEdit ? 'Override per client' : `Pulled from "${selectedIndustry.name}"`}
