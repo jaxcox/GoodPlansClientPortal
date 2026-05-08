@@ -5,7 +5,11 @@ import {
   annualCostOfGoodsDollars,
   annualGrossProfitDollars,
   costOfGoodsPct,
+  distributeAcrossMonths,
+  emptyMonthArray,
   evenSeasonPct,
+  looksAutoDistributed,
+  sumMonthsThru,
 } from '../lib/budget'
 import type { Budget, Client, SeasonType } from '../lib/types'
 import { NumberField } from './NumberField'
@@ -34,6 +38,17 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [seasonType, setSeasonType] = useState<SeasonType>('even')
   const [seasonPct, setSeasonPct] = useState<number[]>(evenSeasonPct())
 
+  // YTD actuals — Doc 08 PC: stored month-by-month, but the default UI is
+  // single totals + a thru-month picker; coach can expand the per-month grid.
+  const [ytdThruMonth, setYtdThruMonth] = useState<number | null>(null)
+  const [ytdRevenueByMonth, setYtdRevenueByMonth] = useState<
+    (number | null)[]
+  >(emptyMonthArray())
+  const [ytdCogsByMonth, setYtdCogsByMonth] = useState<(number | null)[]>(
+    emptyMonthArray()
+  )
+  const [showMonthlyBreakdown, setShowMonthlyBreakdown] = useState(false)
+
   // Save state -------------------------------------------------------------
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -52,6 +67,18 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         ? b.season_pct
         : evenSeasonPct()
     )
+    setYtdThruMonth(b?.ytd_thru_month ?? null)
+    setYtdRevenueByMonth(
+      b?.ytd_revenue_by_month && b.ytd_revenue_by_month.length === 12
+        ? b.ytd_revenue_by_month
+        : emptyMonthArray()
+    )
+    setYtdCogsByMonth(
+      b?.ytd_cogs_by_month && b.ytd_cogs_by_month.length === 12
+        ? b.ytd_cogs_by_month
+        : emptyMonthArray()
+    )
+    setShowMonthlyBreakdown(false)
     setSavedAt(null)
     setSaveError(null)
   }
@@ -98,14 +125,34 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     grossProfitPct === undefined ? null : 100 - grossProfitPct
 
   const isDirty = useMemo(() => {
+    const savedRevByMonth =
+      budget?.ytd_revenue_by_month && budget.ytd_revenue_by_month.length === 12
+        ? budget.ytd_revenue_by_month
+        : emptyMonthArray()
+    const savedCogsByMonth =
+      budget?.ytd_cogs_by_month && budget.ytd_cogs_by_month.length === 12
+        ? budget.ytd_cogs_by_month
+        : emptyMonthArray()
     return (
       (annualRevenue ?? null) !== (budget?.annual_revenue ?? null) ||
       draftCogsPct !== (budget?.cogs_target_pct ?? null) ||
       seasonType !== (budget?.season_type ?? 'even') ||
       JSON.stringify(seasonPct) !==
-        JSON.stringify(budget?.season_pct ?? evenSeasonPct())
+        JSON.stringify(budget?.season_pct ?? evenSeasonPct()) ||
+      ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
+      JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRevByMonth) ||
+      JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth)
     )
-  }, [budget, annualRevenue, draftCogsPct, seasonType, seasonPct])
+  }, [
+    budget,
+    annualRevenue,
+    draftCogsPct,
+    seasonType,
+    seasonPct,
+    ytdThruMonth,
+    ytdRevenueByMonth,
+    ytdCogsByMonth,
+  ])
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
   useEffect(() => {
@@ -176,6 +223,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       cogs_target_pct: draftCogsPct,
       season_type: seasonType,
       season_pct: seasonType === 'seasonal' ? seasonPct : [],
+      ytd_thru_month: ytdThruMonth,
+      ytd_revenue_by_month:
+        ytdThruMonth === null ? null : ytdRevenueByMonth,
+      ytd_cogs_by_month: ytdThruMonth === null ? null : ytdCogsByMonth,
     }
 
     const op = budget
@@ -314,11 +365,19 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         )}
       </Card>
 
-      {/* YTD actuals — Phase 4.3 */}
+      {/* YTD actuals */}
       <Card title="YTD Actuals">
-        <PhaseStub
-          phase="Phase 4.3"
-          summary="Month-by-month Revenue and Cost of Goods Sold actuals through a chosen month, so QTD math stays accurate when coaching starts mid-quarter (Doc 08 PC)."
+        <YtdActualsBody
+          ytdThruMonth={ytdThruMonth}
+          setYtdThruMonth={setYtdThruMonth}
+          revenueByMonth={ytdRevenueByMonth}
+          setRevenueByMonth={setYtdRevenueByMonth}
+          cogsByMonth={ytdCogsByMonth}
+          setCogsByMonth={setYtdCogsByMonth}
+          showMonthly={showMonthlyBreakdown}
+          setShowMonthly={setShowMonthlyBreakdown}
+          seasonType={seasonType}
+          seasonPct={seasonPct}
         />
       </Card>
 
@@ -355,6 +414,246 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 // =============================================================================
 // Helpers
 // =============================================================================
+
+function YtdActualsBody({
+  ytdThruMonth,
+  setYtdThruMonth,
+  revenueByMonth,
+  setRevenueByMonth,
+  cogsByMonth,
+  setCogsByMonth,
+  showMonthly,
+  setShowMonthly,
+  seasonType,
+  seasonPct,
+}: {
+  ytdThruMonth: number | null
+  setYtdThruMonth: (n: number | null) => void
+  revenueByMonth: (number | null)[]
+  setRevenueByMonth: (arr: (number | null)[]) => void
+  cogsByMonth: (number | null)[]
+  setCogsByMonth: (arr: (number | null)[]) => void
+  showMonthly: boolean
+  setShowMonthly: (b: boolean) => void
+  seasonType: SeasonType
+  seasonPct: number[]
+}) {
+  const enabled = ytdThruMonth !== null
+  const revenueTotal = sumMonthsThru(revenueByMonth, ytdThruMonth)
+  const cogsTotal = sumMonthsThru(cogsByMonth, ytdThruMonth)
+
+  const onThruMonthChange = (raw: string) => {
+    if (raw === '' || raw === 'none') {
+      setYtdThruMonth(null)
+      setRevenueByMonth(emptyMonthArray())
+      setCogsByMonth(emptyMonthArray())
+      setShowMonthly(false)
+      return
+    }
+    const next = Number(raw)
+    setYtdThruMonth(next)
+    // If shrinking the window, null out months past the new range.
+    if (revenueByMonth.some((v, i) => i > next && v != null)) {
+      const trimmed = revenueByMonth.map((v, i) => (i > next ? null : v))
+      setRevenueByMonth(trimmed)
+    }
+    if (cogsByMonth.some((v, i) => i > next && v != null)) {
+      const trimmed = cogsByMonth.map((v, i) => (i > next ? null : v))
+      setCogsByMonth(trimmed)
+    }
+  }
+
+  const setRevenueTotal = (n: number | undefined) => {
+    if (ytdThruMonth === null) return
+    if (n === undefined) {
+      setRevenueByMonth(emptyMonthArray())
+      return
+    }
+    if (
+      !looksAutoDistributed(revenueByMonth, ytdThruMonth) &&
+      !confirm(
+        'You have per-month overrides for Revenue. Replace them with an auto-distributed split based on this total?'
+      )
+    ) {
+      return
+    }
+    setRevenueByMonth(
+      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
+    )
+  }
+
+  const setCogsTotal = (n: number | undefined) => {
+    if (ytdThruMonth === null) return
+    if (n === undefined) {
+      setCogsByMonth(emptyMonthArray())
+      return
+    }
+    if (
+      !looksAutoDistributed(cogsByMonth, ytdThruMonth) &&
+      !confirm(
+        'You have per-month overrides for Cost of Goods Sold. Replace them with an auto-distributed split based on this total?'
+      )
+    ) {
+      return
+    }
+    setCogsByMonth(
+      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
+    )
+  }
+
+  const setMonthValue = (
+    which: 'revenue' | 'cogs',
+    idx: number,
+    value: number | undefined
+  ) => {
+    const arr = which === 'revenue' ? revenueByMonth : cogsByMonth
+    const next = [...arr]
+    next[idx] = value ?? null
+    if (which === 'revenue') setRevenueByMonth(next)
+    else setCogsByMonth(next)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[11px] text-mute leading-relaxed">
+        Year-to-date actuals from outside the portal — typically used when
+        you start coaching a client mid-year. Pick the most recent completed
+        month, then enter the totals (or expand for per-month overrides).
+      </p>
+
+      <Labeled label="YTD Through">
+        <select
+          value={ytdThruMonth ?? 'none'}
+          onChange={(e) => onThruMonthChange(e.target.value)}
+          className="w-48 bg-surface-2 border border-line rounded text-white text-sm px-3 py-2 focus:outline-none focus:border-accent"
+        >
+          <option value="none">— Pick one —</option>
+          {MONTH_LABELS.map((m, i) => (
+            <option key={m} value={i}>
+              End of {m}
+            </option>
+          ))}
+        </select>
+      </Labeled>
+
+      {enabled && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Labeled label="Revenue (YTD total)">
+              <NumberField
+                value={revenueTotal === 0 ? undefined : revenueTotal}
+                onChange={setRevenueTotal}
+                format="dollars"
+                max={null}
+                ariaLabel="YTD revenue total"
+              />
+            </Labeled>
+            <Labeled label="Cost of Goods Sold (YTD total)">
+              <NumberField
+                value={cogsTotal === 0 ? undefined : cogsTotal}
+                onChange={setCogsTotal}
+                format="dollars"
+                max={null}
+                ariaLabel="YTD cost of goods sold total"
+              />
+            </Labeled>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
+            <Derived
+              label="YTD Gross Profit"
+              value={formatDollars(revenueTotal - cogsTotal)}
+              hint="Revenue − Cost of Goods Sold"
+            />
+            <Derived
+              label="YTD GP Margin"
+              value={
+                revenueTotal > 0
+                  ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
+                  : '—'
+              }
+              hint="Gross Profit ÷ Revenue"
+            />
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowMonthly(!showMonthly)}
+              className="text-[11px] text-mute hover:text-white"
+            >
+              {showMonthly ? '▾ Hide monthly breakdown' : '▸ Show monthly breakdown'}
+            </button>
+          </div>
+
+          {showMonthly && (
+            <div className="bg-surface-2 rounded p-3">
+              <div className="text-[10px] text-mute mb-2 leading-relaxed">
+                Override individual months below. Editing a YTD total above
+                will warn before replacing your overrides.
+              </div>
+              <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-3 gap-y-1.5 items-center">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                  Month
+                </div>
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                  Revenue
+                </div>
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-mute">
+                  Cost of Goods Sold
+                </div>
+                {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
+                  <FragmentRow
+                    key={m}
+                    month={m}
+                    revenue={revenueByMonth[i] ?? undefined}
+                    cogs={cogsByMonth[i] ?? undefined}
+                    onRevenueChange={(n) => setMonthValue('revenue', i, n)}
+                    onCogsChange={(n) => setMonthValue('cogs', i, n)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function FragmentRow({
+  month,
+  revenue,
+  cogs,
+  onRevenueChange,
+  onCogsChange,
+}: {
+  month: string
+  revenue: number | undefined
+  cogs: number | undefined
+  onRevenueChange: (n: number | undefined) => void
+  onCogsChange: (n: number | undefined) => void
+}) {
+  return (
+    <>
+      <div className="text-white text-xs font-semibold">{month}</div>
+      <NumberField
+        value={revenue}
+        onChange={onRevenueChange}
+        format="dollars"
+        max={null}
+        ariaLabel={`${month} revenue`}
+      />
+      <NumberField
+        value={cogs}
+        onChange={onCogsChange}
+        format="dollars"
+        max={null}
+        ariaLabel={`${month} cost of goods sold`}
+      />
+    </>
+  )
+}
 
 function SaveBar({
   isDirty,

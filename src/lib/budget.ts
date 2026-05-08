@@ -83,3 +83,78 @@ export function costOfGoodsPct(grossProfitPct: number | null): number | null {
   if (grossProfitPct == null) return null
   return 100 - grossProfitPct
 }
+
+// =============================================================================
+// YTD actuals month-array helpers (Doc 08 PC: month-by-month storage)
+// =============================================================================
+
+export function emptyMonthArray(): (number | null)[] {
+  return Array(12).fill(null)
+}
+
+/** Sum of values from index 0 through `thruMonthInclusive` (0–11). */
+export function sumMonthsThru(
+  arr: (number | null)[] | null | undefined,
+  thruMonthInclusive: number | null
+): number {
+  if (!arr || thruMonthInclusive == null) return 0
+  let total = 0
+  for (let i = 0; i <= thruMonthInclusive && i < 12; i++) {
+    total += Number(arr[i] ?? 0)
+  }
+  return total
+}
+
+/** Spread a single total across months 0..thruMonthInclusive, weighted by
+ *  season_pct in 'seasonal' mode and split evenly otherwise. Months past the
+ *  YTD window are null. */
+export function distributeAcrossMonths(
+  total: number,
+  thruMonthInclusive: number,
+  seasonType: SeasonType,
+  seasonPct: number[]
+): (number | null)[] {
+  const out: (number | null)[] = Array(12).fill(null)
+  if (thruMonthInclusive < 0 || thruMonthInclusive > 11) return out
+
+  const useSeasonal =
+    seasonType === 'seasonal' &&
+    seasonPct.length === 12 &&
+    seasonPct.slice(0, thruMonthInclusive + 1).some((v) => v > 0)
+
+  if (useSeasonal) {
+    const coveredPct = seasonPct
+      .slice(0, thruMonthInclusive + 1)
+      .reduce((a, b) => a + b, 0)
+    if (coveredPct > 0) {
+      for (let i = 0; i <= thruMonthInclusive; i++) {
+        out[i] = +(total * (seasonPct[i] / coveredPct)).toFixed(2)
+      }
+      return out
+    }
+  }
+
+  // Even split fallback
+  const monthShare = +(total / (thruMonthInclusive + 1)).toFixed(2)
+  for (let i = 0; i <= thruMonthInclusive; i++) {
+    out[i] = monthShare
+  }
+  return out
+}
+
+/** Heuristic: did a coach manually edit a month, vs. accept the auto-distribute?
+ *  We treat the months as "evenly distributed" if every covered month has the
+ *  same value (within $0.50 tolerance for rounding) — anything else is treated
+ *  as overrides for the warn-before-overwrite UX. */
+export function looksAutoDistributed(
+  arr: (number | null)[] | null | undefined,
+  thruMonthInclusive: number | null
+): boolean {
+  if (!arr || thruMonthInclusive == null) return true
+  if (thruMonthInclusive < 0) return true
+  const first = arr[0] ?? 0
+  for (let i = 1; i <= thruMonthInclusive && i < 12; i++) {
+    if (Math.abs((arr[i] ?? 0) - first) > 0.5) return false
+  }
+  return true
+}
