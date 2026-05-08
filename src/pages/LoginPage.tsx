@@ -104,7 +104,7 @@ function SubTab({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 px-2 py-1.5 rounded text-[10px] font-bold border ${
+      className={`flex-1 px-2 py-1.5 rounded text-xs font-bold border ${
         active
           ? 'border-accent bg-accent/10 text-white'
           : 'border-line bg-transparent text-white'
@@ -316,7 +316,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </label>
       <input
@@ -335,7 +335,7 @@ function Field({
               : 'off'
         }
       />
-      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-white mt-1">{hint}</div>}
     </div>
   )
 }

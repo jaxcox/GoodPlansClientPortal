@@ -301,7 +301,7 @@ function ClientCard({
         <div className="flex flex-wrap gap-1.5">
           <StatusPill activated={client.activated} archived={client.archived} />
           {!client.activated && client.invite_code && (
-            <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-mono">
+            <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-mono">
               Code: {client.invite_code}
             </span>
           )}
@@ -311,7 +311,7 @@ function ClientCard({
         <button
           type="button"
           onClick={onEdit}
-          className="bg-transparent text-white border border-mute text-[11px] font-bold px-3 py-1.5 rounded hover:bg-white/10"
+          className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
         >
           Edit
         </button>
@@ -319,7 +319,7 @@ function ClientCard({
           <button
             type="button"
             onClick={onResetPassword}
-            className="bg-transparent text-white border border-mute text-[11px] font-bold px-3 py-1.5 rounded hover:bg-white/10"
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
           >
             Reset Password
           </button>
@@ -327,7 +327,7 @@ function ClientCard({
         <button
           type="button"
           onClick={onViewPortal}
-          className="bg-accent text-black text-[11px] font-bold px-3 py-1.5 rounded hover:brightness-95"
+          className="bg-accent text-black text-xs font-bold px-3 py-1.5 rounded hover:brightness-95"
         >
           View Portal
         </button>
@@ -336,7 +336,7 @@ function ClientCard({
             type="button"
             onClick={() => setArchived(false)}
             disabled={busy}
-            className="bg-transparent text-white border border-good text-[11px] font-bold px-3 py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-good text-xs font-bold px-3 py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
           >
             Restore
           </button>
@@ -345,7 +345,7 @@ function ClientCard({
             type="button"
             onClick={() => setArchived(true)}
             disabled={busy}
-            className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
           >
             Archive
           </button>
@@ -364,20 +364,20 @@ function StatusPill({
 }) {
   if (archived) {
     return (
-      <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
+      <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
         Archived
       </span>
     )
   }
   if (activated) {
     return (
-      <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
+      <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
         Active
       </span>
     )
   }
   return (
-    <span className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold">
+    <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
       Pending
     </span>
   )

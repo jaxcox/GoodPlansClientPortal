@@ -96,7 +96,7 @@ export function IndustryQuickAddModal({
 
         <form onSubmit={onSave} className="space-y-3">
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
               Industry Name *
             </label>
             <input
@@ -110,20 +110,20 @@ export function IndustryQuickAddModal({
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-white">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-white">
                 Key Performance Indicator Defaults for New Clients
               </label>
-              <span className="text-[10px] text-white font-bold">
+              <span className="text-xs text-white font-bold">
                 {activeCount} active
               </span>
             </div>
-            <p className="text-[11px] text-white mb-3 leading-relaxed">
+            <p className="text-xs text-white mb-3 leading-relaxed">
               Revenue, COGS, Gross Profit, and GP Margin are always on.
             </p>
             <div className="bg-surface-2 rounded p-3 space-y-3">
               {groups.map((group) => (
                 <div key={group.category}>
-                  <div className="text-[10px] font-bold text-white uppercase tracking-wider mb-1.5">
+                  <div className="text-xs font-bold text-white uppercase tracking-wider mb-1.5">
                     {group.category}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
@@ -139,7 +139,7 @@ export function IndustryQuickAddModal({
                 </div>
               ))}
               {feedback && (
-                <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
+                <div className="text-xs text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
                   {feedback}
                 </div>
               )}

@@ -82,7 +82,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-start gap-3">
-        <p className="text-[11px] text-white leading-relaxed">
+        <p className="text-xs text-white leading-relaxed">
           Define teams or departments and how to track their utilization. Goals
           for each capacity group are set in{' '}
           <strong>Budget &amp; Goals</strong>.
@@ -90,7 +90,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
         <button
           type="button"
           onClick={addGroup}
-          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-[11px] hover:brightness-95 whitespace-nowrap shrink-0"
+          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap shrink-0"
         >
           + Add Group
         </button>
@@ -161,7 +161,7 @@ function GroupPanel({
             ))}
           </select>
           {meta && (
-            <div className="text-[10px] text-white mt-1 leading-relaxed">
+            <div className="text-xs text-white mt-1 leading-relaxed">
               {meta.description}
             </div>
           )}
@@ -180,7 +180,7 @@ function GroupPanel({
         <button
           type="button"
           onClick={onRemove}
-          className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1 rounded hover:bg-bad/10"
+          className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1 rounded hover:bg-bad/10"
         >
           Remove Group
         </button>
@@ -282,7 +282,7 @@ function SlotsBody({
           </button>
         ))}
       </div>
-      <div className="text-[10px] text-white mt-1.5">
+      <div className="text-xs text-white mt-1.5">
         Slots filled and total slots are entered each week.
       </div>
     </FieldGroup>
@@ -325,10 +325,10 @@ function EmployeesBody({
     <div>
       <div className="flex justify-between items-end mb-2">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
+          <div className="text-xs font-semibold uppercase tracking-wider text-white">
             {isLabor ? 'Employees' : 'Revenue Earners'}
           </div>
-          <div className="text-[11px] text-white font-semibold">
+          <div className="text-xs text-white font-semibold">
             {isLabor
               ? `${totalCapacity} hrs/wk capacity`
               : `${formatDollars(totalCapacity)}/wk capacity`}
@@ -337,7 +337,7 @@ function EmployeesBody({
         <button
           type="button"
           onClick={addEmployeeRow}
-          className="bg-accent text-black font-bold px-3 py-1 rounded text-[11px] hover:brightness-95"
+          className="bg-accent text-black font-bold px-3 py-1 rounded text-xs hover:brightness-95"
         >
           + Add
         </button>
@@ -368,7 +368,7 @@ function EmployeesBody({
 function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
   if (method === 'labor') {
     return (
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
+      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
         <div>Name</div>
         <div>Role</div>
         <div>Capacity Hrs/Wk</div>
@@ -378,7 +378,7 @@ function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
     )
   }
   return (
-    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
+    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
       <div>Name</div>
       <div>Role</div>
       <div>$ Cap/Wk</div>
@@ -515,17 +515,17 @@ function HeadcountBody({
       <div>
         <div className="flex justify-between items-end mb-2">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
+            <div className="text-xs font-semibold uppercase tracking-wider text-white">
               Departments
             </div>
-            <div className="text-[11px] text-white font-semibold">
+            <div className="text-xs text-white font-semibold">
               {totalHeadcountCapacityHours(group)} hrs/wk capacity
             </div>
           </div>
           <button
             type="button"
             onClick={addDept}
-            className="bg-accent text-black font-bold px-3 py-1 rounded text-[11px] hover:brightness-95"
+            className="bg-accent text-black font-bold px-3 py-1 rounded text-xs hover:brightness-95"
           >
             + Add
           </button>
@@ -537,7 +537,7 @@ function HeadcountBody({
           </div>
         ) : (
           <div className="space-y-1.5">
-            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-[9px] font-semibold uppercase tracking-wider text-white">
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
               <div>Department</div>
               <div>Full Time #</div>
               <div>Part Time #</div>
@@ -595,7 +595,7 @@ function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
           {group.name || titleFallback}
         </div>
         {meta && (
-          <div className="text-[10px] text-white font-bold uppercase tracking-wider">
+          <div className="text-xs text-white font-bold uppercase tracking-wider">
             {meta.short}
           </div>
         )}
@@ -678,7 +678,7 @@ function FieldGroup({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </div>
       {children}

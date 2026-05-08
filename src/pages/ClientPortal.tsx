@@ -76,7 +76,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             {client.company_name}
           </span>
           {coachView && (
-            <span className="bg-ink text-white border border-line rounded px-2 py-0.5 text-[10px] font-bold">
+            <span className="bg-ink text-white border border-line rounded px-2 py-0.5 text-xs font-bold">
               COACH VIEW
             </span>
           )}
@@ -150,7 +150,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
       </main>
 
       {/* Footer — brand mark per Doc 03 PC */}
-      <footer className="text-center text-[11px] text-black py-4">
+      <footer className="text-center text-xs text-black py-4">
         Powered by {coach?.brand_name ?? 'The Good Plans Co'}
       </footer>
     </div>

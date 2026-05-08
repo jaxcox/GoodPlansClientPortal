@@ -231,7 +231,7 @@ function AddRow({
         </button>
       </div>
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
           Direction
         </div>
         <DirectionPicker value={direction} onChange={setDirection} />
@@ -283,7 +283,7 @@ function DisplayRow({
         </span>
       </button>
       <span
-        className={`text-[10px] font-bold whitespace-nowrap ${
+        className={`text-xs font-bold whitespace-nowrap ${
           kpi.direction === 'hi' ? 'text-white' : 'text-white'
         }`}
       >
@@ -373,7 +373,7 @@ function EditRow({
         </FieldGroup>
       </div>
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
           Direction
         </div>
         <DirectionPicker value={direction} onChange={setDirection} />
@@ -413,7 +413,7 @@ function ReadOnlyRow({ kpi }: { kpi: CustomKpi }) {
         </span>
       </div>
       <span
-        className={`text-[10px] font-bold ${
+        className={`text-xs font-bold ${
           kpi.direction === 'hi' ? 'text-white' : 'text-white'
         }`}
       >
@@ -436,7 +436,7 @@ function FieldGroup({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </div>
       {children}

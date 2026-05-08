@@ -29,7 +29,7 @@ export function PasswordField({
 
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </label>
       <div className="relative">
@@ -51,7 +51,7 @@ export function PasswordField({
           {show ? <EyeOffIcon /> : <EyeIcon />}
         </button>
       </div>
-      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-white mt-1">{hint}</div>}
     </div>
   )
 }

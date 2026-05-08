@@ -184,7 +184,7 @@ function IndustryCard({
     <div className="bg-ink border border-line rounded-lg p-4 flex justify-between items-start gap-3">
       <div className="flex-1 min-w-0">
         <div className="text-white font-bold text-sm mb-1">{industry.name}</div>
-        <div className="text-white text-[11px] mb-2">
+        <div className="text-white text-xs mb-2">
           {activeKpis.length} Key Performance Indicator{activeKpis.length === 1 ? '' : 's'} active by default
           {clientCount > 0 && ` · ${clientCount} client${clientCount === 1 ? '' : 's'}`}
         </div>
@@ -193,7 +193,7 @@ function IndustryCard({
             {byCategory.map(([cat, labels]) => (
               <span
                 key={cat}
-                className="bg-line text-white rounded px-2 py-0.5 text-[10px] font-semibold"
+                className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold"
               >
                 {cat}: {labels.join(', ')}
               </span>
@@ -205,7 +205,7 @@ function IndustryCard({
         <button
           type="button"
           onClick={onEdit}
-          className="bg-accent text-black text-[11px] font-bold px-3 py-1.5 rounded hover:brightness-95"
+          className="bg-accent text-black text-xs font-bold px-3 py-1.5 rounded hover:brightness-95"
         >
           Edit
         </button>
@@ -213,7 +213,7 @@ function IndustryCard({
           type="button"
           onClick={onDelete}
           disabled={busy}
-          className="bg-transparent text-white border border-bad-soft text-[11px] font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+          className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
         >
           Delete
         </button>
@@ -285,7 +285,7 @@ function IndustryEditor({
 
       <div className="bg-ink border border-line rounded-lg p-5 space-y-5">
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
             Industry Name
           </label>
           <input
@@ -299,14 +299,14 @@ function IndustryEditor({
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-white">
+            <div className="text-xs font-semibold uppercase tracking-wider text-white">
               Key Performance Indicator Defaults for New Clients
             </div>
-            <div className="text-[10px] text-white font-bold">
+            <div className="text-xs text-white font-bold">
               {activeCount} active
             </div>
           </div>
-          <p className="text-[11px] text-white mb-3 leading-relaxed">
+          <p className="text-xs text-white mb-3 leading-relaxed">
             Revenue, COGS, Gross Profit, and GP Margin are always on for every
             client. Toggle the rest to set this industry's defaults.
           </p>
@@ -314,7 +314,7 @@ function IndustryEditor({
           <div className="space-y-4">
             {groups.map((group) => (
               <div key={group.category}>
-                <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
                   {group.category}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
@@ -331,7 +331,7 @@ function IndustryEditor({
             ))}
           </div>
           {feedback && (
-            <div className="mt-3 text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
+            <div className="mt-3 text-xs text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
               {feedback}
             </div>
           )}

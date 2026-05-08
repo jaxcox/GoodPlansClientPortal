@@ -272,7 +272,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           />
 
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
               Industry *
             </label>
             {industries === null ? (
@@ -307,7 +307,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
               </select>
             )}
             {isEdit && (
-              <div className="text-[10px] text-white mt-1">
+              <div className="text-xs text-white mt-1">
                 Switching industries replaces the indicator toggles below with that industry's defaults.
               </div>
             )}
@@ -316,17 +316,17 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           {selectedIndustry && (
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-white">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-white">
                   Key Performance Indicator Defaults
                 </label>
-                <span className="text-[10px] text-white">
+                <span className="text-xs text-white">
                   {isEdit ? 'Override per client' : `Pulled from "${selectedIndustry.name}"`}
                 </span>
               </div>
               <div className="bg-surface-2 rounded p-3 space-y-3">
                 {groups.map((group) => (
                   <div key={group.category}>
-                    <div className="text-[10px] font-bold text-white uppercase tracking-wider mb-1.5">
+                    <div className="text-xs font-bold text-white uppercase tracking-wider mb-1.5">
                       {group.category}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
@@ -342,7 +342,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
                   </div>
                 ))}
                 {kpiFeedback && (
-                  <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
+                  <div className="text-xs text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
                     {kpiFeedback}
                   </div>
                 )}
@@ -412,7 +412,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </label>
       <input
@@ -426,7 +426,7 @@ function Field({
           disabled ? 'bg-surface-1 text-white cursor-not-allowed' : 'bg-surface-2 text-white'
         }`}
       />
-      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-white mt-1">{hint}</div>}
     </div>
   )
 }

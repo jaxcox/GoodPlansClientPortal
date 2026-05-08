@@ -281,7 +281,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             canEdit={canEditAll}
           />
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
               Industry {canEditAll && '*'}
             </label>
             {canEditAll ? (
@@ -307,12 +307,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               </div>
             )}
             {canEditAll && (
-              <div className="text-[10px] text-white mt-1">
+              <div className="text-xs text-white mt-1">
                 Switching industry replaces the indicator toggles on the right.
               </div>
             )}
             {!canEditAll && (
-              <div className="text-[10px] text-white mt-1">
+              <div className="text-xs text-white mt-1">
                 Coach manages your industry assignment.
               </div>
             )}
@@ -325,7 +325,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               Coach manages which Key Performance Indicators your portal tracks.
             </div>
           )}
-          <div className="text-[11px] text-white mb-3 leading-relaxed">
+          <div className="text-xs text-white mb-3 leading-relaxed">
             Revenue, COGS, Gross Profit, and GP Margin are always on.
           </div>
 
@@ -458,7 +458,7 @@ function SharedFolderRow({
   if (canEdit) {
     return (
       <div>
-        <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
           Shared Folder Link
         </label>
         <div className="flex gap-2">
@@ -481,7 +481,7 @@ function SharedFolderRow({
             </a>
           )}
         </div>
-        <div className="text-[10px] text-white mt-1">
+        <div className="text-xs text-white mt-1">
           Clients see this as a "Shared Folder" button — they don't see the URL.
         </div>
       </div>
@@ -489,7 +489,7 @@ function SharedFolderRow({
   }
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
         Shared Folder
       </label>
       {isLikelyUrl ? (
@@ -531,7 +531,7 @@ function DarkField({
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-white mb-1">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
         {label}
       </label>
       <input
@@ -545,7 +545,7 @@ function DarkField({
           disabled ? 'bg-surface-1 text-white cursor-not-allowed' : 'bg-surface-2 text-white'
         }`}
       />
-      {hint && <div className="text-[10px] text-white mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-white mt-1">{hint}</div>}
     </div>
   )
 }
@@ -565,7 +565,7 @@ function KpiTogglesGrouped({
     <div className="space-y-3">
       {groups.map((g) => (
         <div key={g.category}>
-          <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+          <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
             {g.category}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
@@ -581,7 +581,7 @@ function KpiTogglesGrouped({
         </div>
       ))}
       {feedback && (
-        <div className="text-[11px] text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
+        <div className="text-xs text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
           {feedback}
         </div>
       )}
@@ -603,7 +603,7 @@ function KpiTogglesReadOnly({
         if (active.length === 0) return null
         return (
           <div key={g.category}>
-            <div className="text-[10px] font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+            <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
               {g.category}
             </div>
             <ul className="text-xs text-white space-y-1">
