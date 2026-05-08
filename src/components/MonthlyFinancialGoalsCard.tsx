@@ -106,6 +106,7 @@ function MonthTile({
         />
         <hr className="border-line my-2" />
         <Row label="Expenses" value={formatDollars(month.expenses)} />
+        <hr className="border-line my-2" />
         <Row
           label="Net Profit"
           value={formatDollars(month.netProfit)}
