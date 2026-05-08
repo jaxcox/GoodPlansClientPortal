@@ -28,11 +28,7 @@ export function LoginPage() {
             </TabHead>
           </div>
 
-          {tab === 'coach' ? (
-            <CoachLoginForm />
-          ) : (
-            <ClientPanel onBackToCoach={() => setTab('coach')} />
-          )}
+          {tab === 'coach' ? <CoachLoginForm /> : <ClientPanel />}
         </div>
       </div>
     </div>
@@ -76,7 +72,7 @@ function CoachLoginForm() {
   )
 }
 
-function ClientPanel({ onBackToCoach }: { onBackToCoach: () => void }) {
+function ClientPanel() {
   const [sub, setSub] = useState<ClientSubTab>('existing')
   return (
     <>
@@ -90,14 +86,6 @@ function ClientPanel({ onBackToCoach }: { onBackToCoach: () => void }) {
       </div>
 
       {sub === 'existing' ? <ClientExistingForm /> : <ClientFirstTimeForm />}
-
-      <button
-        type="button"
-        onClick={onBackToCoach}
-        className="mt-4 w-full text-center text-mute hover:text-white text-[11px] py-1.5"
-      >
-        ← Back to Coach Login
-      </button>
     </>
   )
 }
