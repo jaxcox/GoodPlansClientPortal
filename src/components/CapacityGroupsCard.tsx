@@ -405,7 +405,7 @@ function EmployeeRow({
   onRemove: () => void
 }) {
   const textCell =
-    'bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-xs px-2 py-1.5 focus:outline-none focus:border-accent'
+    'bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-2 focus:outline-none focus:border-accent'
   if (method === 'labor') {
     return (
       <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 items-center">
@@ -560,7 +560,7 @@ function HeadcountBody({
                   value={d.name}
                   onChange={(e) => updateDept(d.id, { name: e.target.value })}
                   placeholder="Department"
-                  className="bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-xs px-2 py-1.5 focus:outline-none focus:border-accent"
+                  className="bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-2 focus:outline-none focus:border-accent"
                 />
                 <NumberField
                   value={d.fullTimeCount}
