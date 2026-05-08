@@ -83,7 +83,9 @@ export function NumberField({
   const fixText = tone === 'light' ? 'text-black' : 'text-white'
   // Light tone gets a thicker yellow ring so the "fillable" affordance reads
   // strongly against the dark card background.
-  const borderWidth = tone === 'light' ? 'border-4' : 'border'
+  const borderWidth = tone === 'light' ? 'border-2' : 'border'
+  const innerRing =
+    tone === 'light' ? 'ring-1 ring-inset ring-black' : ''
 
   return (
     <div className="relative">
@@ -103,7 +105,7 @@ export function NumberField({
         onFocus={handleFocus}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full ${inputClasses} ${borderWidth} border-accent rounded text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
+        className={`w-full ${inputClasses} ${borderWidth} border-accent ${innerRing} rounded text-sm py-2 ${padLeft} ${padRight} focus:outline-none focus:border-accent ${className}`}
       />
       {suffix && (
         <span
