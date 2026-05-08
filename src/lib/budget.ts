@@ -224,13 +224,25 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
   const gpRate = grossProfitPct / 100
   const annualGp = annualRevenue * gpRate
 
-  // Effective season percentages (length 12, summing to 100). Even mode is a
-  // flat 1/12 each. Seasonal mode uses the saved array if valid.
-  const effectivePct = effectiveSeasonPct(seasonType, seasonPct)
+  // Per-month share as fractions summing to 1 — the math uses these directly
+  // so the per-month tiles always sum exactly to the annual targets. Even
+  // mode is exactly 1/12 each (avoiding the 8.3/8.7 rounding artifact in
+  // evenSeasonPct, which is for *display*). Seasonal mode normalizes the
+  // saved percentages.
+  let monthShare: number[]
+  if (seasonType === 'seasonal' && seasonPct.length === 12) {
+    const total = seasonPct.reduce((a, b) => a + b, 0)
+    monthShare =
+      total > 0
+        ? seasonPct.map((p) => p / total)
+        : Array(12).fill(1 / 12)
+  } else {
+    monthShare = Array(12).fill(1 / 12)
+  }
 
-  // Step 1: baseline planned revenue per month from the season distribution.
-  const baselineRevenue: number[] = effectivePct.map(
-    (p) => annualRevenue * (p / 100)
+  // Step 1: baseline planned revenue per month.
+  const baselineRevenue: number[] = monthShare.map(
+    (s) => annualRevenue * s
   )
 
   // Step 2: actual YTD totals when the YTD window is set.
@@ -258,11 +270,11 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
   const gpGap = ytdGpActual - ytdGpPlanned
 
   // Step 4: build the per-month view, holding annual GP $ constant by
-  // distributing the remaining GP across future months by season weight.
+  // distributing the remaining GP across future months by share weight.
   const futureIdxs: number[] = []
   for (let i = thru + 1; i < 12; i++) futureIdxs.push(i)
-  const futurePctSum = futureIdxs.reduce(
-    (acc, i) => acc + effectivePct[i],
+  const futureShareSum = futureIdxs.reduce(
+    (acc, i) => acc + monthShare[i],
     0
   )
   const remainingGpNeeded = annualGp - ytdGpActual
@@ -288,8 +300,8 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
       })
     } else {
       const weight =
-        futurePctSum > 0 && futureIdxs.length > 0
-          ? effectivePct[i] / futurePctSum
+        futureShareSum > 0 && futureIdxs.length > 0
+          ? monthShare[i] / futureShareSum
           : 1 / Math.max(futureIdxs.length, 1)
       const gp = remainingGpNeeded * weight
       const revenue = gpRate > 0 ? gp / gpRate : 0
