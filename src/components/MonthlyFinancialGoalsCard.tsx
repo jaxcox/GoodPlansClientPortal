@@ -88,25 +88,25 @@ function MonthTile({
         )}
       </div>
 
-      {/* Dark body — financial values */}
-      <div className="bg-surface-2 p-3">
+      {/* Beige body — financial values */}
+      <div className="bg-beige p-3">
         <Row label="Income" value={formatDollars(month.revenue)} bold />
-        <hr className="border-line my-2" />
+        <hr className="border-black/20 my-2" />
         <Row
           label="Gross Profit"
           value={formatDollars(month.grossProfit)}
           sub={`(${month.gpPct.toFixed(1)}%)`}
           bold
         />
-        <hr className="border-line my-2" />
+        <hr className="border-black/20 my-2" />
         <Row
           label="Cost of Goods"
           value={formatDollars(month.cogs)}
           sub={`(${(100 - month.gpPct).toFixed(1)}%)`}
         />
-        <hr className="border-line my-2" />
+        <hr className="border-black/20 my-2" />
         <Row label="Expenses" value={formatDollars(month.expenses)} />
-        <hr className="border-line my-2" />
+        <hr className="border-black/20 my-2" />
         <Row
           label="Net Profit"
           value={formatDollars(month.netProfit)}
@@ -130,11 +130,11 @@ function Row({
   bold?: boolean
 }) {
   return (
-    <div className="flex justify-between items-baseline text-xs text-white leading-snug">
+    <div className="flex justify-between items-baseline text-xs text-black leading-snug">
       <div>{label}</div>
       <div className={bold ? 'font-bold' : ''}>
         {value}
-        {sub && <span className="ml-1 text-white">{sub}</span>}
+        {sub && <span className="ml-1 text-black">{sub}</span>}
       </div>
     </div>
   )
