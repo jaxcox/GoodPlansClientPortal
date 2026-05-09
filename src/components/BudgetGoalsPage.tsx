@@ -532,28 +532,28 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       </div>
       {/* end left column */}
 
-      {/* Right column: YTD Actuals */}
-      <Card title="YTD Actuals">
-        <YtdActualsBody
-          ytdThruMonth={ytdThruMonth}
-          setYtdThruMonth={setYtdThruMonth}
-          revenueByMonth={ytdRevenueByMonth}
-          setRevenueByMonth={setYtdRevenueByMonth}
-          cogsByMonth={ytdCogsByMonth}
-          setCogsByMonth={setYtdCogsByMonth}
-          expensesByMonth={ytdExpensesByMonth}
-          setExpensesByMonth={setYtdExpensesByMonth}
-          entryMode={ytdEntryMode}
-          setEntryMode={setYtdEntryMode}
-          seasonType={seasonType}
-          seasonPct={seasonPct}
-        />
-      </Card>
+      {/* Right column: YTD Actuals + status banners directly under it */}
+      <div className="space-y-4">
+        <Card title="YTD Actuals">
+          <YtdActualsBody
+            ytdThruMonth={ytdThruMonth}
+            setYtdThruMonth={setYtdThruMonth}
+            revenueByMonth={ytdRevenueByMonth}
+            setRevenueByMonth={setYtdRevenueByMonth}
+            cogsByMonth={ytdCogsByMonth}
+            setCogsByMonth={setYtdCogsByMonth}
+            expensesByMonth={ytdExpensesByMonth}
+            setExpensesByMonth={setYtdExpensesByMonth}
+            entryMode={ytdEntryMode}
+            setEntryMode={setYtdEntryMode}
+            seasonType={seasonType}
+            seasonPct={seasonPct}
+          />
+        </Card>
+        <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
+      </div>
       </div>
       {/* end Row 1 grid */}
-
-      {/* Status banners (only when YTD actuals exist + targets are set) */}
-      <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
 
       {/* Row 2: KPI Goals (full width) */}
       <Card title="Key Performance Indicator Goals">
