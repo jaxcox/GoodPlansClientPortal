@@ -16,11 +16,16 @@ type Row = {
   hint: string
 }
 
-/** Per-KPI hint text — answers "what number am I supposed to type here?". */
+/** Per-KPI hint text — answers "what number am I supposed to type here?".
+ *
+ *  Sum/$ KPI goals are stored as ANNUAL amounts and pro-rated by the dashboard
+ *  using the same season_pct distribution that drives monthly income targets.
+ *  Symmetric with the Income Target (also annual). */
 function goalHint(format: KpiFormat, aggregation: KpiAggregation): string {
-  // Sum: total per month — the dashboard prorates to weeks.
+  // Sum: annual total. Dashboard math: monthly = annual × monthShare,
+  // weekly = annual × monthShare × days/30.
   if (aggregation === 'sum') {
-    return format === '$' ? 'Monthly $ target' : 'Monthly target'
+    return format === '$' ? 'Annual $ target' : 'Annual target'
   }
   // Last: snapshot KPIs (pipeline, accounts receivable). Target is the
   // value you want the snapshot at, any given week.
