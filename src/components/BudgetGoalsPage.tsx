@@ -555,14 +555,16 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       </div>
       {/* end Row 1 grid */}
 
-      {/* Row 2: KPI Goals (full width) */}
-      <Card title="Key Performance Indicator Goals">
-        <KpiGoalsCard
-          client={client}
-          goals={kpiGoals}
-          onChange={setKpiGoals}
-        />
-      </Card>
+      {/* Row 2: KPI Goals (half width on lg+) */}
+      <div className="lg:w-1/2">
+        <Card title="Key Performance Indicator Goals">
+          <KpiGoalsCard
+            client={client}
+            goals={kpiGoals}
+            onChange={setKpiGoals}
+          />
+        </Card>
+      </div>
 
       {/* Row 3: Capacity & Utilization (full width — group panels with
           employee tables don't fit comfortably at half width). */}
