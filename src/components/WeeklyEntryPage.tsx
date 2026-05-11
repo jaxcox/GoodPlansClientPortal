@@ -536,8 +536,15 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                 const inputRows = (groupedRows.get(cat) ?? []).filter(
                   (r) => !r.derived
                 )
+                // Capacity groups in Team — Manual % groups are hidden
+                // on the left (no weekly input). All groups appear on
+                // the right as auto-calculated utilization rows.
                 const teamGroups =
-                  cat === 'Team' ? (client.capacity_groups ?? []) : []
+                  cat === 'Team'
+                    ? (client.capacity_groups ?? []).filter(
+                        (g) => g.method !== 'manual'
+                      )
+                    : []
                 if (inputRows.length === 0 && teamGroups.length === 0)
                   return null
                 return (
@@ -604,7 +611,12 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                 const derivedRows = (groupedRows.get(cat) ?? []).filter(
                   (r) => r.derived
                 )
-                if (derivedRows.length === 0) return null
+                // All capacity groups (including Manual %) get an
+                // auto-calculated utilization row under Team here.
+                const capacityRows =
+                  cat === 'Team' ? (client.capacity_groups ?? []) : []
+                if (derivedRows.length === 0 && capacityRows.length === 0)
+                  return null
                 return (
                   <div key={`R-${cat}`}>
                     <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
@@ -630,6 +642,24 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                           />
                         </div>
                       ))}
+                      {capacityRows.map((g) => {
+                        const v = computeLiveUtilization(
+                          g,
+                          capacityValues[g.id]
+                        )
+                        return (
+                          <div key={g.id} className="flex flex-col">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+                              {capacityUtilizationLabel(g)}
+                            </div>
+                            <DerivedKpiBox
+                              value={
+                                v === null ? '—' : `${v.toFixed(1)}%`
+                              }
+                            />
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -828,16 +858,12 @@ function CapacityGroupEntryBlock({
   values: WeeklyCapacityActual | undefined
   onChange: (next: WeeklyCapacityActual | undefined) => void
 }) {
-  const utilPct = computeLiveUtilization(group, values)
+  // The live utilization % is no longer in the block header — it lives in
+  // the right-side "Auto-calculated" card per category-split layout.
   return (
     <div className="bg-surface-2 rounded-lg p-3 space-y-3">
-      <div className="flex justify-between items-center gap-3">
-        <div className="text-white text-sm font-semibold">
-          {group.name || 'Untitled group'}
-        </div>
-        <div className="text-white text-sm font-bold whitespace-nowrap">
-          {utilPct === null ? '—' : `${utilPct.toFixed(1)}%`}
-        </div>
+      <div className="text-white text-sm font-semibold">
+        {group.name || 'Untitled group'}
       </div>
       <CapacityGroupBody
         group={group}
@@ -846,6 +872,19 @@ function CapacityGroupEntryBlock({
       />
     </div>
   )
+}
+
+/** Label for the auto-calculated utilization row on the right side of
+ *  Weekly Entry. Uses the group name, the word "Utilization", and (when
+ *  set) the "What's Being Measured" field — per user's spec:
+ *    Body Team Utilization — Labor Hours
+ *  If no measurable, drops the trailing qualifier. */
+function capacityUtilizationLabel(group: CapacityGroup): string {
+  const name = group.name?.trim() || 'Untitled group'
+  const measurable = group.measurable?.trim()
+  return measurable
+    ? `${name} Utilization — ${measurable}`
+    : `${name} Utilization`
 }
 
 function CapacityGroupBody({
