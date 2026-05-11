@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { generateInviteCode } from '../lib/inviteCode'
 import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
@@ -446,6 +447,33 @@ function ClientCard({
     onChange()
   }
 
+  const regenerateCode = async () => {
+    if (busy) return
+    if (
+      !confirm(
+        `Regenerate the invite code for ${client.company_name}? The current code (${client.invite_code ?? '—'}) will stop working immediately. The new code will appear on this card — share it with the client.`
+      )
+    )
+      return
+    setBusy(true)
+    const newCode = generateInviteCode()
+    const expires = new Date()
+    expires.setDate(expires.getDate() + 30)
+    const { error } = await supabase
+      .from('clients')
+      .update({
+        invite_code: newCode,
+        invite_code_expires_at: expires.toISOString(),
+      })
+      .eq('id', client.id)
+    setBusy(false)
+    if (error) {
+      alert(error.message)
+      return
+    }
+    onChange()
+  }
+
   return (
     <li className="bg-ink border border-line rounded-lg p-4 flex flex-col gap-3">
       <div className="min-w-0">
@@ -509,6 +537,16 @@ function ClientCard({
             className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
           >
             Reset Password
+          </button>
+        )}
+        {!client.activated && !client.archived && (
+          <button
+            type="button"
+            onClick={regenerateCode}
+            disabled={busy}
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
+          >
+            Regenerate Code
           </button>
         )}
         <button
