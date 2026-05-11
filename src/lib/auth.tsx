@@ -9,8 +9,14 @@ type AuthState = {
   profile: Profile | null
   coach: Coach | null
   loading: boolean
+  /** True while the user is signed in via a password-recovery link (i.e.
+   *  the email reset flow). App renders a "set new password" page while
+   *  this is true. Cleared by completePasswordRecovery once the user
+   *  picks a new password. */
+  isRecoverySession: boolean
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  completePasswordRecovery: () => void
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -20,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [coach, setCoach] = useState<Coach | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isRecoverySession, setIsRecoverySession] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -30,12 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!data.session) setLoading(false)
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession)
+      // Email password-recovery flow: Supabase fires PASSWORD_RECOVERY
+      // when the user lands via the reset email link. The app renders a
+      // "set new password" page until completePasswordRecovery() fires.
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoverySession(true)
+      }
       if (!newSession) {
         setProfile(null)
         setCoach(null)
         setLoading(false)
+        setIsRecoverySession(false)
       }
     })
 
@@ -101,9 +115,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const completePasswordRecovery = () => setIsRecoverySession(false)
+
   return (
     <AuthContext.Provider
-      value={{ session, profile, coach, loading, signInWithPassword, signOut }}
+      value={{
+        session,
+        profile,
+        coach,
+        loading,
+        isRecoverySession,
+        signInWithPassword,
+        signOut,
+        completePasswordRecovery,
+      }}
     >
       {children}
     </AuthContext.Provider>

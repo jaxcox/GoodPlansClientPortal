@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { PasswordField } from '../components/PasswordField'
@@ -265,6 +265,7 @@ function PasswordSignInForm({
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [forgotOpen, setForgotOpen] = useState(false)
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -285,6 +286,15 @@ function PasswordSignInForm({
         required
         autoComplete="current-password"
       />
+      <div className="-mt-1 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setForgotOpen(true)}
+          className="text-white text-xs underline hover:opacity-80"
+        >
+          Forgot password?
+        </button>
+      </div>
       {error && <ErrorBox>{error}</ErrorBox>}
       <button
         type="submit"
@@ -293,7 +303,153 @@ function PasswordSignInForm({
       >
         {submitting ? 'Signing in…' : submitLabel}
       </button>
+      <ForgotPasswordModal
+        open={forgotOpen}
+        defaultEmail={email}
+        onClose={() => setForgotOpen(false)}
+      />
     </form>
+  )
+}
+
+/** Forgot Password modal — asks for an email, calls Supabase's built-in
+ *  resetPasswordForEmail which sends the user a magic link. The link
+ *  brings them back to the portal with a recovery session; AuthProvider
+ *  detects PASSWORD_RECOVERY and App renders ResetPasswordRecoveryPage. */
+function ForgotPasswordModal({
+  open,
+  defaultEmail,
+  onClose,
+}: {
+  open: boolean
+  defaultEmail: string
+  onClose: () => void
+}) {
+  const [email, setEmail] = useState(defaultEmail)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+
+  // Seed with whatever the user already typed in the sign-in form.
+  useEffect(() => {
+    if (open) {
+      setEmail(defaultEmail)
+      setError(null)
+      setSent(false)
+      setSubmitting(false)
+    }
+  }, [open, defaultEmail])
+
+  // Esc to close.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    const trimmed = email.trim()
+    if (!trimmed) {
+      setError('Enter your email.')
+      return
+    }
+    setSubmitting(true)
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+      trimmed,
+      { redirectTo: window.location.origin }
+    )
+    setSubmitting(false)
+    if (resetErr) {
+      setError(resetErr.message)
+      return
+    }
+    setSent(true)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-sm my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-white text-base font-bold">Forgot password</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-white text-xl leading-none px-2"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="space-y-4">
+            <div className="text-white bg-good/10 border border-good/40 rounded px-3 py-2 text-sm">
+              ✓ Reset email sent. Check your inbox for{' '}
+              <strong className="text-white">{email}</strong> and follow
+              the link to set a new password.
+            </div>
+            <p className="text-white text-xs">
+              Didn't get it? Wait a minute, check your spam folder, then
+              try again. Make sure the email matches the one your coach
+              has on file.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-3">
+            <p className="text-white text-xs leading-relaxed">
+              Enter your account email. We'll send you a link to set a
+              new password.
+            </p>
+            <Field
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              required
+            />
+            {error && <ErrorBox>{error}</ErrorBox>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-transparent text-white border border-mute px-4 py-1.5 rounded text-xs font-semibold hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
+              >
+                {submitting ? 'Sending…' : 'Send reset email'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
   )
 }
 

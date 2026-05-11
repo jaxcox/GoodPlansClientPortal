@@ -5,6 +5,7 @@ import { CoachAdmin } from './pages/CoachAdmin'
 import { ClientPortal } from './pages/ClientPortal'
 import { supabaseConfigured } from './lib/supabase'
 import { DirtyGuardProvider } from './lib/dirtyGuard'
+import { ResetPasswordRecoveryPage } from './components/ResetPasswordRecoveryPage'
 
 export default function App() {
   return (
@@ -15,11 +16,17 @@ export default function App() {
 }
 
 function AppInner() {
-  const { session, profile, loading } = useAuth()
+  const { session, profile, loading, isRecoverySession } = useAuth()
   const [viewingClientId, setViewingClientId] = useState<string | null>(null)
 
   if (!supabaseConfigured) {
     return <SetupNeeded />
+  }
+
+  // Password-recovery email link landed the user here — show the new-password
+  // form before any normal routing, regardless of role.
+  if (isRecoverySession) {
+    return <ResetPasswordRecoveryPage />
   }
 
   if (loading) {
