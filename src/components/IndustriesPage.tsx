@@ -14,12 +14,16 @@ type Mode =
   | { kind: 'list' }
   | { kind: 'edit'; industry: Industry | null /* null = new */ }
 
+type IndustrySort = 'alpha-asc' | 'alpha-desc' | 'most-clients' | 'newest'
+
 export function IndustriesPage() {
   const { coach } = useAuth()
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
   const [industries, setIndustries] = useState<Industry[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [clientCounts, setClientCounts] = useState<Record<string, number>>({})
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<IndustrySort>('alpha-asc')
 
   const refresh = async () => {
     const [iRes, cRes] = await Promise.all([
@@ -48,6 +52,29 @@ export function IndustriesPage() {
     refresh()
   }, [])
 
+  const visible = useMemo(() => {
+    if (!industries) return null
+    const q = search.trim().toLowerCase()
+    const filtered = q
+      ? industries.filter((i) => i.name.toLowerCase().startsWith(q))
+      : industries
+    const list = [...filtered]
+    switch (sort) {
+      case 'alpha-asc':
+        return list.sort((a, b) => a.name.localeCompare(b.name))
+      case 'alpha-desc':
+        return list.sort((a, b) => b.name.localeCompare(a.name))
+      case 'most-clients':
+        return list.sort(
+          (a, b) =>
+            (clientCounts[b.id] ?? 0) - (clientCounts[a.id] ?? 0) ||
+            a.name.localeCompare(b.name)
+        )
+      case 'newest':
+        return list.sort((a, b) => b.created_at.localeCompare(a.created_at))
+    }
+  }, [industries, search, sort, clientCounts])
+
   if (!coach) return null
 
   if (mode.kind === 'edit') {
@@ -70,7 +97,7 @@ export function IndustriesPage() {
         <div>
           <h1 className="text-ink text-base font-bold">Custom Industries</h1>
           <p className="text-black text-xs">
-            Define industries and their default Key Performance Indicator sets for new clients.
+            Define industries and their default KPI sets for new clients.
           </p>
         </div>
         <button
@@ -88,21 +115,48 @@ export function IndustriesPage() {
         </div>
       )}
 
-      <div className="mt-4 space-y-2">
+      {industries && industries.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by industry name…"
+            className="flex-1 min-w-[12rem] max-w-sm bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as IndustrySort)}
+            aria-label="Sort industries"
+            className="select-yellow bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
+          >
+            <option value="alpha-asc">Sort: A → Z</option>
+            <option value="alpha-desc">Sort: Z → A</option>
+            <option value="most-clients">Sort: Most clients first</option>
+            <option value="newest">Sort: Newest first</option>
+          </select>
+        </div>
+      )}
+
+      <div className="mt-4">
         {industries === null ? (
           <Loading />
         ) : industries.length === 0 ? (
           <Empty />
+        ) : visible && visible.length === 0 ? (
+          <NoMatches />
         ) : (
-          industries.map((ind) => (
-            <IndustryCard
-              key={ind.id}
-              industry={ind}
-              clientCount={clientCounts[ind.id] ?? 0}
-              onEdit={() => setMode({ kind: 'edit', industry: ind })}
-              onDeleted={refresh}
-            />
-          ))
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {(visible ?? []).map((ind) => (
+              <IndustryCard
+                key={ind.id}
+                industry={ind}
+                clientCount={clientCounts[ind.id] ?? 0}
+                onEdit={() => setMode({ kind: 'edit', industry: ind })}
+                onDeleted={refresh}
+              />
+            ))}
+          </div>
         )}
       </div>
     </section>
@@ -125,7 +179,18 @@ function Empty() {
         No custom industries yet
       </div>
       <div className="text-white text-xs">
-        Add one to set default Key Performance Indicators for new clients in that industry.
+        Add one to set default KPIs for new clients in that industry.
+      </div>
+    </div>
+  )
+}
+
+function NoMatches() {
+  return (
+    <div className="bg-ink border border-dashed border-line rounded p-10 text-center">
+      <div className="text-white font-bold text-sm mb-1">No matches</div>
+      <div className="text-white text-xs">
+        No industries match that search.
       </div>
     </div>
   )
@@ -143,6 +208,7 @@ function IndustryCard({
   onDeleted: () => void
 }) {
   const [busy, setBusy] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   const activeKpis = useMemo(
     () =>
@@ -152,15 +218,6 @@ function IndustryCard({
         .filter((x): x is NonNullable<typeof x> => Boolean(x)),
     [industry.kpi_defaults]
   )
-
-  const byCategory = useMemo(() => {
-    const map = new Map<string, string[]>()
-    for (const k of activeKpis) {
-      if (!map.has(k.category)) map.set(k.category, [])
-      map.get(k.category)!.push(k.label)
-    }
-    return Array.from(map.entries())
-  }, [activeKpis])
 
   const onDelete = async () => {
     if (clientCount > 0) {
@@ -181,43 +238,57 @@ function IndustryCard({
   }
 
   return (
-    <div className="bg-ink border border-line rounded-lg p-4 flex justify-between items-start gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="text-white font-bold text-sm mb-1">{industry.name}</div>
-        <div className="text-white text-xs mb-2">
-          {activeKpis.length} Key Performance Indicator{activeKpis.length === 1 ? '' : 's'} active by default
-          {clientCount > 0 && ` · ${clientCount} client${clientCount === 1 ? '' : 's'}`}
+    <div className="bg-ink border border-line rounded-lg px-3 pt-2 pb-6 relative">
+      <div className="flex justify-between items-center gap-3">
+        <div className="min-w-0 truncate">
+          <span className="text-white font-bold text-base">
+            {industry.name}
+          </span>
+          {clientCount > 0 && (
+            <span className="text-white font-normal text-sm ml-2">
+              · {clientCount} client{clientCount === 1 ? '' : 's'}
+            </span>
+          )}
         </div>
-        {byCategory.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {byCategory.map(([cat, labels]) => (
-              <span
-                key={cat}
-                className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold"
-              >
-                {cat}: {labels.join(', ')}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="bg-accent text-black text-xs font-bold px-3 py-1.5 rounded hover:brightness-95"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={busy}
+            className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+          >
+            Delete
+          </button>
+        </div>
       </div>
-      <div className="flex gap-1.5 shrink-0">
+      {expanded && activeKpis.length > 0 && (
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1">
+          {activeKpis.map((k) => (
+            <div key={k.id} className="flex items-center gap-2">
+              <span className="text-accent font-bold text-xs">✓</span>
+              <span className="text-white text-xs">{k.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {activeKpis.length > 0 && (
         <button
           type="button"
-          onClick={onEdit}
-          className="bg-accent text-black text-xs font-bold px-3 py-1.5 rounded hover:brightness-95"
+          onClick={() => setExpanded((v) => !v)}
+          className="absolute bottom-1 left-2 text-white text-lg font-bold leading-none w-5 h-5 flex items-center justify-center rounded hover:bg-white/10"
+          aria-label={expanded ? 'Hide KPIs' : 'Show KPIs'}
+          title={expanded ? 'Hide KPIs' : 'Show KPIs'}
         >
-          Edit
+          {expanded ? '−' : '+'}
         </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={busy}
-          className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
-        >
-          Delete
-        </button>
-      </div>
+      )}
     </div>
   )
 }
@@ -300,18 +371,23 @@ function IndustryEditor({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="text-xs font-semibold uppercase tracking-wider text-white">
-              Key Performance Indicator Defaults for New Clients
+              KPI Defaults for New Clients
             </div>
             <div className="text-xs text-white font-bold">
               {activeCount} active
             </div>
           </div>
-          <p className="text-xs text-white mb-3 leading-relaxed">
-            Revenue, COGS, Gross Profit, and GP Margin are always on for every
-            client. Toggle the rest to set this industry's defaults.
-          </p>
-
           <div className="space-y-4">
+            {/* Financials section — matches the Settings page treatment.
+                Always-on items aren't listed here; the note alone conveys it. */}
+            <div>
+              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                Financials
+              </div>
+              <div className="text-xs text-white italic">
+                These items are always on.
+              </div>
+            </div>
             {groups.map((group) => (
               <div key={group.category}>
                 <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">

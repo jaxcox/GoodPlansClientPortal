@@ -111,7 +111,7 @@ export function IndustryQuickAddModal({
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-xs font-semibold uppercase tracking-wider text-white">
-                Key Performance Indicator Defaults for New Clients
+                KPI Defaults for New Clients
               </label>
               <span className="text-xs text-white font-bold">
                 {activeCount} active
