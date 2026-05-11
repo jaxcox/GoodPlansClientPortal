@@ -22,8 +22,8 @@ import type {
 } from '../lib/types'
 import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
-import { BudgetStatusBanners } from './BudgetStatusBanners'
 import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
+import { useDirtyGuard } from '../lib/dirtyGuard'
 import { CapacityGroupsCard } from './CapacityGroupsCard'
 
 type Props = {
@@ -188,8 +188,13 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       draftCogsPct !== (budget?.cogs_target_pct ?? null) ||
       (annualExpenses ?? null) !== (budget?.annual_expenses ?? null) ||
       seasonType !== (budget?.season_type ?? 'even') ||
-      JSON.stringify(seasonPct) !==
-        JSON.stringify(budget?.season_pct ?? evenSeasonPct()) ||
+      // Only compare seasonPct when seasonal — when even, the DB stores []
+      // but the form holds evenSeasonPct() (12 elements). Those represent
+      // the same state, so skip the diff in even mode (otherwise the page
+      // is "dirty" the moment it loads on any saved-even budget).
+      (seasonType === 'seasonal' &&
+        JSON.stringify(seasonPct) !==
+          JSON.stringify(budget?.season_pct ?? evenSeasonPct())) ||
       ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
       JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRevByMonth) ||
       JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth) ||
@@ -214,6 +219,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     kpiGoals,
     capacityGroups,
   ])
+
+  // Register dirty state with the app-wide leave guard.
+  const setGuardDirty = useDirtyGuard(isDirty)
 
   // Saved-banner clears when dirty + auto-expires after 3 seconds.
   useEffect(() => {
@@ -280,6 +288,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     if (isDirty && !confirm('Discard your unsaved changes and leave Budget & Goals?'))
       return
     seedDraftFromBudget(budget)
+    // Cancel already confirmed the discard; clear central guard synchronously.
+    setGuardDirty(false)
     onLeave()
   }
 
@@ -367,12 +377,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     <section className="space-y-4">
       {/* Header + Save bar */}
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <div>
-          <h1 className="text-lg font-bold text-ink">Budget &amp; Goals</h1>
-          <p className="text-xs text-black mt-0.5">
-            Annual targets and how they're spread across the year. {year} budget.
-          </p>
-        </div>
+        <h1 className="text-lg font-bold text-ink">Budget &amp; Goals</h1>
         <SaveBar
           isDirty={isDirty}
           saving={saving}
@@ -406,175 +411,154 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
       {budgetTab === 'targets' ? (
         <>
-      {/* Row 1: Left col [Annual Targets, Monthly Distribution] | Right col [YTD Actuals] */}
+      {/* Row 1: 2-col grid.
+          Left  → Annual Targets, Monthly Distribution, YTD Actuals (if on)
+          Right → KPI Goals (top) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-      <div className="space-y-4">
-      {/* Annual Targets */}
-      <Card title="Annual Targets">
         <div className="space-y-4">
-          {/* Row 1: Income */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Income Target">
-              <NumberField tone="light"
-                value={annualRevenue}
-                onChange={setAnnualRevenue}
-                format="dollars"
-                max={null}
-                ariaLabel="Annual income target"
-              />
-            </Labeled>
-          </div>
-
-          {/* Row 2: Gross Profit */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Gross Profit %">
-              <NumberField tone="light"
-                value={grossProfitPct}
-                onChange={setGrossProfitPct}
-                format="percent"
-                ariaLabel="Gross profit percent"
-              />
-            </Labeled>
-            <Labeled label="Gross Profit $">
-              <DerivedBox
-                value={gpDollars !== null ? formatDollars(gpDollars) : '—'}
-              />
-            </Labeled>
-          </div>
-
-          {/* Row 3: Cost of Goods Sold */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Cost of Goods Sold %">
-              <DerivedBox
-                value={cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—'}
-              />
-            </Labeled>
-            <Labeled label="Cost of Goods Sold $">
-              <DerivedBox
-                value={
-                  cogsDollars !== null ? formatDollars(cogsDollars) : '—'
-                }
-              />
-            </Labeled>
-          </div>
-
-          {/* Row 4: Expenses */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Expenses">
-              <NumberField tone="light"
-                value={annualExpenses}
-                onChange={setAnnualExpenses}
-                format="dollars"
-                max={null}
-                ariaLabel="Annual operating expenses"
-              />
-            </Labeled>
-          </div>
-
-          {/* Row 5: Net Profit */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Net Profit $">
-              <DerivedBox
-                value={npDollars !== null ? formatDollars(npDollars) : '—'}
-              />
-            </Labeled>
-            <Labeled label="Net Profit %">
-              <DerivedBox
-                value={npPct !== null ? `${npPct.toFixed(1)}%` : '—'}
-              />
-            </Labeled>
-          </div>
-        </div>
-
-        <RoundingNote />
-      </Card>
-
-      {/* Monthly Distribution */}
-      <Card title="Monthly Distribution">
-        <p className="text-xs text-white leading-relaxed">
-          How is your annual revenue spread across the year? Pick <em>Even</em>{' '}
-          if it's roughly the same every month, or <em>Seasonal</em> to enter
-          a per-month percentage.
-        </p>
-        <div className="inline-flex border border-line rounded overflow-hidden">
-          <ModePill
-            active={seasonType === 'even'}
-            onClick={() => onSeasonTypeChange('even')}
-          >
-            Even
-          </ModePill>
-          <ModePill
-            active={seasonType === 'seasonal'}
-            onClick={() => onSeasonTypeChange('seasonal')}
-          >
-            Seasonal
-          </ModePill>
-        </div>
-
-        {seasonType === 'seasonal' && (
-          <div>
-            <div className="grid grid-cols-3 gap-3">
-              {MONTH_LABELS.map((m, i) => (
-                <Labeled key={m} label={m}>
+          <Card title="Annual Targets">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Income Target">
                   <NumberField tone="light"
-                    value={seasonPct[i] ?? 0}
-                    onChange={(n) => setMonthPct(i, n)}
-                    format="percent"
-                    ariaLabel={`${m} percent of annual`}
+                    value={annualRevenue}
+                    onChange={setAnnualRevenue}
+                    format="dollars"
+                    max={null}
+                    ariaLabel="Annual income target"
                   />
                 </Labeled>
-              ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Gross Profit %">
+                  <NumberField tone="light"
+                    value={grossProfitPct}
+                    onChange={setGrossProfitPct}
+                    format="percent"
+                    ariaLabel="Gross profit percent"
+                  />
+                </Labeled>
+                <Labeled label="Gross Profit $">
+                  <DerivedBox
+                    value={gpDollars !== null ? formatDollars(gpDollars) : '—'}
+                  />
+                </Labeled>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Cost of Goods Sold %">
+                  <DerivedBox
+                    value={cogsPct !== null ? `${cogsPct.toFixed(1)}%` : '—'}
+                  />
+                </Labeled>
+                <Labeled label="Cost of Goods Sold $">
+                  <DerivedBox
+                    value={cogsDollars !== null ? formatDollars(cogsDollars) : '—'}
+                  />
+                </Labeled>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Expenses">
+                  <NumberField tone="light"
+                    value={annualExpenses}
+                    onChange={setAnnualExpenses}
+                    format="dollars"
+                    max={null}
+                    ariaLabel="Annual operating expenses"
+                  />
+                </Labeled>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Labeled label="Net Profit $">
+                  <DerivedBox
+                    value={npDollars !== null ? formatDollars(npDollars) : '—'}
+                  />
+                </Labeled>
+                <Labeled label="Net Profit %">
+                  <DerivedBox
+                    value={npPct !== null ? `${npPct.toFixed(1)}%` : '—'}
+                  />
+                </Labeled>
+              </div>
             </div>
-            <SeasonalSum sum={seasonalSum} />
-          </div>
-        )}
-      </Card>
-      </div>
-      {/* end left column */}
+            <RoundingNote />
+          </Card>
 
-      {/* Right column: YTD Actuals + status banners directly under it */}
-      <div className="space-y-4">
-        <Card title="YTD Actuals">
-          <YtdActualsBody
-            ytdThruMonth={ytdThruMonth}
-            setYtdThruMonth={setYtdThruMonth}
-            revenueByMonth={ytdRevenueByMonth}
-            setRevenueByMonth={setYtdRevenueByMonth}
-            cogsByMonth={ytdCogsByMonth}
-            setCogsByMonth={setYtdCogsByMonth}
-            expensesByMonth={ytdExpensesByMonth}
-            setExpensesByMonth={setYtdExpensesByMonth}
-            entryMode={ytdEntryMode}
-            setEntryMode={setYtdEntryMode}
-            seasonType={seasonType}
-            seasonPct={seasonPct}
-          />
-        </Card>
-        <BudgetStatusBanners view={view} hasYtdActuals={hasYtdActuals} />
-      </div>
-      </div>
-      {/* end Row 1 grid */}
+          <Card title="Monthly Distribution">
+            <div className="inline-flex border border-line rounded overflow-hidden">
+              <ModePill
+                active={seasonType === 'even'}
+                onClick={() => onSeasonTypeChange('even')}
+              >
+                Even
+              </ModePill>
+              <ModePill
+                active={seasonType === 'seasonal'}
+                onClick={() => onSeasonTypeChange('seasonal')}
+              >
+                Seasonal
+              </ModePill>
+            </div>
+            {seasonType === 'seasonal' && (
+              <div>
+                <div className="grid grid-cols-3 gap-3">
+                  {MONTH_LABELS.map((m, i) => (
+                    <Labeled key={m} label={m}>
+                      <NumberField tone="light"
+                        value={seasonPct[i] ?? 0}
+                        onChange={(n) => setMonthPct(i, n)}
+                        format="percent"
+                        ariaLabel={`${m} percent of annual`}
+                      />
+                    </Labeled>
+                  ))}
+                </div>
+                <SeasonalSum sum={seasonalSum} />
+              </div>
+            )}
+          </Card>
 
-      {/* Row 2: KPI Goals (half width on lg+) */}
-      <div className="lg:w-1/2">
-        <Card title="Key Performance Indicator Goals">
-          <KpiGoalsCard
-            client={client}
-            goals={kpiGoals}
-            onChange={setKpiGoals}
-          />
-        </Card>
+          {client.tracks_ytd_actuals && (
+            <Card title="YTD Actuals">
+              <YtdActualsBody
+                ytdThruMonth={ytdThruMonth}
+                setYtdThruMonth={setYtdThruMonth}
+                revenueByMonth={ytdRevenueByMonth}
+                setRevenueByMonth={setYtdRevenueByMonth}
+                cogsByMonth={ytdCogsByMonth}
+                setCogsByMonth={setYtdCogsByMonth}
+                expensesByMonth={ytdExpensesByMonth}
+                setExpensesByMonth={setYtdExpensesByMonth}
+                entryMode={ytdEntryMode}
+                setEntryMode={setYtdEntryMode}
+                seasonType={seasonType}
+                seasonPct={seasonPct}
+                view={view}
+                hasYtdActuals={hasYtdActuals}
+              />
+            </Card>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <Card title="KPI Goals">
+            <KpiGoalsCard
+              client={client}
+              goals={kpiGoals}
+              annualRevenue={annualRevenue}
+              onChange={setKpiGoals}
+            />
+          </Card>
+        </div>
       </div>
 
-      {/* Row 3: Capacity & Utilization (full width — group panels with
-          employee tables don't fit comfortably at half width). */}
-      <Card title="Capacity & Utilization Tracking">
-        <CapacityGroupsCard
-          groups={capacityGroups}
-          onChange={setCapacityGroups}
-          coachView={true}
-        />
-      </Card>
+      {/* Row 3: Capacity & Utilization — section header + one full-width
+          card per group. CapacityGroupsCard owns the layout so adding a
+          group adds a new card. */}
+      <CapacityGroupsCard
+        groups={capacityGroups}
+        onChange={setCapacityGroups}
+        coachView={true}
+      />
         </>
       ) : (
         <Card title="Monthly Financial Goals">
@@ -613,6 +597,8 @@ function YtdActualsBody({
   setEntryMode,
   seasonType,
   seasonPct,
+  view,
+  hasYtdActuals,
 }: {
   ytdThruMonth: number | null
   setYtdThruMonth: (n: number | null) => void
@@ -626,6 +612,8 @@ function YtdActualsBody({
   setEntryMode: (m: 'bulk' | 'monthly') => void
   seasonType: SeasonType
   seasonPct: number[]
+  view: ReturnType<typeof computeBudgetView> | null
+  hasYtdActuals: boolean
 }) {
   const enabled = ytdThruMonth !== null
   const revenueTotal = sumMonthsThru(revenueByMonth, ytdThruMonth)
@@ -714,7 +702,7 @@ function YtdActualsBody({
         <select
           value={ytdThruMonth ?? 'none'}
           onChange={(e) => onThruMonthChange(e.target.value)}
-          className="w-48 bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
+          className="select-yellow w-48 bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
         >
           <option value="none">— Pick one —</option>
           {MONTH_LABELS.map((m, i) => (
@@ -742,18 +730,13 @@ function YtdActualsBody({
                 Month-by-month
               </ModeButton>
             </div>
-            <div className="text-xs text-white mt-2 leading-relaxed">
-              {entryMode === 'bulk'
-                ? `Enter one Income and one Cost of Goods Sold figure for the whole window. The portal spreads it across ${ytdThruMonth + 1} month${ytdThruMonth === 0 ? '' : 's'} ${seasonType === 'seasonal' ? 'using your seasonal distribution' : 'evenly'}.`
-                : `Enter Income and Cost of Goods Sold for each of the ${ytdThruMonth + 1} month${ytdThruMonth === 0 ? '' : 's'} individually. The totals at the bottom are computed from your entries.`}
-            </div>
           </Labeled>
 
           {entryMode === 'bulk' ? (
             <div className="space-y-4">
               {/* Row 1: Income */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Income (YTD total)">
+                <Labeled label="Income">
                   <NumberField tone="light"
                     value={revenueTotal === 0 ? undefined : revenueTotal}
                     onChange={setBulkRevenue}
@@ -761,6 +744,12 @@ function YtdActualsBody({
                     max={null}
                     ariaLabel="YTD income total"
                   />
+                  {view && hasYtdActuals && (
+                    <StatusLine
+                      behind={view.revenueGap < -0.5}
+                      gap={view.revenueGap}
+                    />
+                  )}
                 </Labeled>
               </div>
 
@@ -770,6 +759,20 @@ function YtdActualsBody({
                   <DerivedBox
                     value={formatDollars(revenueTotal - cogsTotal)}
                   />
+                  {view && hasYtdActuals && (
+                    <>
+                      <StatusLine
+                        behind={view.gpGap < -0.5}
+                        gap={view.gpGap}
+                      />
+                      {view.gpGap < -0.5 && (
+                        <div className="text-xs text-white italic mt-1">
+                          Remaining monthly goals adjusted to close this GP
+                          gap.
+                        </div>
+                      )}
+                    </>
+                  )}
                 </Labeled>
                 <Labeled label="Gross Profit %">
                   <DerivedBox
@@ -784,7 +787,7 @@ function YtdActualsBody({
 
               {/* Row 3: Cost of Goods Sold (input + derived %) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Cost of Goods Sold (YTD total)">
+                <Labeled label="Cost of Goods Sold">
                   <NumberField tone="light"
                     value={cogsTotal === 0 ? undefined : cogsTotal}
                     onChange={setBulkCogs}
@@ -793,7 +796,7 @@ function YtdActualsBody({
                     ariaLabel="YTD cost of goods sold total"
                   />
                 </Labeled>
-                <Labeled label="Cost of Goods Sold % (of Income)">
+                <Labeled label="Cost of Goods Sold %">
                   <DerivedBox
                     value={
                       revenueTotal > 0
@@ -806,7 +809,7 @@ function YtdActualsBody({
 
               {/* Row 4: Expenses */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Expenses (YTD total)">
+                <Labeled label="Expenses">
                   <NumberField tone="light"
                     value={expensesTotal === 0 ? undefined : expensesTotal}
                     onChange={setBulkExpenses}
@@ -892,8 +895,10 @@ function YtdActualsBody({
  *  inputs. Stays dark on the Budget & Goals card so derived values are
  *  visually distinct from the white fillable inputs. */
 function DerivedBox({ value }: { value: string }) {
+  // min-h matches the NumberField input's 40px natural height so derived
+  // boxes line up cleanly with fillable inputs in the same row.
   return (
-    <div className="w-full bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-2">
+    <div className="w-full bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-2 min-h-[40px] flex items-center">
       {value}
     </div>
   )
@@ -1101,6 +1106,18 @@ function Card({
     <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
       <h2 className="text-white text-sm font-bold">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+/** Inline status under the Income / Gross Profit boxes on YTD Actuals.
+ *  Plain white text — status is conveyed by the words themselves. */
+function StatusLine({ behind, gap }: { behind: boolean; gap: number }) {
+  return (
+    <div className="mt-1 text-xs text-white">
+      <strong>{behind ? 'Behind Budget' : 'On Track'}</strong>{' '}
+      {gap >= 0 ? '+' : ''}
+      {formatDollars(gap)}
     </div>
   )
 }
