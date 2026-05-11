@@ -46,6 +46,10 @@ type EntryRow = {
   id: string
   label: string
   format: KpiFormat
+  /** True when the value is auto-derived from raw inputs (Gross Profit,
+   *  Conversion Rate, etc.). Renders as a read-only DerivedKpiBox; value
+   *  recomputes live as inputs change. */
+  derived: boolean
   /** Optional inline hint shown below the input — e.g. for snapshot KPIs
    *  that are end-of-week values rather than weekly totals. */
   hint?: string
@@ -55,6 +59,126 @@ const numberFieldFormat: Record<KpiFormat, 'dollars' | 'percent' | 'count'> = {
   $: 'dollars',
   '%': 'percent',
   '#': 'count',
+}
+
+/** KPI ids whose weekly value is auto-derived from raw inputs (or, for
+ *  efficiency, from capacity group state). Doc 06 calls for these to
+ *  display inline on the entry form as read-only boxes that update live.
+ *  All other auto KPIs in the registry fall through to a NumberField
+ *  (currently none, but future-proof). */
+const DERIVABLE_WEEKLY_IDS = new Set<string>([
+  'grossProfit',
+  'grossMargin',
+  'conversionRate',
+  'avgEstimateValue',
+  'avgPipelineDeal',
+  'closeRate',
+  'avgTransactionValue',
+  'avgRepairOrder',
+  'contractValuePerNewClient',
+  'efficiency',
+])
+
+function safeDivide(
+  num: number | undefined,
+  den: number | undefined
+): number | null {
+  if (!num || !den) return null
+  return num / den
+}
+
+/** Pick whichever of contracts/estimates Won $ is the currently-active
+ *  won-dollars KPI for this client (mutex pair on the KPI registry).
+ *  Ignores the inactive sibling's stored value so stale data doesn't
+ *  leak into derived calcs. */
+function wonDollarsActual(
+  kpiValues: Record<string, number>,
+  visible: Set<string>
+): number | undefined {
+  if (visible.has('contractsWonDollars'))
+    return kpiValues['contractsWonDollars']
+  if (visible.has('estimatesWonDollars'))
+    return kpiValues['estimatesWonDollars']
+  return undefined
+}
+
+function deriveWeeklyValue(
+  kpiId: string,
+  kpiValues: Record<string, number>,
+  capacityValues: Record<string, WeeklyCapacityActual>,
+  capacityGroups: CapacityGroup[],
+  visible: Set<string>
+): number | null {
+  const v = (id: string) => kpiValues[id]
+  switch (kpiId) {
+    case 'grossProfit': {
+      const rev = v('revenue')
+      const cogs = v('cogs')
+      if (rev === undefined && cogs === undefined) return null
+      return (rev ?? 0) - (cogs ?? 0)
+    }
+    case 'grossMargin': {
+      const rev = v('revenue')
+      if (!rev) return null
+      return ((rev - (v('cogs') ?? 0)) / rev) * 100
+    }
+    case 'conversionRate': {
+      const r = safeDivide(v('newClients'), v('leads'))
+      return r === null ? null : r * 100
+    }
+    case 'avgEstimateValue':
+      return safeDivide(v('proposalsDollars'), v('estimatesWritten'))
+    case 'avgPipelineDeal':
+      return safeDivide(v('pipelineValue'), v('pipelineDeals'))
+    case 'closeRate': {
+      const r = safeDivide(
+        wonDollarsActual(kpiValues, visible),
+        v('proposalsDollars')
+      )
+      return r === null ? null : r * 100
+    }
+    case 'avgTransactionValue':
+      return safeDivide(v('revenue'), v('transactions'))
+    case 'avgRepairOrder':
+      return safeDivide(v('revenue'), v('jobsCompleted'))
+    case 'contractValuePerNewClient':
+      return safeDivide(
+        wonDollarsActual(kpiValues, visible),
+        v('newClients')
+      )
+    case 'efficiency': {
+      // Doc 04 PC #2: Labor Efficiency = sum of produced hours across
+      // labor-method capacity groups ÷ sum of scheduled working hours
+      // across all their employees.
+      let produced = 0
+      let working = 0
+      for (const grp of capacityGroups) {
+        if (grp.method !== 'labor') continue
+        const cv = capacityValues[grp.id] as
+          | { producedHours?: number }
+          | undefined
+        produced += cv?.producedHours ?? 0
+        for (const e of grp.employees ?? []) {
+          working += e.weeklyWorkingHours ?? 0
+        }
+      }
+      if (!working) return null
+      return (produced / working) * 100
+    }
+    default:
+      return null
+  }
+}
+
+function formatDerivedWeekly(
+  value: number | null,
+  format: KpiFormat
+): string {
+  if (value === null) return '—'
+  if (format === '$')
+    return `$${Math.round(value).toLocaleString('en-US')}`
+  if (format === '%') return `${value.toFixed(1)}%`
+  return Math.round(value).toLocaleString('en-US')
 }
 
 export function WeeklyEntryPage({ clientId, onLeave }: Props) {
@@ -182,32 +306,46 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
       list.push(row)
       grouped.set(cat, list)
     }
-    // Standard KPIs: include always-on inputs (revenue, cogs) and any
-    // toggled-on non-auto KPI. Skip auto-derived.
+    // Standard KPIs: include always-on KPIs AND any toggled-on KPI
+    // (input OR auto-derived). Auto KPIs render as read-only derived
+    // boxes that recompute as inputs change.
     for (const k of KPIS) {
-      if (k.auto) continue
       if (k.isCapacityFlag) continue // capacity entries handled separately
       if (!k.always && Number(client.kpis[k.id]) !== 1) continue
       push(k.category, {
         id: k.id,
         label: k.label,
         format: k.format,
+        derived: DERIVABLE_WEEKLY_IDS.has(k.id),
         hint:
-          k.aggregation === 'last'
+          k.aggregation === 'last' && !DERIVABLE_WEEKLY_IDS.has(k.id)
             ? 'End-of-week snapshot'
             : undefined,
       })
     }
-    // Custom KPIs
+    // Custom KPIs (never auto-derived)
     for (const c of client.custom_kpis ?? []) {
       if (c.active === false) continue
       push(c.category, {
         id: c.id,
         label: c.name,
         format: c.format,
+        derived: false,
       })
     }
     return grouped
+  }, [client])
+
+  // Active standard-KPI ids — drives the contracts/estimates Won mutex
+  // lookup in deriveWeeklyValue (closeRate / contractValuePerNewClient).
+  const visibleStandardIds = useMemo(() => {
+    const s = new Set<string>()
+    if (!client) return s
+    for (const k of KPIS) {
+      if (k.always) s.add(k.id)
+      else if (Number(client.kpis[k.id]) === 1) s.add(k.id)
+    }
+    return s
   }, [client])
 
   // ---- Handlers ---------------------------------------------------------
@@ -408,13 +546,28 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                           <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
                             {row.label}
                           </div>
-                          <NumberField
-                            value={kpiValues[row.id]}
-                            onChange={(n) => setKpi(row.id, n)}
-                            format={numberFieldFormat[row.format]}
-                            max={row.format === '%' ? 100 : null}
-                            ariaLabel={`${row.label} this week`}
-                          />
+                          {row.derived ? (
+                            <DerivedKpiBox
+                              value={formatDerivedWeekly(
+                                deriveWeeklyValue(
+                                  row.id,
+                                  kpiValues,
+                                  capacityValues,
+                                  client.capacity_groups ?? [],
+                                  visibleStandardIds
+                                ),
+                                row.format
+                              )}
+                            />
+                          ) : (
+                            <NumberField
+                              value={kpiValues[row.id]}
+                              onChange={(n) => setKpi(row.id, n)}
+                              format={numberFieldFormat[row.format]}
+                              max={row.format === '%' ? 100 : null}
+                              ariaLabel={`${row.label} this week`}
+                            />
+                          )}
                           {row.hint && (
                             <div className="text-xs text-white italic mt-1">
                               {row.hint}
@@ -612,6 +765,18 @@ function Card({
     <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
       <h2 className="text-white text-sm font-bold">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+/** Read-only display for auto-derived weekly KPIs (Gross Profit, GP%,
+ *  Conversion Rate, etc.). Same dark surface + 0.5px yellow line as the
+ *  derived boxes elsewhere on the page so the "auto-populated" visual
+ *  treatment is consistent. */
+function DerivedKpiBox({ value }: { value: string }) {
+  return (
+    <div className="w-full bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-2 min-h-[40px] flex items-center">
+      {value}
     </div>
   )
 }
