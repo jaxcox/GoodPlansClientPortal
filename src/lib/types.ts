@@ -48,12 +48,21 @@ export type CapacityDepartment = {
   partTimeCount: number
 }
 
+/** Per-group label describing what the "By Dollars" method is actually
+ *  measuring — e.g. "Estimates Written", "Sales", "Contracts Won". Free
+ *  text. Only meaningful when method === 'revenue'; ignored for other
+ *  methods. Optional for backward compatibility with existing data. */
+export type CapacityMeasurable = string
+
 export type CapacityGroup = {
   id: string
   name: string
   /** Optional so newly-added groups can default to "— Pick one —" until the
    * coach explicitly chooses a tracking method. */
   method?: CapacityMethod
+  /** 'revenue' (Dollars) method: free-text label for what the dollars
+   * represent — e.g. "Estimates Written", "Sales", "Contracts Won". */
+  measurable?: CapacityMeasurable
   /** 'manual' method: single static utilization % stored once in Settings
    * (Doc 04 PC #3 — no longer a weekly entry input). */
   staticUtilPct?: number
@@ -96,6 +105,7 @@ export type Client = {
   company_name: string
   contact_name: string | null
   email: string | null
+  phone: string | null
   shared_folder_link: string | null
   invite_code: string | null
   invite_code_expires_at: string | null
@@ -106,6 +116,7 @@ export type Client = {
   kpis: Record<string, number>
   custom_kpis: CustomKpi[]
   capacity_groups: CapacityGroup[]
+  tracks_ytd_actuals: boolean
   dashboard_order: unknown
   coach_note: string | null
   coach_note_updated_at: string | null
@@ -155,6 +166,39 @@ export type Budget = {
   goals: Record<string, number>
   /** Keyed by capacity group id. */
   capacity_group_goals: Record<string, CapacityGroupGoal>
+  created_at: string
+  updated_at: string
+}
+
+/** Per-capacity-group weekly actuals. Shape varies by tracking method:
+ *  - manual:    { utilizationPct: number }
+ *  - slots:     { slotsFilled: number, totalSlots: number }
+ *  - labor:     { producedHours: number }       (working hours come from group def)
+ *  - revenue:   { revenueProduced: number }
+ *  - headcount: { departments: { [deptId]: { hoursWorked: number } } }
+ *
+ *  Stored as opaque JSON on the row; the WeeklyEntry consumer dispatches by
+ *  the group's current method.
+ */
+export type WeeklyCapacityActual =
+  | { utilizationPct: number }
+  | { slotsFilled: number; totalSlots: number }
+  | { producedHours: number }
+  | { revenueProduced: number }
+  | { departments: Record<string, { hoursWorked: number }> }
+
+export type WeeklyEntry = {
+  id: string
+  client_id: string
+  coach_id: string
+  /** ISO date string (YYYY-MM-DD) for the Sunday of the week. */
+  week_start_date: string
+  /** Per-KPI actuals (input KPIs only — auto-derived KPIs are computed at
+   *  read time from these). Keyed by KPI id (standard or custom). */
+  kpi_values: Record<string, number>
+  /** Per-capacity-group actuals, keyed by capacity group id. */
+  capacity_values: Record<string, WeeklyCapacityActual>
+  notes: string | null
   created_at: string
   updated_at: string
 }
