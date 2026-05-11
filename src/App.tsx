@@ -4,8 +4,17 @@ import { LoginPage } from './pages/LoginPage'
 import { CoachAdmin } from './pages/CoachAdmin'
 import { ClientPortal } from './pages/ClientPortal'
 import { supabaseConfigured } from './lib/supabase'
+import { DirtyGuardProvider } from './lib/dirtyGuard'
 
 export default function App() {
+  return (
+    <DirtyGuardProvider>
+      <AppInner />
+    </DirtyGuardProvider>
+  )
+}
+
+function AppInner() {
   const { session, profile, loading } = useAuth()
   const [viewingClientId, setViewingClientId] = useState<string | null>(null)
 
