@@ -51,10 +51,10 @@ export const CAPACITY_METHODS: CapacityMethodMeta[] = [
   },
   {
     value: 'revenue',
-    label: 'By Revenue ($)',
-    short: 'Revenue ($)',
+    label: 'By Dollars',
+    short: 'Dollars',
     description:
-      'Revenue earned vs revenue capacity per employee or sub-team.',
+      'Dollars produced vs dollar capacity per employee or sub-team. Use the "What\'s Being Measured" field on the group to label the dollars (Estimates Written, Sales, Contracts Won, etc.).',
     source: 'employee-revenue',
   },
   {

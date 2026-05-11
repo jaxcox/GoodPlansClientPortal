@@ -44,6 +44,11 @@ export type KpiDef = {
   /** For auto KPIs: which inputs are required. Toggling auto on auto-enables these;
    * toggling an input off cascades with confirmation. */
   dependsOn?: string[]
+  /** Mutually-exclusive KPIs. Turning this one on force-turns the listed
+   * ones off (no cascade-confirm — the user is intentionally swapping).
+   * Used for picks like Contracts Won $ vs Estimates Won $: a coach
+   * tracks one or the other depending on the client's industry. */
+  excludes?: string[]
   /** Special role: when on, renders one tile per capacityGroup. */
   isCapacityFlag?: boolean
 }
@@ -52,7 +57,7 @@ export const KPIS: KpiDef[] = [
   // ----- Financials -----
   {
     id: 'revenue',
-    label: 'Revenue',
+    label: 'Income',
     desc: 'Total sales this week',
     category: 'Financials',
     format: '$',
@@ -131,22 +136,9 @@ export const KPIS: KpiDef[] = [
   },
 
   // ----- Sales -----
-  {
-    id: 'contractsWonDollars',
-    label: 'Contracts Won ($)',
-    desc: 'Dollar value of contracts won',
-    category: 'Sales',
-    format: '$',
-    aggregation: 'sum',
-  },
-  {
-    id: 'estimatesWonDollars',
-    label: 'Estimates Won ($)',
-    desc: 'Dollar value of estimates won',
-    category: 'Sales',
-    format: '$',
-    aggregation: 'sum',
-  },
+  // Display order: Estimates Written $, # of Estimates Written,
+  // Average Estimate Value, Estimates Won $, Contracts Won $ (parallel slot),
+  // Sales Close Rate, then pipeline and transaction metrics.
   {
     id: 'proposalsDollars',
     label: 'Estimates Written ($)',
@@ -174,6 +166,34 @@ export const KPIS: KpiDef[] = [
     dependsOn: ['proposalsDollars', 'estimatesWritten'],
   },
   {
+    id: 'estimatesWonDollars',
+    label: 'Estimates Won ($)',
+    desc: 'Dollar value of estimates won',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'sum',
+    excludes: ['contractsWonDollars'],
+  },
+  {
+    id: 'contractsWonDollars',
+    label: 'Contracts Won ($)',
+    desc: 'Dollar value of contracts won',
+    category: 'Sales',
+    format: '$',
+    aggregation: 'sum',
+    excludes: ['estimatesWonDollars'],
+  },
+  {
+    id: 'closeRate',
+    label: 'Sales Close Rate',
+    desc: 'Contracts $ ÷ Estimates Written $',
+    category: 'Sales',
+    format: '%',
+    aggregation: 'derived',
+    auto: true,
+    dependsOn: ['contractsWonDollars', 'proposalsDollars'],
+  },
+  {
     id: 'pipelineValue',
     label: 'Pipeline Value',
     desc: 'Open deals — total value',
@@ -198,16 +218,6 @@ export const KPIS: KpiDef[] = [
     aggregation: 'derived',
     auto: true,
     dependsOn: ['pipelineValue', 'pipelineDeals'],
-  },
-  {
-    id: 'closeRate',
-    label: 'Sales Close Rate',
-    desc: 'Contracts $ ÷ Estimates Written $',
-    category: 'Sales',
-    format: '%',
-    aggregation: 'derived',
-    auto: true,
-    dependsOn: ['contractsWonDollars', 'proposalsDollars'],
   },
   {
     id: 'transactions',
@@ -416,18 +426,37 @@ export function applyKpiToggle(
   // ----- Turning ON -----
   if (on) {
     const next = { ...defaults, [kpiId]: 1 }
+    const autoDisabled: string[] = []
+
+    // Mutex: turn off any excluded siblings. No cascade-confirm — the user
+    // is intentionally swapping (e.g. switching Contracts Won → Estimates
+    // Won). Any auto-KPIs that pointed at the excluded one are kept on;
+    // their formulas should fall back to the now-active alternative.
+    for (const exId of kpi.excludes ?? []) {
+      if (Number(next[exId]) === 1) {
+        next[exId] = 0
+        const ex = findKpi(exId)
+        if (ex) autoDisabled.push(ex.label)
+      }
+    }
+
     const autoEnabled: string[] = []
     if (kpi.auto && kpi.dependsOn) {
       for (const depId of kpi.dependsOn) {
         const dep = findKpi(depId)
         if (!dep || dep.always) continue
+        // Skip auto-enabling this dep if a mutex sibling of it is already
+        // active — the alternative covers for it (e.g. closeRate's
+        // dependsOn includes contractsWonDollars, but if the client is
+        // already tracking estimatesWonDollars, leave that on instead).
+        if (dep.excludes?.some((altId) => Number(next[altId]) === 1)) continue
         if (Number(next[depId]) !== 1) {
           next[depId] = 1
           autoEnabled.push(dep.label)
         }
       }
     }
-    return { kind: 'applied', defaults: next, autoEnabled, autoDisabled: [] }
+    return { kind: 'applied', defaults: next, autoEnabled, autoDisabled }
   }
 
   // ----- Turning OFF -----
