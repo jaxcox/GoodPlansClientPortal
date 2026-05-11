@@ -309,7 +309,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
     // YTD overlap notification — if this save sets / extends ytd_thru_month
     // to cover weeks that already have weekly_entries rows, the cumulative
-    // dashboard will double-count revenue. Surface it before committing.
+    // dashboard will double-count income. Surface it before committing.
     if (ytdThruMonth != null) {
       const monthEndIso = (() => {
         const d = new Date(year, ytdThruMonth + 1, 0)
@@ -332,7 +332,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         )
         if (
           !confirm(
-            `Heads up — ${overlapCount} weekly entr${overlapCount === 1 ? 'y' : 'ies'} fall within the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count revenue. Save this budget anyway?`
+            `Heads up — ${overlapCount} weekly entr${overlapCount === 1 ? 'y' : 'ies'} fall within the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count income. Save this budget anyway?`
           )
         ) {
           return
@@ -1056,7 +1056,7 @@ function FragmentRow({
         onChange={onRevenueChange}
         format="dollars"
         max={null}
-        ariaLabel={`${month} revenue`}
+        ariaLabel={`${month} income`}
       />
       <NumberField tone="light"
         value={cogs}

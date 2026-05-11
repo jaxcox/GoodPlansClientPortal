@@ -118,7 +118,7 @@ export function IndustryQuickAddModal({
               </span>
             </div>
             <p className="text-xs text-white mb-3 leading-relaxed">
-              Revenue, COGS, Gross Profit, and GP Margin are always on.
+              Income, COGS, Gross Profit, and GP Margin are always on.
             </p>
             <div className="bg-surface-2 rounded p-3 space-y-3">
               {groups.map((group) => (

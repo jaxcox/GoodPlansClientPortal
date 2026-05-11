@@ -381,7 +381,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
 
     // YTD overlap notification — if a budget exists for this week's year
     // with a ytd_thru_month that already covers this week's month, the
-    // cumulative dashboard will double-count revenue. Surface it before
+    // cumulative dashboard will double-count income. Surface it before
     // the save commits so the user can decide.
     const year = weekStart.getFullYear()
     const { data: budget } = await supabase
@@ -399,7 +399,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
       )
       if (
         !confirm(
-          `Heads up — this week falls inside the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count revenue. Save this entry anyway?`
+          `Heads up — this week falls inside the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count income. Save this entry anyway?`
         )
       ) {
         return

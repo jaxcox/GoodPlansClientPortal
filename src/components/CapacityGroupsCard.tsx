@@ -444,7 +444,7 @@ function EmployeeRow({
         onChange={(n) => onChange({ revenueCapacityPerWeek: n })}
         format="dollars"
         max={null}
-        ariaLabel="Revenue capacity per week"
+        ariaLabel="Weekly dollar capacity"
       />
       <RemoveX onClick={onRemove} />
     </div>
