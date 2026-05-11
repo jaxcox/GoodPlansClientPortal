@@ -275,6 +275,40 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
     })
   }
 
+  const onDelete = async () => {
+    if (!entry || !client || saving) return
+    if (
+      !confirm(
+        `Delete the entry for ${formatWeekShort(weekStart)}? This can't be undone.`
+      )
+    )
+      return
+    setSaveError(null)
+    setSaving(true)
+    const { error } = await supabase
+      .from('weekly_entries')
+      .delete()
+      .eq('id', entry.id)
+    setSaving(false)
+    if (error) {
+      setSaveError(error.message)
+      return
+    }
+    // Reset form to a blank entry for the same week.
+    setEntry(null)
+    seedFromEntry(null)
+    setSavedAt(null)
+    setGuardDirty(false)
+    // Surface the week as missed again so the dropdown picks it up.
+    setSavedWeekDates((prev) => {
+      const iso = isoDate(weekStart)
+      if (!prev.has(iso)) return prev
+      const next = new Set(prev)
+      next.delete(iso)
+      return next
+    })
+  }
+
   // ---- Missed-weeks list -------------------------------------------------
   // Sundays from the client's first week up to (but not including) the
   // current in-progress week, minus any week that already has an entry.
@@ -441,6 +475,21 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
           onSave={onSave}
         />
       </div>
+
+      {/* Delete this entry — only when a saved entry exists for this week.
+          Per Doc 06: small subtle link below the Save bar, requires confirm. */}
+      {entry && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={saving}
+            className="text-xs text-black underline hover:opacity-80 disabled:opacity-50"
+          >
+            Delete this entry
+          </button>
+        </div>
+      )}
     </section>
   )
 }
@@ -613,9 +662,10 @@ function CapacityGroupBody({
 }) {
   switch (group.method) {
     case 'manual':
-      return (
-        <ManualBlock group={group} values={values} onChange={onChange} />
-      )
+      // Doc 04 PC #3: Manual % is a one-time setting in Settings —
+      // no weekly entry input. The block header still displays the
+      // staticUtilPct from the group definition as informational context.
+      return <ManualInfo />
     case 'slots':
       return (
         <SlotsBlock group={group} values={values} onChange={onChange} />
@@ -646,33 +696,10 @@ function CapacityGroupBody({
   }
 }
 
-function ManualBlock({
-  group,
-  values,
-  onChange,
-}: {
-  group: CapacityGroup
-  values: WeeklyCapacityActual | undefined
-  onChange: (next: WeeklyCapacityActual | undefined) => void
-}) {
-  const v = (values as { utilizationPct?: number } | undefined) ?? {}
-  const m = group.measurable?.trim()
-  // Use the measurable verbatim — the percent symbol comes from the
-  // NumberField input itself, no need to append "%" to the label.
-  const label = m || 'Utilization %'
+function ManualInfo() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Labeled label={label}>
-        <NumberField
-          value={v.utilizationPct}
-          onChange={(n) =>
-            onChange(n === undefined ? undefined : { utilizationPct: n })
-          }
-          format="percent"
-          max={null}
-          ariaLabel={label}
-        />
-      </Labeled>
+    <div className="text-xs text-white italic">
+      Set in Settings — not entered weekly.
     </div>
   )
 }
@@ -883,12 +910,13 @@ function computeLiveUtilization(
   group: CapacityGroup,
   values: WeeklyCapacityActual | undefined
 ): number | null {
+  // Manual is special — the value comes from group.staticUtilPct (set
+  // once in Settings), not from this week's entry. Doc 04 PC #3.
+  if (group.method === 'manual') {
+    return group.staticUtilPct ?? null
+  }
   if (!values) return null
   switch (group.method) {
-    case 'manual': {
-      const v = values as { utilizationPct?: number }
-      return v.utilizationPct ?? null
-    }
     case 'slots': {
       const v = values as { totalSlots?: number; slotsFilled?: number }
       if (!v.totalSlots) return null
