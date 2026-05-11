@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
 import { useKpiToggle } from '../lib/useKpiToggle'
-import type { Client, Industry } from '../lib/types'
+import type { Client, CustomKpi, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
+import { useDirtyGuard } from '../lib/dirtyGuard'
+import { formatPhone } from '../lib/phone'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
-import { CustomKpisCard } from './CustomKpisCard'
+import {
+  CustomKpiForm,
+  CustomKpisListSection,
+  newCustomKpiId,
+  type CustomKpiFormValues,
+} from './CustomKpisCard'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -28,9 +35,11 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [sharedFolderLink, setSharedFolderLink] = useState('')
   const [industryId, setIndustryId] = useState<string>('')
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
+  const [tracksYtd, setTracksYtd] = useState(true)
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -38,15 +47,31 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [industryModalOpen, setIndustryModalOpen] = useState(false)
 
+  // ---- Custom KPI editing state -----------------------------------------
+  // Lifted out of CustomKpisCard so the Active KPIs list and the Creator
+  // card can coordinate (clicking "edit" in the list pre-fills the Creator).
+  const [editingCustomKpiId, setEditingCustomKpiId] = useState<string | null>(
+    null
+  )
+  const creatorRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (editingCustomKpiId && creatorRef.current) {
+      creatorRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
+    }
+  }, [editingCustomKpiId])
+
   const seedDraft = (c: Client) => {
     setCompanyName(c.company_name)
     setContactName(c.contact_name ?? '')
     setEmail(c.email ?? '')
+    setPhone(formatPhone(c.phone ?? ''))
     setSharedFolderLink(c.shared_folder_link ?? '')
     setIndustryId(c.industry_id ?? '')
     setKpis({ ...emptyKpiDefaults(), ...(c.kpis ?? {}) })
-    setSavedAt(null)
-    setSaveError(null)
+    setTracksYtd(c.tracks_ytd_actuals ?? true)
   }
 
   useEffect(() => {
@@ -63,6 +88,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       }
       setClient(clientRes.data as Client)
       seedDraft(clientRes.data as Client)
+      setSavedAt(null)
+      setSaveError(null)
       setIndustries((indRes.data ?? []) as Industry[])
     })()
     return () => {
@@ -71,14 +98,11 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   }, [clientId])
 
   // ---- Editability rules per Doc 04 PC #7 --------------------------------
-  // Client view: only Company Name + Contact Name are editable.
-  // Coach view: everything below the company-info card is editable too.
-  // Doc 04 PC #7 originally restricted client editing to Contact + Company
-  // Name. Jackie removed that restriction — clients now have the same edit
-  // permissions as the coach. The COACH VIEW badge and Reset Password
-  // button still differentiate context, but the form fields don't.
-  const canEditAll = true
-  void coachView
+  // Client view: only Company Name + Contact Name are editable. Everything
+  // else (email, phone, shared folder, industry, KPI toggles, custom KPIs,
+  // YTD-actuals toggle) is read-only.
+  // Coach view: everything is editable.
+  const canEditAll = coachView
   const emailEditable = coachView && !client?.activated
   const emailLocked = !coachView || (coachView && Boolean(client?.activated))
 
@@ -89,10 +113,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       companyName !== (client.company_name ?? '') ||
       contactName !== (client.contact_name ?? '') ||
       email !== (client.email ?? '') ||
+      phone !== (client.phone ?? '') ||
       sharedFolderLink !== (client.shared_folder_link ?? '') ||
       industryId !== (client.industry_id ?? '') ||
       JSON.stringify(kpis) !==
         JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) }) ||
+      tracksYtd !== (client.tracks_ytd_actuals ?? true) ||
       false
     )
   }, [
@@ -100,10 +126,16 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     companyName,
     contactName,
     email,
+    phone,
     sharedFolderLink,
     industryId,
     kpis,
+    tracksYtd,
   ])
+
+  // Register dirty state with the app-wide leave guard so top-bar tab
+  // clicks / Back / Logout prompt the user before discarding changes.
+  const setGuardDirty = useDirtyGuard(isDirty)
 
   // Saved-banner clears the moment the form is changed again, and also
   // auto-expires after a few seconds so the default state on screen is
@@ -146,19 +178,94 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setKpis
   )
 
+  // ---- Custom KPI persistence (immediate, independent of Save Settings) -
+  const persistCustomKpis = async (next: CustomKpi[]): Promise<boolean> => {
+    if (!client) return false
+    const { data, error } = await supabase
+      .from('clients')
+      .update({ custom_kpis: next })
+      .eq('id', client.id)
+      .select()
+      .single()
+    if (error || !data) {
+      setSaveError(error?.message ?? 'Saving custom KPI failed')
+      return false
+    }
+    setClient(data as Client)
+    return true
+  }
+
+  const addCustomKpi = async (values: CustomKpiFormValues) => {
+    if (!client) return
+    const next: CustomKpi[] = [
+      ...(client.custom_kpis ?? []),
+      { ...values, id: newCustomKpiId(), active: true },
+    ]
+    await persistCustomKpis(next)
+  }
+
+  const updateCustomKpi = async (id: string, values: CustomKpiFormValues) => {
+    if (!client) return
+    const next = (client.custom_kpis ?? []).map((k) =>
+      k.id === id ? { ...k, ...values } : k
+    )
+    const ok = await persistCustomKpis(next)
+    if (ok) setEditingCustomKpiId(null)
+  }
+
+  const deleteCustomKpi = async (id: string) => {
+    if (!client) return
+    const k = (client.custom_kpis ?? []).find((x) => x.id === id)
+    if (!k) return
+    if (
+      !confirm(
+        `Delete "${k.name}"? This custom indicator has no historical data yet, but if you re-add it later, it'll be a new indicator — old values won't return.`
+      )
+    )
+      return
+    const next = (client.custom_kpis ?? []).filter((x) => x.id !== id)
+    await persistCustomKpis(next)
+    if (editingCustomKpiId === id) setEditingCustomKpiId(null)
+  }
+
+  const toggleCustomKpiActive = async (id: string, active: boolean) => {
+    if (!client) return
+    const next = (client.custom_kpis ?? []).map((k) =>
+      k.id === id ? { ...k, active } : k
+    )
+    await persistCustomKpis(next)
+  }
+
+  const editingCustomKpi = editingCustomKpiId
+    ? (client?.custom_kpis ?? []).find((k) => k.id === editingCustomKpiId) ??
+      null
+    : null
+
   // Cancel = exit Settings. If the form is dirty, confirm before leaving.
   // Always enabled regardless of dirty state.
   const onCancel = () => {
     if (isDirty && !confirm('Discard your unsaved changes and leave Settings?')) {
       return
     }
-    if (client) seedDraft(client)
+    if (client) {
+      seedDraft(client)
+      setSavedAt(null)
+      setSaveError(null)
+    }
+    // Cancel already confirmed the discard via its own prompt; clear the
+    // central guard synchronously so onLeave doesn't double-prompt.
+    setGuardDirty(false)
     onLeave()
   }
 
   const onSave = async () => {
-    if (!client) return
-    if (!isDirty) return // No-op when there's nothing to save
+    if (!client || saving) return
+    if (!isDirty) {
+      // Nothing to save — flash the green confirmation anyway so the
+      // click feels acknowledged.
+      setSavedAt(Date.now())
+      return
+    }
     setSaveError(null)
     if (!companyName.trim()) {
       setSaveError('Company name is required.')
@@ -173,11 +280,13 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     const updates: Partial<Client> = {
       company_name: companyName.trim(),
       contact_name: contactName.trim() || null,
+      phone: phone.trim() || null,
     }
     if (canEditAll) {
       updates.shared_folder_link = sharedFolderLink.trim() || null
       updates.industry_id = industryId || null
       updates.kpis = kpis
+      updates.tracks_ytd_actuals = tracksYtd
     }
     if (emailEditable) {
       updates.email = email.trim().toLowerCase()
@@ -197,6 +306,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     }
     setClient(data as Client)
     seedDraft(data as Client)
+    setSaveError(null)
     setSavedAt(Date.now())
   }
 
@@ -265,6 +375,13 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 : undefined
             }
           />
+          <DarkField
+            label="Phone"
+            type="tel"
+            value={phone}
+            onChange={(v) => setPhone(formatPhone(v))}
+            placeholder="(555)555-1212"
+          />
           <SharedFolderRow
             value={sharedFolderLink}
             onChange={setSharedFolderLink}
@@ -278,7 +395,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               <select
                 value={industryId}
                 onChange={(e) => onIndustryChange(e.target.value)}
-                className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
+                className="select-yellow w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
               >
                 <option value="">— Pick one —</option>
                 {(industries ?? []).map((i) => (
@@ -304,32 +421,59 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           </div>
         </Card>
 
-        <Card title="Active Key Performance Indicators">
-          <div className="text-xs text-white mb-3 leading-relaxed">
-            Revenue, COGS, Gross Profit, and GP Margin are always on.
-          </div>
-
+        <Card title="Active KPIs">
           {canEditAll ? (
-            <KpiTogglesGrouped
-              groups={groups}
-              kpis={kpis}
-              onToggle={onKpiToggle}
-              feedback={kpiFeedback}
-            />
+            <div className="space-y-3">
+              <FinancialsSection
+                tracksYtd={tracksYtd}
+                onTracksYtdChange={setTracksYtd}
+              />
+              <KpiTogglesGrouped
+                groups={groups}
+                kpis={kpis}
+                onToggle={onKpiToggle}
+                feedback={kpiFeedback}
+              />
+              <CustomKpisListSection
+                customKpis={client.custom_kpis ?? []}
+                editingId={editingCustomKpiId}
+                onEdit={setEditingCustomKpiId}
+                onDelete={deleteCustomKpi}
+                onToggleActive={toggleCustomKpiActive}
+              />
+            </div>
           ) : (
-            <KpiTogglesReadOnly groups={groups} kpis={kpis} />
+            <div className="space-y-3">
+              <KpiTogglesReadOnly groups={groups} kpis={kpis} />
+              <CustomKpisListSection
+                customKpis={(client.custom_kpis ?? []).filter(
+                  (k) => k.active !== false
+                )}
+                readOnly
+              />
+            </div>
           )}
         </Card>
       </div>
 
-      {/* ===== Row 3: Custom KPIs ===== */}
-      <Card title="Custom Key Performance Indicators">
-        <CustomKpisCard
-          client={client}
-          coachView={coachView}
-          onChange={(c) => setClient(c)}
-        />
-      </Card>
+      {/* ===== Row 2: Custom KPI Creator (half width on lg+) ===== */}
+      {canEditAll && (
+        <div ref={creatorRef} className="lg:w-1/2">
+          <Card title="Custom KPI Creator">
+            <CustomKpiForm
+              editing={editingCustomKpi}
+              onSubmit={async (values) => {
+                if (editingCustomKpi) {
+                  await updateCustomKpi(editingCustomKpi.id, values)
+                } else {
+                  await addCustomKpi(values)
+                }
+              }}
+              onCancel={() => setEditingCustomKpiId(null)}
+            />
+          </Card>
+        </div>
+      )}
 
       {/* ===== Bottom Save/Cancel ===== */}
       <div className="flex justify-end pt-2">
@@ -445,7 +589,7 @@ function SharedFolderRow({
               href={trimmed}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent text-white border border-mute px-3 py-2 rounded text-xs font-semibold hover:bg-white/10 whitespace-nowrap"
+              className="bg-accent text-black font-bold px-3 py-2 rounded text-xs hover:brightness-95 whitespace-nowrap"
               title="Open the link in a new tab to verify it"
             >
               Open ↗
@@ -523,6 +667,52 @@ function DarkField({
   )
 }
 
+/** Always-on financial KPIs + the per-client YTD Actuals toggle, rendered
+ *  in the same two-column grid as the toggleable categories below it. */
+function FinancialsSection({
+  tracksYtd,
+  onTracksYtdChange,
+}: {
+  tracksYtd: boolean
+  onTracksYtdChange: (v: boolean) => void
+}) {
+  return (
+    <div>
+      <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+        Financials
+      </div>
+      <div className="text-xs text-white italic mb-2">
+        These items are always on.
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+        <AlwaysOnItem label="Income" />
+        <AlwaysOnItem label="COGS" />
+        <AlwaysOnItem label="Gross Profit" />
+        <AlwaysOnItem label="Gross Profit Margin" />
+        <Toggle
+          checked={tracksYtd}
+          onChange={onTracksYtdChange}
+          label="YTD Actuals (year 1 only)"
+        />
+      </div>
+    </div>
+  )
+}
+
+/** Visual sibling of the Toggle component for items that can't be turned off.
+ *  The 28px-wide checkmark slot mirrors the Toggle pill so labels align in
+ *  the same column. */
+function AlwaysOnItem({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="inline-flex justify-center w-7 text-accent text-xs font-bold">
+        ✓
+      </span>
+      <span className="text-white text-xs">{label}</span>
+    </div>
+  )
+}
+
 function KpiTogglesGrouped({
   groups,
   kpis,
@@ -582,7 +772,7 @@ function KpiTogglesReadOnly({
             <ul className="text-xs text-white space-y-1">
               {active.map((k) => (
                 <li key={k.id} className="flex items-center gap-2">
-                  <span className="text-white">✓</span> {k.label}
+                  <span className="text-accent font-bold">✓</span> {k.label}
                 </li>
               ))}
             </ul>
