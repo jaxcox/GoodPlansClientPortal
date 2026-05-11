@@ -80,28 +80,27 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-start gap-3">
-        <p className="text-xs text-white leading-relaxed">
-          Define teams or departments and how to track their utilization. Goals
-          for each capacity group are set in{' '}
-          <strong>Budget &amp; Goals</strong>.
-        </p>
+    <div className="space-y-4">
+      {/* Section header lives outside the cards, on the page background. */}
+      <div className="space-y-3">
+        <h2 className="text-base font-bold text-ink">
+          Capacity &amp; Utilization Tracking
+        </h2>
         <button
           type="button"
           onClick={addGroup}
-          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap shrink-0"
+          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
         >
           + Add Group
         </button>
       </div>
 
       {groups.length === 0 ? (
-        <div className="bg-surface-2 rounded p-4 text-white text-xs text-center">
+        <div className="bg-ink border border-line rounded-lg p-5 text-white text-xs text-center">
           No capacity groups yet. Click <strong>+ Add Group</strong> to start.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {groups.map((g) => (
             <GroupPanel
               key={g.id}
@@ -132,10 +131,9 @@ function GroupPanel({
   onMethodChange: (m: CapacityMethod) => void
   onRemove: () => void
 }) {
-  const meta = methodMeta(group.method)
   return (
-    <div className="bg-[#0f0f0f] border border-accent/30 rounded-lg p-3 space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-[2fr_1.2fr] gap-3">
+    <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-md">
         <FieldGroup label="Department / Team Name">
           <input
             type="text"
@@ -149,7 +147,7 @@ function GroupPanel({
           <select
             value={group.method ?? ''}
             onChange={(e) => onMethodChange(e.target.value as CapacityMethod)}
-            className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            className="select-yellow w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
           >
             <option value="" disabled>
               — Pick one —
@@ -160,13 +158,22 @@ function GroupPanel({
               </option>
             ))}
           </select>
-          {meta && (
-            <div className="text-xs text-white mt-1 leading-relaxed">
-              {meta.description}
-            </div>
-          )}
         </FieldGroup>
       </div>
+
+      {group.method && (
+        <div className="sm:max-w-md">
+          <FieldGroup label="What's Being Measured">
+            <input
+              type="text"
+              value={group.measurable ?? ''}
+              onChange={(e) => onChange({ measurable: e.target.value })}
+              placeholder="e.g. Estimates Written, Production Hours, Appointments"
+              className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
+            />
+          </FieldGroup>
+        </div>
+      )}
 
       {group.method ? (
         <MethodBody group={group} onChange={onChange} />
@@ -235,18 +242,13 @@ function ManualBody({
 }) {
   return (
     <FieldGroup label="Utilization">
-      <div className="flex items-center gap-2">
-        <div className="w-28">
-          <NumberField
-            value={group.staticUtilPct}
-            onChange={(n) => onChange({ staticUtilPct: n })}
-            format="percent"
-            ariaLabel="Static utilization percent"
-          />
-        </div>
-        <span className="text-white text-xs">
-          shown every week until you change it
-        </span>
+      <div className="w-28">
+        <NumberField
+          value={group.staticUtilPct}
+          onChange={(n) => onChange({ staticUtilPct: n })}
+          format="percent"
+          ariaLabel="Static utilization percent"
+        />
       </div>
     </FieldGroup>
   )
@@ -282,9 +284,6 @@ function SlotsBody({
           </button>
         ))}
       </div>
-      <div className="text-xs text-white mt-1.5">
-        Slots filled and total slots are entered each week.
-      </div>
     </FieldGroup>
   )
 }
@@ -301,11 +300,6 @@ function EmployeesBody({
   onChange: (patch: Partial<CapacityGroup>) => void
 }) {
   const employees = group.employees ?? []
-  const isLabor = method === 'labor'
-
-  const totalCapacity = isLabor
-    ? totalCapacityHours(group)
-    : totalRevenueCapacity(group)
 
   const updateEmployee = (id: string, patch: Partial<CapacityEmployee>) => {
     onChange({
@@ -323,17 +317,7 @@ function EmployeesBody({
 
   return (
     <div>
-      <div className="flex justify-between items-end mb-2">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-white">
-            {isLabor ? 'Employees' : 'Revenue Earners'}
-          </div>
-          <div className="text-xs text-white font-semibold">
-            {isLabor
-              ? `${totalCapacity} hrs/wk maximum capacity`
-              : `${formatDollars(totalCapacity)}/wk maximum capacity`}
-          </div>
-        </div>
+      <div className="flex justify-end mb-2">
         <button
           type="button"
           onClick={addEmployeeRow}
@@ -374,7 +358,7 @@ function EmployeesBody({
 function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
   if (method === 'labor') {
     return (
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
+      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
         <div>Name</div>
         <div>Role</div>
         <div>Maximum Capacity</div>
@@ -384,7 +368,7 @@ function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
     )
   }
   return (
-    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
+    <div className="grid grid-cols-[2fr_1fr_2fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
       <div>Name</div>
       <div>Role</div>
       <div>Maximum Capacity</div>
@@ -408,7 +392,7 @@ function EmployeeRow({
     'bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-2 focus:outline-none focus:border-accent'
   if (method === 'labor') {
     return (
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-2 items-center">
+      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center">
         <input
           type="text"
           value={employee.name}
@@ -440,7 +424,7 @@ function EmployeeRow({
     )
   }
   return (
-    <div className="grid grid-cols-[2fr_1.5fr_1fr_auto] gap-2 items-center">
+    <div className="grid grid-cols-[2fr_1fr_2fr_auto] gap-2 items-center">
       <input
         type="text"
         value={employee.name}
@@ -519,15 +503,7 @@ function HeadcountBody({
       </FieldGroup>
 
       <div>
-        <div className="flex justify-between items-end mb-2">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-white">
-              Departments
-            </div>
-            <div className="text-xs text-white font-semibold">
-              {totalHeadcountCapacityHours(group)} hrs/wk maximum capacity
-            </div>
-          </div>
+        <div className="flex justify-end mb-2">
           <button
             type="button"
             onClick={addDept}
