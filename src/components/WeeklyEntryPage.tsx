@@ -753,7 +753,9 @@ function WeekPicker({
       </span>
 
       {/* Missed-weeks dropdown — only weeks that have no saved entry yet,
-          most recent first. Hidden when there are no gaps. */}
+          most recent first. Hidden when there are no gaps.
+          Red font: missed-action / overdue states use red per the
+          feedback_overdue_red.md project rule. */}
       {missedWeeks.length > 0 && (
         <select
           value=""
@@ -761,7 +763,7 @@ function WeekPicker({
             if (e.target.value) onPickDate(e.target.value)
           }}
           aria-label="Jump to a missed week"
-          className="select-yellow bg-white border border-gray-300 rounded text-black text-xs px-3 py-1 focus:outline-none focus:border-gray-400"
+          className="select-yellow bg-white border border-gray-300 rounded text-bad font-bold text-xs px-3 py-1 focus:outline-none focus:border-gray-400"
         >
           <option value="">
             Missed weeks ({missedWeeks.length})
