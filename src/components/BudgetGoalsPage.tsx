@@ -307,6 +307,39 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       return
     }
 
+    // YTD overlap notification — if this save sets / extends ytd_thru_month
+    // to cover weeks that already have weekly_entries rows, the cumulative
+    // dashboard will double-count revenue. Surface it before committing.
+    if (ytdThruMonth != null) {
+      const monthEndIso = (() => {
+        const d = new Date(year, ytdThruMonth + 1, 0)
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${d.getFullYear()}-${m}-${day}`
+      })()
+      const yearStartIso = `${year}-01-01`
+      const { data: overlapping } = await supabase
+        .from('weekly_entries')
+        .select('week_start_date')
+        .eq('client_id', client.id)
+        .gte('week_start_date', yearStartIso)
+        .lte('week_start_date', monthEndIso)
+      const overlapCount = overlapping?.length ?? 0
+      if (overlapCount > 0) {
+        const monthName = new Date(year, ytdThruMonth, 1).toLocaleDateString(
+          'en-US',
+          { month: 'long' }
+        )
+        if (
+          !confirm(
+            `Heads up — ${overlapCount} weekly entr${overlapCount === 1 ? 'y' : 'ies'} fall within the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count revenue. Save this budget anyway?`
+          )
+        ) {
+          return
+        }
+      }
+    }
+
     setSaving(true)
     const payload = {
       client_id: client.id,

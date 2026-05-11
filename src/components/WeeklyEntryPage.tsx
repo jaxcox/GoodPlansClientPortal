@@ -378,6 +378,34 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
       return
     }
     setSaveError(null)
+
+    // YTD overlap notification — if a budget exists for this week's year
+    // with a ytd_thru_month that already covers this week's month, the
+    // cumulative dashboard will double-count revenue. Surface it before
+    // the save commits so the user can decide.
+    const year = weekStart.getFullYear()
+    const { data: budget } = await supabase
+      .from('budgets')
+      .select('ytd_thru_month')
+      .eq('client_id', client.id)
+      .eq('year', year)
+      .maybeSingle()
+    const thru = (budget as { ytd_thru_month: number | null } | null)
+      ?.ytd_thru_month
+    if (thru != null && weekStart.getMonth() <= thru) {
+      const monthName = new Date(year, thru, 1).toLocaleDateString(
+        'en-US',
+        { month: 'long' }
+      )
+      if (
+        !confirm(
+          `Heads up — this week falls inside the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count revenue. Save this entry anyway?`
+        )
+      ) {
+        return
+      }
+    }
+
     setSaving(true)
 
     const payload = {
