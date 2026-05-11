@@ -516,22 +516,22 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
         <div className="text-xs text-black italic">Loading week…</div>
       )}
 
-      {/* KPI inputs — split: inputs on the left, auto-calculated on the
-          right. Each column groups rows by category with subheaders.
-          Stacks single-column on smaller screens. */}
-      <Card title="KPI Actuals">
-        {!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
+      {/* KPI actuals split into two separate cards: inputs on the left,
+          auto-calculated on the right. Each card groups rows by category
+          with a subheader; empty categories hide entirely. Stacks
+          single-column on smaller screens. */}
+      {!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
+        <Card title="KPI Actuals">
           <div className="text-white text-xs">
             No active KPIs to enter. Toggle some on under{' '}
             <strong>Settings → Active KPIs</strong>.
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {/* Left: inputs (what the client fills in) */}
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          {/* Left card: inputs (what the client fills in) */}
+          <Card title="Your entries">
             <div className="space-y-5">
-              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-line">
-                Your entries
-              </div>
               {CATEGORIES.map((cat) => {
                 const inputRows = (groupedRows.get(cat) ?? []).filter(
                   (r) => !r.derived
@@ -548,10 +548,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                     {inputRows.length > 0 && (
                       <div className="space-y-3">
                         {inputRows.map((row) => (
-                          <div
-                            key={row.id}
-                            className="flex flex-col"
-                          >
+                          <div key={row.id} className="flex flex-col">
                             <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
                               {row.label}
                             </div>
@@ -598,12 +595,11 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                 )
               })}
             </div>
+          </Card>
 
-            {/* Right: auto-calculated (live from inputs) */}
+          {/* Right card: auto-calculated (live from inputs) */}
+          <Card title="Auto-calculated">
             <div className="space-y-5">
-              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-line">
-                Auto-calculated
-              </div>
               {CATEGORIES.map((cat) => {
                 const derivedRows = (groupedRows.get(cat) ?? []).filter(
                   (r) => r.derived
@@ -639,9 +635,9 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                 )
               })}
             </div>
-          </div>
-        )}
-      </Card>
+          </Card>
+        </div>
+      )}
 
       {/* Notes */}
       <Card title="Notes">
@@ -834,7 +830,7 @@ function CapacityGroupEntryBlock({
 }) {
   const utilPct = computeLiveUtilization(group, values)
   return (
-    <div className="bg-surface-2 border-[0.5px] border-accent rounded-lg p-3 space-y-3">
+    <div className="bg-surface-2 rounded-lg p-3 space-y-3">
       <div className="flex justify-between items-center gap-3">
         <div className="text-white text-sm font-semibold">
           {group.name || 'Untitled group'}
