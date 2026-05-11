@@ -6,6 +6,7 @@ import type { Client } from '../lib/types'
 import { SettingsPage } from '../components/SettingsPage'
 import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
 import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
+import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 
 type Props = {
   clientId: string
@@ -21,6 +22,19 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<NavTab>('dashboard')
+
+  const reloadClient = async () => {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', clientId)
+      .maybeSingle()
+    if (error || !data) {
+      setError(error?.message ?? 'Client not found')
+      return
+    }
+    setClient(data as Client)
+  }
 
   /** Guarded tab change — prompts if the current page has unsaved edits. */
   const guardedSetTab = (next: NavTab) => {
@@ -87,7 +101,10 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   return (
     <div className="min-h-screen bg-[#f5f3ec] flex flex-col">
-      {/* Top bar — client name primary, brand to footer (per Doc 03 PC) */}
+      {/* Top bar — client name primary, brand to footer (per Doc 03 PC).
+          When a force-change-password is required, the nav links are
+          suppressed so the client can't navigate around the interstitial.
+          Logout / Back stays available. */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-ink">
@@ -100,11 +117,15 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           )}
         </div>
         <div className="flex items-center gap-1 text-xs flex-wrap">
-          <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
-          <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
-          <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
-          <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
-          <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+          {!(client.must_change_password && !coachView) && (
+            <>
+              <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
+              <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
+              <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
+              <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
+              <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+            </>
+          )}
           {client.shared_folder_link && (
             <a
               href={client.shared_folder_link}
@@ -138,7 +159,13 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
       {/* Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
-        {tab === 'settings' ? (
+        {client.must_change_password && !coachView ? (
+          <ForceChangePasswordPage
+            clientId={clientId}
+            email={client.email}
+            onChanged={reloadClient}
+          />
+        ) : tab === 'settings' ? (
           <SettingsPage
             clientId={clientId}
             coachView={coachView}
