@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { useDirtyConfirm } from '../lib/dirtyGuard'
 import type { Client } from '../lib/types'
 import { SettingsPage } from '../components/SettingsPage'
 import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
+import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
 
 type Props = {
   clientId: string
@@ -15,9 +17,25 @@ type NavTab = 'dashboard' | 'entry' | 'budget' | 'history' | 'settings'
 
 export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const { signOut, coach } = useAuth()
+  const confirmLeave = useDirtyConfirm()
   const [client, setClient] = useState<Client | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<NavTab>('dashboard')
+
+  /** Guarded tab change — prompts if the current page has unsaved edits. */
+  const guardedSetTab = (next: NavTab) => {
+    if (tab === next) return
+    if (!confirmLeave()) return
+    setTab(next)
+  }
+  const guardedBack = () => {
+    if (!confirmLeave()) return
+    onBack?.()
+  }
+  const guardedSignOut = () => {
+    if (!confirmLeave()) return
+    signOut()
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -82,11 +100,11 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           )}
         </div>
         <div className="flex items-center gap-1 text-xs flex-wrap">
-          <NavLink active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>Dashboard</NavLink>
-          <NavLink active={tab === 'entry'} onClick={() => setTab('entry')}>Weekly Entry</NavLink>
-          <NavLink active={tab === 'budget'} onClick={() => setTab('budget')}>Budget &amp; Goals</NavLink>
-          <NavLink active={tab === 'history'} onClick={() => setTab('history')}>History</NavLink>
-          <NavLink active={tab === 'settings'} onClick={() => setTab('settings')}>Settings</NavLink>
+          <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
+          <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
+          <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
+          <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
+          <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
           {client.shared_folder_link && (
             <a
               href={client.shared_folder_link}
@@ -101,7 +119,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           {coachView ? (
             <button
               type="button"
-              onClick={onBack}
+              onClick={guardedBack}
               className="bg-surface-2 text-white border border-line px-3 py-1 rounded ml-2 hover:bg-surface-1"
             >
               Back
@@ -109,7 +127,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           ) : (
             <button
               type="button"
-              onClick={signOut}
+              onClick={guardedSignOut}
               className="bg-surface-2 text-white border border-line px-3 py-1 rounded ml-2 hover:bg-surface-1"
             >
               Logout
@@ -134,6 +152,18 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           />
         ) : tab === 'budget' ? (
           <BudgetGoalsPage
+            clientId={clientId}
+            coachView={coachView}
+            onLeave={() => {
+              if (coachView && onBack) {
+                onBack()
+              } else {
+                setTab('dashboard')
+              }
+            }}
+          />
+        ) : tab === 'entry' ? (
+          <WeeklyEntryPage
             clientId={clientId}
             coachView={coachView}
             onLeave={() => {
