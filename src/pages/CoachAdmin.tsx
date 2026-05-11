@@ -315,7 +315,7 @@ function ClientsTab({
 function EntryStatusPill({ entered }: { entered: boolean }) {
   if (entered) {
     return (
-      <span className="bg-good text-black text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0">
+      <span className="bg-good text-white text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0">
         Current
       </span>
     )
