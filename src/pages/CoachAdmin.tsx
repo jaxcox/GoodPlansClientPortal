@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { generateInviteCode } from '../lib/inviteCode'
+import {
+  isoDate,
+  mostRecentCompletedWeekStart,
+} from '../lib/week'
 import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
@@ -21,14 +25,24 @@ export function CoachAdmin({ onViewPortal }: Props) {
   const [clients, setClients] = useState<Client[] | null>(null)
   const [industries, setIndustries] = useState<Industry[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  /** Set of client IDs that have a weekly_entries row for the most recent
+   *  completed week. Used to color the entry-status pill on each card. */
+  const [lastWeekEntries, setLastWeekEntries] = useState<Set<string>>(
+    () => new Set()
+  )
 
   const refresh = async () => {
-    const [cRes, iRes] = await Promise.all([
+    const lastWeekIso = isoDate(mostRecentCompletedWeekStart())
+    const [cRes, iRes, eRes] = await Promise.all([
       supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: true }),
       supabase.from('industries').select('*').order('name'),
+      supabase
+        .from('weekly_entries')
+        .select('client_id')
+        .eq('week_start_date', lastWeekIso),
     ])
     if (cRes.error) {
       setLoadError(cRes.error.message)
@@ -38,6 +52,13 @@ export function CoachAdmin({ onViewPortal }: Props) {
       setClients((cRes.data ?? []) as Client[])
     }
     setIndustries((iRes.data ?? []) as Industry[])
+    setLastWeekEntries(
+      new Set(
+        (eRes.data ?? []).map(
+          (r) => (r as { client_id: string }).client_id
+        )
+      )
+    )
   }
 
   const industryById = useMemo(() => {
@@ -87,6 +108,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
           <ClientsTab
             clients={clients}
             industryById={industryById}
+            lastWeekEntries={lastWeekEntries}
             error={loadError}
             onChange={refresh}
             onViewPortal={onViewPortal}
@@ -126,12 +148,14 @@ function TabButton({
 function ClientsTab({
   clients,
   industryById,
+  lastWeekEntries,
   error,
   onChange,
   onViewPortal,
 }: {
   clients: Client[] | null
   industryById: Map<string, string>
+  lastWeekEntries: Set<string>
   error: string | null
   onChange: () => void
   onViewPortal: (clientId: string) => void
@@ -251,6 +275,7 @@ function ClientsTab({
               industryName={
                 c.industry_id ? industryById.get(c.industry_id) ?? null : null
               }
+              lastWeekEntered={lastWeekEntries.has(c.id)}
               onChange={onChange}
               onViewPortal={() => onViewPortal(c.id)}
               onEdit={() => setModalState({ kind: 'edit', client: c })}
@@ -277,6 +302,28 @@ function ClientsTab({
         onReset={() => onChange()}
       />
     </section>
+  )
+}
+
+/** Entry status pill — green "Current" when the most recent completed
+ *  week has a weekly_entries row for this client, red "Overdue" when it
+ *  doesn't. Red is intentional here (vs. the softer yellow used for
+ *  "behind budget" financial states) — a missed weekly entry is a task
+ *  that wasn't done, not a financial trailing indicator, so it warrants
+ *  the more urgent treatment. White text on red per the project color
+ *  rule (text-on-bg contrast). */
+function EntryStatusPill({ entered }: { entered: boolean }) {
+  if (entered) {
+    return (
+      <span className="bg-good text-black text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0">
+        Current
+      </span>
+    )
+  }
+  return (
+    <span className="bg-bad text-white text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0">
+      Overdue
+    </span>
   )
 }
 
@@ -411,6 +458,7 @@ function EmptyState({
 function ClientCard({
   client,
   industryName,
+  lastWeekEntered,
   onChange,
   onViewPortal,
   onEdit,
@@ -418,6 +466,7 @@ function ClientCard({
 }: {
   client: Client
   industryName: string | null
+  lastWeekEntered: boolean
   onChange: () => void
   onViewPortal: () => void
   onEdit: () => void
@@ -477,8 +526,15 @@ function ClientCard({
   return (
     <li className="bg-ink border border-line rounded-lg p-4 flex flex-col gap-3">
       <div className="min-w-0">
-        <div className="text-white font-bold text-base truncate">
-          {client.company_name}
+        <div className="flex justify-between items-start gap-2">
+          <div className="text-white font-bold text-base truncate flex-1 min-w-0">
+            {client.company_name}
+          </div>
+          {/* Entry status pill — only on Active clients. Pending = no entry
+              workflow yet; Archived = irrelevant. */}
+          {client.activated && !client.archived && (
+            <EntryStatusPill entered={lastWeekEntered} />
+          )}
         </div>
         <div className="text-white text-sm mt-1 space-y-0.5">
           {client.contact_name && (
