@@ -516,7 +516,9 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
         <div className="text-xs text-black italic">Loading week…</div>
       )}
 
-      {/* KPI inputs */}
+      {/* KPI inputs — split: inputs on the left, auto-calculated on the
+          right. Each column groups rows by category with subheaders.
+          Stacks single-column on smaller screens. */}
       <Card title="KPI Actuals">
         {!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
           <div className="text-white text-xs">
@@ -524,42 +526,35 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
             <strong>Settings → Active KPIs</strong>.
           </div>
         ) : (
-          <div className="space-y-5">
-            {CATEGORIES.map((cat) => {
-              const rows = groupedRows.get(cat) ?? []
-              const teamGroups =
-                cat === 'Team' ? (client.capacity_groups ?? []) : []
-              // Doc 6 planned change: hide empty categories entirely.
-              if (rows.length === 0 && teamGroups.length === 0) return null
-              return (
-                <div key={cat}>
-                  <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
-                    {cat}
-                  </div>
-                  {rows.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                      {rows.map((row) => (
-                        <div
-                          key={row.id}
-                          className="flex flex-col h-full justify-end"
-                        >
-                          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-                            {row.label}
-                          </div>
-                          {row.derived ? (
-                            <DerivedKpiBox
-                              value={formatDerivedWeekly(
-                                deriveWeeklyValue(
-                                  row.id,
-                                  kpiValues,
-                                  capacityValues,
-                                  client.capacity_groups ?? [],
-                                  visibleStandardIds
-                                ),
-                                row.format
-                              )}
-                            />
-                          ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Left: inputs (what the client fills in) */}
+            <div className="space-y-5">
+              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-line">
+                Your entries
+              </div>
+              {CATEGORIES.map((cat) => {
+                const inputRows = (groupedRows.get(cat) ?? []).filter(
+                  (r) => !r.derived
+                )
+                const teamGroups =
+                  cat === 'Team' ? (client.capacity_groups ?? []) : []
+                if (inputRows.length === 0 && teamGroups.length === 0)
+                  return null
+                return (
+                  <div key={`L-${cat}`}>
+                    <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                      {cat}
+                    </div>
+                    {inputRows.length > 0 && (
+                      <div className="space-y-3">
+                        {inputRows.map((row) => (
+                          <div
+                            key={row.id}
+                            className="flex flex-col"
+                          >
+                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+                              {row.label}
+                            </div>
                             <NumberField
                               value={kpiValues[row.id]}
                               onChange={(n) => setKpi(row.id, n)}
@@ -567,42 +562,83 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                               max={row.format === '%' ? 100 : null}
                               ariaLabel={`${row.label} this week`}
                             />
-                          )}
-                          {row.hint && (
-                            <div className="text-xs text-white italic mt-1">
-                              {row.hint}
-                            </div>
-                          )}
+                            {row.hint && (
+                              <div className="text-xs text-white italic mt-1">
+                                {row.hint}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {teamGroups.length > 0 && (
+                      <div
+                        className={`space-y-3 ${
+                          inputRows.length > 0 ? 'mt-4' : ''
+                        }`}
+                      >
+                        {teamGroups.map((g) => (
+                          <CapacityGroupEntryBlock
+                            key={g.id}
+                            group={g}
+                            values={capacityValues[g.id]}
+                            onChange={(next) =>
+                              setCapacityValues((prev) => {
+                                const out = { ...prev }
+                                if (next === undefined) delete out[g.id]
+                                else out[g.id] = next
+                                return out
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Right: auto-calculated (live from inputs) */}
+            <div className="space-y-5">
+              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-line">
+                Auto-calculated
+              </div>
+              {CATEGORIES.map((cat) => {
+                const derivedRows = (groupedRows.get(cat) ?? []).filter(
+                  (r) => r.derived
+                )
+                if (derivedRows.length === 0) return null
+                return (
+                  <div key={`R-${cat}`}>
+                    <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                      {cat}
+                    </div>
+                    <div className="space-y-3">
+                      {derivedRows.map((row) => (
+                        <div key={row.id} className="flex flex-col">
+                          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+                            {row.label}
+                          </div>
+                          <DerivedKpiBox
+                            value={formatDerivedWeekly(
+                              deriveWeeklyValue(
+                                row.id,
+                                kpiValues,
+                                capacityValues,
+                                client.capacity_groups ?? [],
+                                visibleStandardIds
+                              ),
+                              row.format
+                            )}
+                          />
                         </div>
                       ))}
                     </div>
-                  )}
-                  {teamGroups.length > 0 && (
-                    <div
-                      className={`space-y-3 ${
-                        rows.length > 0 ? 'mt-4' : ''
-                      }`}
-                    >
-                      {teamGroups.map((g) => (
-                        <CapacityGroupEntryBlock
-                          key={g.id}
-                          group={g}
-                          values={capacityValues[g.id]}
-                          onChange={(next) =>
-                            setCapacityValues((prev) => {
-                              const out = { ...prev }
-                              if (next === undefined) delete out[g.id]
-                              else out[g.id] = next
-                              return out
-                            })
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
       </Card>
