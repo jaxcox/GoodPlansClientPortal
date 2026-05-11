@@ -8,6 +8,7 @@ import {
 } from '../lib/kpis'
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, Industry } from '../lib/types'
+import { formatPhone } from '../lib/phone'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 
@@ -29,6 +30,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [sharedFolderLink, setSharedFolderLink] = useState('')
   const [industryId, setIndustryId] = useState<string>('')
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
@@ -49,6 +51,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
       setCompanyName(editing.company_name)
       setContactName(editing.contact_name ?? '')
       setEmail(editing.email ?? '')
+      setPhone(formatPhone(editing.phone ?? ''))
       setSharedFolderLink(editing.shared_folder_link ?? '')
       setIndustryId(editing.industry_id ?? '')
       setKpis({ ...emptyKpiDefaults(), ...(editing.kpis ?? {}) })
@@ -56,6 +59,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
       setCompanyName('')
       setContactName('')
       setEmail('')
+      setPhone('')
       setSharedFolderLink('')
       setIndustryId('')
       setKpis(emptyKpiDefaults())
@@ -167,6 +171,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
       const updates: Partial<Client> = {
         company_name: companyName.trim(),
         contact_name: contactName.trim() || null,
+        phone: phone.trim() || null,
         shared_folder_link: sharedFolderLink.trim() || null,
         industry_id: industryId,
         kpis,
@@ -203,6 +208,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
         company_name: companyName.trim(),
         contact_name: contactName.trim() || null,
         email: email.trim().toLowerCase(),
+        phone: phone.trim() || null,
         shared_folder_link: sharedFolderLink.trim() || null,
         invite_code: inviteCode,
         invite_code_expires_at: expires.toISOString(),
@@ -252,18 +258,27 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             <Field label="Company Name *" value={companyName} onChange={setCompanyName} autoFocus />
             <Field label="Contact Name" value={contactName} onChange={setContactName} />
           </div>
-          <Field
-            label={emailLocked ? 'Email (login — locked)' : 'Email *'}
-            type="email"
-            value={email}
-            onChange={setEmail}
-            disabled={emailLocked}
-            hint={
-              emailLocked
-                ? "This client has activated. Email is the login key and can't be changed here."
-                : undefined
-            }
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field
+              label={emailLocked ? 'Email (login — locked)' : 'Email *'}
+              type="email"
+              value={email}
+              onChange={setEmail}
+              disabled={emailLocked}
+              hint={
+                emailLocked
+                  ? "This client has activated. Email is the login key and can't be changed here."
+                  : undefined
+              }
+            />
+            <Field
+              label="Phone"
+              type="tel"
+              value={phone}
+              onChange={(v) => setPhone(formatPhone(v))}
+              placeholder="(555)555-1212"
+            />
+          </div>
           <Field
             label="Shared Folder Link"
             placeholder="https://drive.google.com/..."
@@ -294,7 +309,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
               <select
                 value={industryId}
                 onChange={(e) => onIndustryChange(e.target.value)}
-                className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
+                className="select-yellow w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
               >
                 <option value="">— Pick one —</option>
                 {industries.map((i) => (
@@ -317,7 +332,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-white">
-                  Key Performance Indicator Defaults
+                  KPI Defaults
                 </label>
                 <span className="text-xs text-white">
                   {isEdit ? 'Override per client' : `Pulled from "${selectedIndustry.name}"`}
