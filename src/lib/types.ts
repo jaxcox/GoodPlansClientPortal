@@ -113,6 +113,13 @@ export type Client = {
   reset_code_expires_at: string | null
   activated: boolean
   archived: boolean
+  /** True when a coach has set a temporary password via the coach-side
+   *  Reset Password modal. ClientPortal renders a force-change-password
+   *  interstitial until the client picks their own password, at which
+   *  point this flips back to false. One-time use enforced at the UI
+   *  level — the auth password still works for additional sign-ins, but
+   *  the client can't reach any page in the portal until they change it. */
+  must_change_password: boolean
   kpis: Record<string, number>
   custom_kpis: CustomKpi[]
   capacity_groups: CapacityGroup[]

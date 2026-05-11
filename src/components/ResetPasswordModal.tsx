@@ -100,7 +100,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-white text-base font-bold">
-            Reset password — {client.company_name}
+            Set temporary password — {client.company_name}
           </h2>
           <button
             type="button"
@@ -115,8 +115,9 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
         {done ? (
           <div className="space-y-4">
             <div className="text-white bg-good/10 border border-good/40 rounded px-3 py-2 text-sm">
-              ✓ Password updated. Share it with the client however you usually
-              do (text, email, in-call).
+              ✓ Temporary password set. Share it with the client however
+              you usually do (text, email, in-call). They'll be required
+              to choose their own password on their next sign-in.
             </div>
             <div className="flex justify-end">
               <button
@@ -131,11 +132,14 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
         ) : (
           <form onSubmit={onSubmit} className="space-y-3">
             <p className="text-white text-xs leading-relaxed">
-              Set a new password for <strong className="text-white">{client.email}</strong>.
-              The old password stops working immediately.
+              Set a temporary password for{' '}
+              <strong className="text-white">{client.email}</strong>. The
+              old password stops working immediately. The client will be
+              required to choose their own password the next time they
+              sign in.
             </p>
             <PasswordField
-              label="New Password"
+              label="Temporary Password"
               value={password}
               onChange={setPassword}
               required
@@ -189,7 +193,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
                 disabled={submitting || !ready}
                 className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
               >
-                {submitting ? 'Resetting…' : 'Reset Password'}
+                {submitting ? 'Setting…' : 'Set Temporary Password'}
               </button>
             </div>
           </form>

@@ -591,6 +591,7 @@ function ClientCard({
             type="button"
             onClick={onResetPassword}
             className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
+            title="Set a temporary password — client will be required to pick their own on next sign-in"
           >
             Reset Password
           </button>

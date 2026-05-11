@@ -98,6 +98,17 @@ Deno.serve(async (req) => {
   )
   if (updateErr) return jsonError(500, updateErr.message)
 
+  // 4. Flag the client as "must change password" so the portal renders
+  //    the force-change interstitial on their next sign-in. The temp
+  //    password the coach just set is one-time use at the UI level —
+  //    they can sign in with it, but they can't reach any page until
+  //    they pick their own password.
+  const { error: flagErr } = await admin
+    .from('clients')
+    .update({ must_change_password: true })
+    .eq('id', clientId)
+  if (flagErr) return jsonError(500, flagErr.message)
+
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { ...cors, 'Content-Type': 'application/json' },
