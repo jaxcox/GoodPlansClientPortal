@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import type { Client } from '../lib/types'
+import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
 
 type Tab = 'clients' | 'industries'
-type ClientFilter = 'active' | 'archived'
+type ClientFilter = 'active' | 'pending' | 'archived'
+type ClientSort = 'alpha-asc' | 'alpha-desc' | 'newest' | 'oldest'
 
 type Props = {
   onViewPortal: (clientId: string) => void
@@ -17,21 +18,32 @@ export function CoachAdmin({ onViewPortal }: Props) {
   const { coach, profile, signOut } = useAuth()
   const [tab, setTab] = useState<Tab>('clients')
   const [clients, setClients] = useState<Client[] | null>(null)
+  const [industries, setIndustries] = useState<Industry[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const refresh = async () => {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: true })
-    if (error) {
-      setLoadError(error.message)
+    const [cRes, iRes] = await Promise.all([
+      supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: true }),
+      supabase.from('industries').select('*').order('name'),
+    ])
+    if (cRes.error) {
+      setLoadError(cRes.error.message)
       setClients([])
     } else {
       setLoadError(null)
-      setClients((data ?? []) as Client[])
+      setClients((cRes.data ?? []) as Client[])
     }
+    setIndustries((iRes.data ?? []) as Industry[])
   }
+
+  const industryById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const i of industries) m.set(i.id, i.name)
+    return m
+  }, [industries])
 
   useEffect(() => {
     refresh()
@@ -73,6 +85,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
         {tab === 'clients' ? (
           <ClientsTab
             clients={clients}
+            industryById={industryById}
             error={loadError}
             onChange={refresh}
             onViewPortal={onViewPortal}
@@ -111,16 +124,20 @@ function TabButton({
 
 function ClientsTab({
   clients,
+  industryById,
   error,
   onChange,
   onViewPortal,
 }: {
   clients: Client[] | null
+  industryById: Map<string, string>
   error: string | null
   onChange: () => void
   onViewPortal: (clientId: string) => void
 }) {
   const [filter, setFilter] = useState<ClientFilter>('active')
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<ClientSort>('alpha-asc')
   const [modalState, setModalState] = useState<
     | { kind: 'closed' }
     | { kind: 'create' }
@@ -128,9 +145,32 @@ function ClientsTab({
   >({ kind: 'closed' })
   const [resetClient, setResetClient] = useState<Client | null>(null)
 
-  const active = (clients ?? []).filter((c) => !c.archived)
+  const active = (clients ?? []).filter((c) => !c.archived && c.activated)
+  const pending = (clients ?? []).filter((c) => !c.archived && !c.activated)
   const archived = (clients ?? []).filter((c) => c.archived)
-  const visible = filter === 'active' ? active : archived
+  const bucket =
+    filter === 'active' ? active : filter === 'pending' ? pending : archived
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? bucket.filter((c) => c.company_name.toLowerCase().startsWith(q))
+    : bucket
+  const visible = useMemo(() => {
+    const list = [...filtered]
+    switch (sort) {
+      case 'alpha-asc':
+        return list.sort((a, b) =>
+          a.company_name.localeCompare(b.company_name)
+        )
+      case 'alpha-desc':
+        return list.sort((a, b) =>
+          b.company_name.localeCompare(a.company_name)
+        )
+      case 'newest':
+        return list.sort((a, b) => b.created_at.localeCompare(a.created_at))
+      case 'oldest':
+        return list.sort((a, b) => a.created_at.localeCompare(b.created_at))
+    }
+  }, [filtered, sort])
 
   return (
     <section>
@@ -145,21 +185,48 @@ function ClientsTab({
         </button>
       </div>
 
-      <div className="inline-flex border border-gray-300 rounded overflow-hidden text-xs mb-4">
-        <FilterButton
-          active={filter === 'active'}
-          onClick={() => setFilter('active')}
-          count={active.length}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="inline-flex border border-gray-300 rounded overflow-hidden text-xs">
+          <FilterButton
+            active={filter === 'active'}
+            onClick={() => setFilter('active')}
+            count={active.length}
+          >
+            Active
+          </FilterButton>
+          <FilterButton
+            active={filter === 'pending'}
+            onClick={() => setFilter('pending')}
+            count={pending.length}
+          >
+            Pending
+          </FilterButton>
+          <FilterButton
+            active={filter === 'archived'}
+            onClick={() => setFilter('archived')}
+            count={archived.length}
+          >
+            Archived
+          </FilterButton>
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by company name…"
+          className="flex-1 min-w-[12rem] max-w-sm bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
+        />
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as ClientSort)}
+          aria-label="Sort clients"
+          className="select-yellow bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
         >
-          Active
-        </FilterButton>
-        <FilterButton
-          active={filter === 'archived'}
-          onClick={() => setFilter('archived')}
-          count={archived.length}
-        >
-          Archived
-        </FilterButton>
+          <option value="alpha-asc">Sort: A → Z</option>
+          <option value="alpha-desc">Sort: Z → A</option>
+          <option value="newest">Sort: Newest first</option>
+          <option value="oldest">Sort: Oldest first</option>
+        </select>
       </div>
 
       {error && (
@@ -173,13 +240,16 @@ function ClientsTab({
           Loading…
         </div>
       ) : visible.length === 0 ? (
-        <EmptyState filter={filter} />
+        <EmptyState filter={filter} hasSearch={q.length > 0} />
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {visible.map((c) => (
             <ClientCard
               key={c.id}
               client={c}
+              industryName={
+                c.industry_id ? industryById.get(c.industry_id) ?? null : null
+              }
               onChange={onChange}
               onViewPortal={() => onViewPortal(c.id)}
               onEdit={() => setModalState({ kind: 'edit', client: c })}
@@ -209,6 +279,65 @@ function ClientsTab({
   )
 }
 
+/* Inline SVG icons used as labels on the client card. fill="currentColor" +
+ * text-accent applies the brand yellow; change `text-accent` on any of these
+ * to recolor (e.g. text-white, text-good, etc.). */
+const ICON_CLS = 'inline-block w-4 h-4 align-text-bottom text-accent'
+
+function EmailIcon() {
+  return (
+    <svg
+      role="img"
+      aria-label="Email"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={ICON_CLS}
+    >
+      <title>Email</title>
+      <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
+      <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
+    </svg>
+  )
+}
+
+function PhoneIcon() {
+  return (
+    <svg
+      role="img"
+      aria-label="Phone"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={ICON_CLS}
+    >
+      <title>Phone</title>
+      <path
+        fillRule="evenodd"
+        d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
+
+function IndustryIcon() {
+  return (
+    <svg
+      role="img"
+      aria-label="Industry"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={ICON_CLS}
+    >
+      <title>Industry</title>
+      <path
+        fillRule="evenodd"
+        d="M4.25 2A2.25 2.25 0 0 0 2 4.25v11.5A2.25 2.25 0 0 0 4.25 18h11.5A2.25 2.25 0 0 0 18 15.75V4.25A2.25 2.25 0 0 0 15.75 2H4.25ZM6 5.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5A.75.75 0 0 1 6 6.75v-1.5Zm5 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5ZM6 9.75A.75.75 0 0 1 6.75 9h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5A.75.75 0 0 1 6 11.25v-1.5Zm5 0A.75.75 0 0 1 11.75 9h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5ZM7 14a1 1 0 0 0-1 1v3h3v-3a1 1 0 0 0-1-1H7Zm5-1a.75.75 0 0 0-.75.75v3.5c0 .414.336.75.75.75h.75a.75.75 0 0 0 .75-.75v-3.5a.75.75 0 0 0-.75-.75H12Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
+
 function FilterButton({
   active,
   onClick,
@@ -235,30 +364,59 @@ function FilterButton({
   )
 }
 
-function EmptyState({ filter }: { filter: ClientFilter }) {
+function EmptyState({
+  filter,
+  hasSearch,
+}: {
+  filter: ClientFilter
+  hasSearch: boolean
+}) {
+  if (hasSearch) {
+    return (
+      <div className="bg-ink border border-dashed border-line rounded p-10 text-center">
+        <div className="text-white font-bold text-sm mb-1">
+          No matches
+        </div>
+        <div className="text-white text-xs">
+          No {filter} clients match that search.
+        </div>
+      </div>
+    )
+  }
+  const copy: Record<ClientFilter, { title: string; sub: string }> = {
+    active: {
+      title: 'No active clients yet',
+      sub: 'Click “+ New Client” to add your first.',
+    },
+    pending: {
+      title: 'No pending clients',
+      sub: 'New clients land here until they activate their portal.',
+    },
+    archived: {
+      title: 'No archived clients',
+      sub: 'Archived clients live here.',
+    },
+  }
   return (
     <div className="bg-ink border border-dashed border-line rounded p-10 text-center">
-      <div className="text-2xl mb-2">{filter === 'active' ? '📂' : '🗄️'}</div>
       <div className="text-white font-bold text-sm mb-1">
-        {filter === 'active' ? 'No active clients yet' : 'No archived clients'}
+        {copy[filter].title}
       </div>
-      <div className="text-white text-xs">
-        {filter === 'active'
-          ? 'Click “+ New Client” to add your first.'
-          : 'Archived clients live here.'}
-      </div>
+      <div className="text-white text-xs">{copy[filter].sub}</div>
     </div>
   )
 }
 
 function ClientCard({
   client,
+  industryName,
   onChange,
   onViewPortal,
   onEdit,
   onResetPassword,
 }: {
   client: Client
+  industryName: string | null
   onChange: () => void
   onViewPortal: () => void
   onEdit: () => void
@@ -289,25 +447,54 @@ function ClientCard({
   }
 
   return (
-    <li className="bg-ink border border-line rounded-lg p-4 flex justify-between items-start gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="text-white font-bold text-sm mb-1">
+    <li className="bg-ink border border-line rounded-lg p-4 flex flex-col gap-3">
+      <div className="min-w-0">
+        <div className="text-white font-bold text-base truncate">
           {client.company_name}
         </div>
-        <div className="text-white text-xs mb-2">
-          {[client.contact_name, client.email].filter(Boolean).join(' · ') ||
-            '—'}
+        <div className="text-white text-sm mt-1 space-y-0.5">
+          {client.contact_name && (
+            <div>
+              <span className="font-semibold">Contact Name:</span>{' '}
+              {client.contact_name}
+            </div>
+          )}
+          {client.email && (
+            <div className="truncate">
+              <EmailIcon />{' '}
+              <a
+                href={`mailto:${client.email}`}
+                className="underline hover:opacity-80"
+              >
+                {client.email}
+              </a>
+            </div>
+          )}
+          {client.phone && (
+            <div>
+              <PhoneIcon />{' '}
+              <a
+                href={`tel:${client.phone.replace(/[^0-9+]/g, '')}`}
+                className="underline hover:opacity-80"
+              >
+                {client.phone}
+              </a>
+            </div>
+          )}
+          <div>
+            <IndustryIcon />{' '}
+            {industryName ?? '—'}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          <StatusPill activated={client.activated} archived={client.archived} />
-          {!client.activated && client.invite_code && (
+        {!client.activated && client.invite_code && (
+          <div className="mt-2">
             <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-mono">
               Code: {client.invite_code}
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-      <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+      <div className="flex flex-wrap justify-center gap-1.5">
         <button
           type="button"
           onClick={onEdit}
@@ -352,34 +539,6 @@ function ClientCard({
         )}
       </div>
     </li>
-  )
-}
-
-function StatusPill({
-  activated,
-  archived,
-}: {
-  activated: boolean
-  archived: boolean
-}) {
-  if (archived) {
-    return (
-      <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
-        Archived
-      </span>
-    )
-  }
-  if (activated) {
-    return (
-      <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
-        Active
-      </span>
-    )
-  }
-  return (
-    <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-semibold">
-      Pending
-    </span>
   )
 }
 
