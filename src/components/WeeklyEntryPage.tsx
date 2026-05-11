@@ -604,7 +604,8 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
             </div>
           </Card>
 
-          {/* Right card: auto-calculated (live from inputs) */}
+          {/* Right column: Auto-calculated card + Notes card stacked */}
+          <div className="space-y-4">
           <Card title="Auto-calculated">
             <div className="space-y-5">
               {CATEGORIES.map((cat) => {
@@ -666,19 +667,18 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
               })}
             </div>
           </Card>
+          <Card title="Notes">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Anything notable about this week? (Optional.)"
+              rows={3}
+              className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent resize-y"
+            />
+          </Card>
+          </div>
         </div>
       )}
-
-      {/* Notes */}
-      <Card title="Notes">
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Anything notable about this week? (Optional.)"
-          rows={3}
-          className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent resize-y"
-        />
-      </Card>
 
       {/* Bottom save */}
       <div className="flex justify-end pt-2">
