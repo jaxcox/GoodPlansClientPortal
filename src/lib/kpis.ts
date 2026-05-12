@@ -58,7 +58,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'revenue',
     label: 'Income',
-    desc: 'Total sales this week',
+    desc: 'Money you actually received. What hit your bank account, regardless of when the sale happened or when you billed for it.',
     category: 'Financials',
     format: '$',
     aggregation: 'sum',
@@ -67,7 +67,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'cogs',
     label: 'COGS',
-    desc: 'Direct production costs',
+    desc: 'The direct cost of what you sold. Includes materials, direct labor, or any other cost tied directly to delivering the product or service. Doesn\'t include rent, utilities, marketing, or other overhead.',
     category: 'Financials',
     format: '$',
     aggregation: 'sum',
@@ -78,7 +78,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'grossProfit',
     label: 'Gross Profit',
-    desc: 'Revenue minus COGS',
+    desc: 'Income minus COGS. The dollars left after covering the direct cost of what you sold, before paying overhead and other expenses.',
     category: 'Financials',
     format: '$',
     aggregation: 'sum',
@@ -89,7 +89,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'grossMargin',
     label: 'Gross Profit Margin',
-    desc: 'Gross Profit ÷ Revenue',
+    desc: 'Gross Profit ÷ Income, shown as a percent. How much of every dollar of income you keep after covering the direct cost of what you sold.',
     category: 'Financials',
     format: '%',
     aggregation: 'derived',
@@ -100,7 +100,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'accountsReceivable',
     label: 'Accounts Receivable',
-    desc: 'Target range ±10%',
+    desc: 'The total money customers currently owe you for work already done. The portal scores it as on-target when it\'s within ±10% of your goal.',
     category: 'Financials',
     format: '$',
     aggregation: 'last',
@@ -111,7 +111,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'leads',
     label: 'Leads Generated',
-    desc: 'New prospects this week',
+    desc: 'Number of new prospects that came in. People who reached out, filled a form, called, or were introduced. Counts anyone you can reasonably follow up with, even if they don\'t end up buying.',
     category: 'Marketing',
     format: '#',
     aggregation: 'sum',
@@ -119,7 +119,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'newClients',
     label: 'New Clients',
-    desc: 'New clients this week',
+    desc: 'Number of new customers. First-time buyers, not existing customers placing repeat orders.',
     category: 'Marketing',
     format: '#',
     aggregation: 'sum',
@@ -127,7 +127,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'conversionRate',
     label: 'Leads Conversion Rate',
-    desc: 'New Clients ÷ Leads',
+    desc: 'New Clients ÷ Leads Generated, shown as a percent. How many of the prospects who came in actually became paying customers.',
     category: 'Marketing',
     format: '%',
     aggregation: 'derived',
@@ -142,7 +142,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'proposalsDollars',
     label: 'Estimates Written ($)',
-    desc: 'Total estimates written this week',
+    desc: 'Total dollar value of estimates you put out for prospective customers, whether they accepted or not. A "shots on goal" measure of your sales pipeline.',
     category: 'Sales',
     format: '$',
     aggregation: 'sum',
@@ -150,7 +150,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'estimatesWritten',
     label: '# of Estimates Written',
-    desc: 'Number of estimates written this week',
+    desc: 'Count of estimates you put out. Pair with Estimates Written ($) to see whether activity is being driven by a few big deals or many small ones.',
     category: 'Sales',
     format: '#',
     aggregation: 'sum',
@@ -158,7 +158,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'avgEstimateValue',
     label: 'Average Estimate Value',
-    desc: 'Estimates Written $ ÷ # of Estimates',
+    desc: 'Estimates Written ($) ÷ # of Estimates Written. The typical size of an estimate you put out.',
     category: 'Sales',
     format: '$',
     aggregation: 'derived',
@@ -168,7 +168,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'estimatesWonDollars',
     label: 'Estimates Won ($)',
-    desc: 'Dollar value of estimates won',
+    desc: 'Total dollar value of estimates customers agreed to. Use this if your business tracks wins at the estimate stage and doesn\'t formalize with contracts.',
     category: 'Sales',
     format: '$',
     aggregation: 'sum',
@@ -177,7 +177,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'contractsWonDollars',
     label: 'Contracts Won ($)',
-    desc: 'Dollar value of contracts won',
+    desc: 'Total dollar value of signed contracts. Use this if your business formalizes wins with contracts.',
     category: 'Sales',
     format: '$',
     aggregation: 'sum',
@@ -186,7 +186,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'closeRate',
     label: 'Sales Close Rate',
-    desc: 'Contracts $ ÷ Estimates Written $',
+    desc: 'The dollar value of wins divided by the dollar value of estimates you put out, shown as a percent. The share of estimate dollars that turned into actual sales.',
     category: 'Sales',
     format: '%',
     aggregation: 'derived',
@@ -196,7 +196,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'pipelineValue',
     label: 'Pipeline Value',
-    desc: 'Open deals — total value',
+    desc: 'Total dollar value of open deals you\'re still working on. Includes estimates that are out, conversations in progress, and anything not yet won or lost.',
     category: 'Sales',
     format: '$',
     aggregation: 'last',
@@ -204,7 +204,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'pipelineDeals',
     label: 'Pipeline Deals',
-    desc: 'Open deals — count',
+    desc: 'Count of open deals you\'re still working on. Pair with Pipeline Value to see whether you\'re chasing a few big opportunities or many small ones.',
     category: 'Sales',
     format: '#',
     aggregation: 'last',
@@ -212,7 +212,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'avgPipelineDeal',
     label: 'Avg Deal in Pipeline',
-    desc: 'Pipeline Value ÷ Pipeline Deals',
+    desc: 'Pipeline Value ÷ Pipeline Deals. The typical size of a deal sitting in your open pipeline.',
     category: 'Sales',
     format: '$',
     aggregation: 'derived',
@@ -222,7 +222,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'transactions',
     label: '# of Transactions',
-    desc: 'Total sales transactions',
+    desc: 'Total number of completed sales. Includes closed orders, completed jobs, or rung-up purchases.',
     category: 'Sales',
     format: '#',
     aggregation: 'sum',
@@ -230,7 +230,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'avgTransactionValue',
     label: 'Avg Transaction Value',
-    desc: 'Revenue ÷ Transactions',
+    desc: 'Income ÷ # of Transactions. The typical size of a completed sale.',
     category: 'Sales',
     format: '$',
     aggregation: 'derived',
@@ -240,7 +240,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'contractValuePerNewClient',
     label: 'Contract Value per New Client',
-    desc: 'Contracts Won $ ÷ New Clients',
+    desc: 'The dollar value of wins divided by the number of new clients. The typical first-deal size per newly-signed customer.',
     category: 'Sales',
     format: '$',
     aggregation: 'derived',
@@ -252,7 +252,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'jobsCompleted',
     label: 'Jobs Completed',
-    desc: 'Jobs finished this week',
+    desc: 'Number of jobs, projects, or work orders you finished. Counts each one as it wraps up, regardless of size or duration.',
     category: 'Operations',
     format: '#',
     aggregation: 'sum',
@@ -260,7 +260,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'onTimeDelivery',
     label: 'On-Time Delivery',
-    desc: 'Percent of jobs on schedule',
+    desc: 'The percent of jobs you finished by their committed deadline.',
     category: 'Operations',
     format: '%',
     aggregation: 'avg',
@@ -268,7 +268,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'avgRepairOrder',
     label: 'Avg Repair Order',
-    desc: 'Revenue ÷ Jobs Completed',
+    desc: 'Income ÷ Jobs Completed. The typical dollar value of a completed job.',
     category: 'Operations',
     format: '$',
     aggregation: 'derived',
@@ -278,7 +278,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'efficiency',
     label: 'Labor Efficiency',
-    desc: 'Produced hours ÷ Working hours',
+    desc: 'Produced hours ÷ Working hours, shown as a percent. How many hours of billable or productive work your team generated out of the total hours they were on the clock.',
     category: 'Operations',
     format: '%',
     aggregation: 'avg',
@@ -288,7 +288,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'warrantyReturns',
     label: 'Warranty / Returns',
-    desc: 'Returns and warranty claims',
+    desc: 'Count of warranty claims, returns, and rework jobs.',
     category: 'Operations',
     format: '#',
     aggregation: 'sum',
@@ -297,7 +297,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'cancellations',
     label: 'Cancellations',
-    desc: 'Cancelled / not rescheduled',
+    desc: 'Number of jobs that were cancelled and not rescheduled.',
     category: 'Operations',
     format: '#',
     aggregation: 'sum',
@@ -308,7 +308,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'laborHoursCompleted',
     label: 'Labor Hours Completed',
-    desc: 'Hours produced this week',
+    desc: 'The number of productive or billable hours your team logged. Used as the numerator in Labor Efficiency.',
     category: 'Team',
     format: '#',
     aggregation: 'sum',
@@ -316,7 +316,7 @@ export const KPIS: KpiDef[] = [
   {
     id: 'teamCapacity',
     label: 'Team Capacity',
-    desc: 'Track utilization by employee or team — defined in Capacity Groups',
+    desc: 'The maximum amount of work that can be expected from a person, team, or department. The detailed setup lives in Capacity Groups under Settings.',
     category: 'Team',
     format: '%',
     aggregation: 'avg',

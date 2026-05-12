@@ -120,6 +120,9 @@ export type Client = {
    *  level — the auth password still works for additional sign-ins, but
    *  the client can't reach any page in the portal until they change it. */
   must_change_password: boolean
+  /** Per-client preference. True = send weekly entry reminder emails when
+   *  a client misses the prior week. Email job not built yet (Phase 9). */
+  weekly_reminder_enabled: boolean
   kpis: Record<string, number>
   custom_kpis: CustomKpi[]
   capacity_groups: CapacityGroup[]

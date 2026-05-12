@@ -97,7 +97,7 @@ export function ResetPasswordRecoveryPage() {
               disabled={submitting || !ready}
               className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Saving…' : 'Save Password'}
+              {submitting ? 'Saving…' : 'Save'}
             </button>
             <button
               type="button"

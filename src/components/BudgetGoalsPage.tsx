@@ -25,6 +25,8 @@ import { KpiGoalsCard } from './KpiGoalsCard'
 import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { CapacityGroupsCard } from './CapacityGroupsCard'
+import { SaveBar } from './SaveBar'
+import { Card } from './Card'
 
 type Props = {
   clientId: string
@@ -285,7 +287,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   }
 
   const onCancel = () => {
-    if (isDirty && !confirm('Discard your unsaved changes and leave Budget & Goals?'))
+    if (isDirty && !confirm('You have unsaved changes. Leave without saving? Click OK to continue or Cancel to stay.'))
       return
     seedDraftFromBudget(budget)
     // Cancel already confirmed the discard; clear central guard synchronously.
@@ -1082,64 +1084,6 @@ function FragmentRow({
         {npPct === null ? '—' : `${npPct.toFixed(1)}%`}
       </DerivedCell>
     </>
-  )
-}
-
-function SaveBar({
-  isDirty,
-  saving,
-  savedAt,
-  onCancel,
-  onSave,
-}: {
-  isDirty: boolean
-  saving: boolean
-  savedAt: number | null
-  onCancel: () => void
-  onSave: () => void
-}) {
-  const showSaved = !isDirty && savedAt !== null
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving}
-        className={`px-4 py-1.5 rounded text-xs font-bold ${
-          showSaved
-            ? 'bg-good text-black hover:brightness-95'
-            : 'bg-accent text-black hover:brightness-95'
-        } disabled:opacity-60 disabled:cursor-wait`}
-      >
-        {saving
-          ? 'Saving…'
-          : showSaved
-            ? 'Saved ✓'
-            : 'Save Budget & Goals'}
-      </button>
-    </div>
-  )
-}
-
-function Card({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
-      <h2 className="text-white text-sm font-bold">{title}</h2>
-      {children}
-    </div>
   )
 }
 

@@ -10,8 +10,10 @@ import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
+import { CoachAccountPage } from './CoachAccountPage'
+import { useDirtyConfirm } from '../lib/dirtyGuard'
 
-type Tab = 'clients' | 'industries'
+type Tab = 'clients' | 'industries' | 'account'
 type ClientFilter = 'active' | 'pending' | 'archived'
 type ClientSort = 'alpha-asc' | 'alpha-desc' | 'newest' | 'oldest'
 
@@ -21,7 +23,19 @@ type Props = {
 
 export function CoachAdmin({ onViewPortal }: Props) {
   const { coach, profile, signOut } = useAuth()
+  const confirmLeave = useDirtyConfirm()
   const [tab, setTab] = useState<Tab>('clients')
+
+  /** Guarded tab change — prompts if the current page has unsaved edits. */
+  const guardedSetTab = (next: Tab) => {
+    if (tab === next) return
+    if (!confirmLeave()) return
+    setTab(next)
+  }
+  const guardedSignOut = () => {
+    if (!confirmLeave()) return
+    signOut()
+  }
   const [clients, setClients] = useState<Client[] | null>(null)
   const [industries, setIndustries] = useState<Industry[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -86,7 +100,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
           </span>
           <button
             type="button"
-            onClick={signOut}
+            onClick={guardedSignOut}
             className="bg-surface-2 text-white border border-line px-3 py-1.5 rounded hover:bg-surface-1"
           >
             Logout
@@ -95,11 +109,14 @@ export function CoachAdmin({ onViewPortal }: Props) {
       </header>
 
       <nav className="bg-white border-b border-gray-100 px-6 flex gap-5">
-        <TabButton active={tab === 'clients'} onClick={() => setTab('clients')}>
+        <TabButton active={tab === 'clients'} onClick={() => guardedSetTab('clients')}>
           Clients
         </TabButton>
-        <TabButton active={tab === 'industries'} onClick={() => setTab('industries')}>
+        <TabButton active={tab === 'industries'} onClick={() => guardedSetTab('industries')}>
           Industries
+        </TabButton>
+        <TabButton active={tab === 'account'} onClick={() => guardedSetTab('account')}>
+          Account
         </TabButton>
       </nav>
 
@@ -113,8 +130,10 @@ export function CoachAdmin({ onViewPortal }: Props) {
             onChange={refresh}
             onViewPortal={onViewPortal}
           />
-        ) : (
+        ) : tab === 'industries' ? (
           <IndustriesPage />
+        ) : (
+          <CoachAccountPage onLeave={() => setTab('clients')} />
         )}
       </main>
     </div>
@@ -200,13 +219,13 @@ function ClientsTab({
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-ink text-base font-bold">My Clients</h1>
+        <h1 className="text-ink text-lg font-bold">My Clients</h1>
         <button
           type="button"
           onClick={() => setModalState({ kind: 'create' })}
           className="bg-accent text-black px-4 py-1.5 rounded text-xs font-bold hover:brightness-95"
         >
-          + New Client
+          + Add Client
         </button>
       </div>
 
@@ -434,7 +453,7 @@ function EmptyState({
   const copy: Record<ClientFilter, { title: string; sub: string }> = {
     active: {
       title: 'No active clients yet',
-      sub: 'Click “+ New Client” to add your first.',
+      sub: 'Click + Add Client to create your first.',
     },
     pending: {
       title: 'No pending clients',

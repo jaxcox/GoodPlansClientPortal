@@ -17,6 +17,9 @@ type AuthState = {
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   completePasswordRecovery: () => void
+  /** Re-fetch the profile + coach rows from the DB. Call this after editing
+   *  display_name / brand fields so the header re-renders with fresh values. */
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -117,6 +120,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const completePasswordRecovery = () => setIsRecoverySession(false)
 
+  const refreshProfile = async () => {
+    if (!userId) return
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+    if (profileData) {
+      setProfile(profileData as Profile)
+      if (profileData.coach_id) {
+        const { data: coachData } = await supabase
+          .from('coaches')
+          .select('*')
+          .eq('id', profileData.coach_id)
+          .maybeSingle()
+        setCoach((coachData as Coach) ?? null)
+      }
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -128,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithPassword,
         signOut,
         completePasswordRecovery,
+        refreshProfile,
       }}
     >
       {children}

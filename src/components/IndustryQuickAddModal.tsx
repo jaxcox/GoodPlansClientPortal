@@ -165,7 +165,7 @@ export function IndustryQuickAddModal({
               disabled={submitting || !name.trim()}
               className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
             >
-              {submitting ? 'Saving…' : 'Save Industry'}
+              {submitting ? 'Saving…' : 'Save'}
             </button>
           </div>
         </form>

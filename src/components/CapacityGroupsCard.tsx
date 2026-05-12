@@ -329,7 +329,7 @@ function EmployeesBody({
 
       {employees.length === 0 ? (
         <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
-          No rows yet — click + Add to start.
+          No rows yet. Click + Add to start.
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -515,7 +515,7 @@ function HeadcountBody({
 
         {departments.length === 0 ? (
           <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
-            No departments yet — click + Add to start.
+            No departments yet. Click + Add to start.
           </div>
         ) : (
           <div className="overflow-x-auto">

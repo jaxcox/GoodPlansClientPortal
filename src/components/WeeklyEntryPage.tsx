@@ -27,6 +27,8 @@ import {
 } from '../lib/week'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { NumberField } from './NumberField'
+import { SaveBar } from './SaveBar'
+import { Card } from './Card'
 
 // =============================================================================
 // Phase 5 — Weekly Entry
@@ -361,7 +363,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
   const onCancel = () => {
     if (
       isDirty &&
-      !confirm('Discard your unsaved changes and leave Weekly Entry?')
+      !confirm('You have unsaved changes. Leave without saving? Click OK to continue or Cancel to stay.')
     )
       return
     seedFromEntry(entry)
@@ -807,60 +809,6 @@ function WeekPicker({
   )
 }
 
-function SaveBar({
-  isDirty,
-  saving,
-  savedAt,
-  onCancel,
-  onSave,
-}: {
-  isDirty: boolean
-  saving: boolean
-  savedAt: number | null
-  onCancel: () => void
-  onSave: () => void
-}) {
-  const showSaved = !isDirty && savedAt !== null
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving}
-        className={`px-4 py-1.5 rounded text-xs font-bold ${
-          showSaved
-            ? 'bg-good text-black hover:brightness-95'
-            : 'bg-accent text-black hover:brightness-95'
-        } disabled:opacity-60 disabled:cursor-wait`}
-      >
-        {saving ? 'Saving…' : showSaved ? 'Saved ✓' : 'Save Entry'}
-      </button>
-    </div>
-  )
-}
-
-function Card({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
-      <h2 className="text-white text-sm font-bold">{title}</h2>
-      {children}
-    </div>
-  )
-}
-
 /** Read-only display for auto-derived weekly KPIs (Gross Profit, GP%,
  *  Conversion Rate, etc.). Same dark surface + 0.5px yellow line as the
  *  derived boxes elsewhere on the page so the "auto-populated" visual
@@ -955,7 +903,7 @@ function CapacityGroupBody({
     default:
       return (
         <div className="text-white text-xs italic">
-          No tracking method picked yet — set one in Settings → Capacity
+          No tracking method picked yet. Set one in Settings → Capacity
           &amp; Utilization Tracking.
         </div>
       )
@@ -1119,7 +1067,7 @@ function HeadcountBlock({
   if (departments.length === 0) {
     return (
       <div className="text-white text-xs italic">
-        No departments yet — add some in Settings → Capacity &amp; Utilization
+        No departments yet. Add some in Settings → Capacity &amp; Utilization
         Tracking.
       </div>
     )

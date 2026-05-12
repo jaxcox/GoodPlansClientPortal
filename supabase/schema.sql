@@ -69,6 +69,10 @@ create table if not exists clients (
   activated boolean not null default false,
   archived boolean not null default false,
 
+  -- Per-client preference: send weekly entry reminder emails. Email job
+  -- itself is built in Phase 9 deploy work.
+  weekly_reminder_enabled boolean not null default true,
+
   -- Per-client structure (populated in later phases)
   kpis jsonb not null default '{}'::jsonb,
   custom_kpis jsonb not null default '[]'::jsonb,
@@ -214,6 +218,11 @@ drop policy if exists "profiles_admin_write" on profiles;
 create policy "profiles_admin_write" on profiles
 for all using (current_app_role() = 'super_admin')
 with check (current_app_role() = 'super_admin');
+
+drop policy if exists "profiles_self_update" on profiles;
+create policy "profiles_self_update" on profiles
+for update using (id = auth.uid())
+with check (id = auth.uid());
 
 -- =============================================================================
 -- TIMESTAMP TRIGGERS

@@ -199,7 +199,7 @@ export function KpiGoalsCard({
   if (totalRows === 0) {
     return (
       <div className="text-white text-xs leading-relaxed">
-        No active indicators to set goals for. Toggle some on under{' '}
+        No active KPIs to enter. Toggle some on under{' '}
         <strong className="text-white">Settings → Active KPIs</strong>, then
         come back here to set their targets.
       </div>

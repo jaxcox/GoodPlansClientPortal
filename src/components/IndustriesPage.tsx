@@ -93,19 +93,14 @@ export function IndustriesPage() {
 
   return (
     <section>
-      <div className="flex justify-between items-start mb-1">
-        <div>
-          <h1 className="text-ink text-base font-bold">Custom Industries</h1>
-          <p className="text-black text-xs">
-            Define industries and their default KPI sets for new clients.
-          </p>
-        </div>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-ink text-lg font-bold">Custom Industries</h1>
         <button
           type="button"
           onClick={() => setMode({ kind: 'edit', industry: null })}
           className="bg-accent text-black px-4 py-1.5 rounded text-xs font-bold hover:brightness-95"
         >
-          + New Industry
+          + Add Industry
         </button>
       </div>
 
@@ -342,7 +337,7 @@ function IndustryEditor({
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-ink text-base font-bold">
+        <h1 className="text-ink text-lg font-bold">
           {industry ? 'Edit Industry' : 'New Industry'}
         </h1>
         <button
@@ -433,7 +428,7 @@ function IndustryEditor({
             disabled={submitting || !name.trim()}
             className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
           >
-            {submitting ? 'Saving…' : 'Save Industry'}
+            {submitting ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>

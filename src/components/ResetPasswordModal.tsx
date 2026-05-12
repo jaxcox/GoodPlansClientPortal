@@ -193,7 +193,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
                 disabled={submitting || !ready}
                 className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
               >
-                {submitting ? 'Setting…' : 'Set Temporary Password'}
+                {submitting ? 'Saving…' : 'Save'}
               </button>
             </div>
           </form>

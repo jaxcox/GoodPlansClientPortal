@@ -7,13 +7,16 @@ import { Toggle } from './Toggle'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { formatPhone } from '../lib/phone'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
-import { PasswordField } from './PasswordField'
 import {
   CustomKpiForm,
   CustomKpisListSection,
   newCustomKpiId,
   type CustomKpiFormValues,
 } from './CustomKpisCard'
+import { SaveBar } from './SaveBar'
+import { Card } from './Card'
+import { ChangePasswordForm } from './ChangePasswordForm'
+import { DarkField } from './DarkField'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -41,6 +44,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [industryId, setIndustryId] = useState<string>('')
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
   const [tracksYtd, setTracksYtd] = useState(true)
+  const [weeklyReminder, setWeeklyReminder] = useState(true)
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -73,6 +77,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setIndustryId(c.industry_id ?? '')
     setKpis({ ...emptyKpiDefaults(), ...(c.kpis ?? {}) })
     setTracksYtd(c.tracks_ytd_actuals ?? true)
+    setWeeklyReminder(c.weekly_reminder_enabled ?? true)
   }
 
   useEffect(() => {
@@ -120,6 +125,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       JSON.stringify(kpis) !==
         JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) }) ||
       tracksYtd !== (client.tracks_ytd_actuals ?? true) ||
+      weeklyReminder !== (client.weekly_reminder_enabled ?? true) ||
       false
     )
   }, [
@@ -132,6 +138,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     industryId,
     kpis,
     tracksYtd,
+    weeklyReminder,
   ])
 
   // Register dirty state with the app-wide leave guard so top-bar tab
@@ -245,7 +252,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   // Cancel = exit Settings. If the form is dirty, confirm before leaving.
   // Always enabled regardless of dirty state.
   const onCancel = () => {
-    if (isDirty && !confirm('Discard your unsaved changes and leave Settings?')) {
+    if (isDirty && !confirm('You have unsaved changes. Leave without saving? Click OK to continue or Cancel to stay.')) {
       return
     }
     if (client) {
@@ -282,6 +289,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       company_name: companyName.trim(),
       contact_name: contactName.trim() || null,
       phone: phone.trim() || null,
+      weekly_reminder_enabled: weeklyReminder,
     }
     if (canEditAll) {
       updates.shared_folder_link = sharedFolderLink.trim() || null
@@ -461,7 +469,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {canEditAll && (
           <div ref={creatorRef}>
-            <Card title="Custom KPI Creator">
+            <Card title="Custom KPIs">
               <CustomKpiForm
                 editing={editingCustomKpi}
                 onSubmit={async (values) => {
@@ -486,6 +494,18 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             </Card>
           </div>
         )}
+      </div>
+
+      {/* ===== Row 3: Notifications ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <Card title="Notifications">
+          <NotificationToggle
+            label="Weekly entry reminder email"
+            hint="Sends a friendly nudge if the prior week hasn't been logged by Tuesday morning."
+            checked={weeklyReminder}
+            onChange={setWeeklyReminder}
+          />
+        </Card>
       </div>
 
       {/* ===== Bottom Save/Cancel ===== */}
@@ -515,184 +535,21 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 // Helpers
 // =============================================================================
 
-/** Change Password form — only rendered for clients viewing their own
- *  portal (not coach via View Portal). Verifies old password by
- *  re-signing in (Supabase doesn't expose a direct verify-only call),
- *  then updates the auth password. Eye toggle on all three fields via
- *  the shared PasswordField component. */
-function ChangePasswordForm({ email }: { email: string }) {
-  const [oldPw, setOldPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [confirmPw, setConfirmPw] = useState('')
-  const [show, setShow] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
-
-  const longEnough = newPw.length >= 8
-  const matches = confirmPw.length > 0 && newPw === confirmPw
-  const sameAsOld = newPw.length > 0 && oldPw.length > 0 && newPw === oldPw
-  const ready =
-    oldPw.length > 0 && longEnough && matches && !sameAsOld
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setDone(false)
-    if (!ready) {
-      setError(
-        !oldPw
-          ? 'Enter your current password.'
-          : !longEnough
-            ? 'New password must be at least 8 characters.'
-            : !matches
-              ? "Passwords don't match."
-              : sameAsOld
-                ? 'New password must differ from the current one.'
-                : 'Form not ready.'
-      )
-      return
-    }
-    setSubmitting(true)
-
-    // 1. Verify the current password by re-signing in. If it's wrong,
-    //    Supabase rejects with "Invalid login credentials".
-    const { error: verifyErr } = await supabase.auth.signInWithPassword({
-      email,
-      password: oldPw,
-    })
-    if (verifyErr) {
-      setError('Current password is incorrect.')
-      setSubmitting(false)
-      return
-    }
-
-    // 2. Set the new password.
-    const { error: updateErr } = await supabase.auth.updateUser({
-      password: newPw,
-    })
-    setSubmitting(false)
-    if (updateErr) {
-      setError(updateErr.message)
-      return
-    }
-    setOldPw('')
-    setNewPw('')
-    setConfirmPw('')
-    setDone(true)
-  }
-
-  const visibility = { show, toggle: () => setShow((s) => !s) }
-
-  return (
-    <form onSubmit={onSubmit} className="space-y-3">
-      <PasswordField
-        label="Current Password"
-        value={oldPw}
-        onChange={setOldPw}
-        required
-        autoComplete="current-password"
-        visibility={visibility}
-      />
-      <PasswordField
-        label="New Password"
-        value={newPw}
-        onChange={setNewPw}
-        required
-        visibility={visibility}
-      />
-      <div className="text-xs text-white -mt-2">
-        {longEnough ? '✓ ' : ''}New password must be at least 8 characters
-        {newPw.length > 0 && !longEnough && ` (${newPw.length}/8)`}
-      </div>
-      <PasswordField
-        label="Confirm New Password"
-        value={confirmPw}
-        onChange={setConfirmPw}
-        required
-        visibility={visibility}
-      />
-      {confirmPw.length > 0 && newPw.length > 0 && (
-        <div className="text-xs text-white -mt-2">
-          {matches ? '✓ Passwords match' : "Passwords don't match"}
-        </div>
-      )}
-      {error && (
-        <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
-          {error}
-        </div>
-      )}
-      {done && (
-        <div className="text-xs text-white bg-good/10 border border-good/40 rounded px-3 py-2">
-          ✓ Password updated.
-        </div>
-      )}
-      <div className="flex justify-end pt-1">
-        <button
-          type="submit"
-          disabled={submitting || !ready}
-          className="bg-accent text-black font-bold px-4 py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50"
-        >
-          {submitting ? 'Updating…' : 'Update Password'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function SaveBar({
-  isDirty,
-  saving,
-  savedAt,
-  onCancel,
-  onSave,
+function NotificationToggle({
+  label,
+  hint,
+  checked,
+  onChange,
 }: {
-  isDirty: boolean
-  saving: boolean
-  savedAt: number | null
-  onCancel: () => void
-  onSave: () => void
-}) {
-  // Default state is yellow "Save Settings" — even when the form is clean —
-  // so the screen never looks "done" the moment you arrive. Green "Saved ✓"
-  // is a transient confirmation that fades back to yellow after a few seconds.
-  const showSaved = !isDirty && savedAt !== null
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving}
-        className={`px-4 py-1.5 rounded text-xs font-bold ${
-          showSaved
-            ? 'bg-good text-black hover:brightness-95'
-            : 'bg-accent text-black hover:brightness-95'
-        } disabled:opacity-60 disabled:cursor-wait`}
-      >
-        {saving ? 'Saving…' : showSaved ? 'Saved ✓' : 'Save Settings'}
-      </button>
-    </div>
-  )
-}
-
-function Card({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
+  label: string
+  hint?: string
+  checked: boolean
+  onChange: (v: boolean) => void
 }) {
   return (
-    <div className="bg-ink border border-line rounded-lg p-5">
-      <h2 className="text-white text-sm font-bold mb-4">{title}</h2>
-      <div className="space-y-3">{children}</div>
+    <div>
+      <Toggle label={label} checked={checked} onChange={onChange} />
+      {hint && <div className="text-xs text-white mt-1.5">{hint}</div>}
     </div>
   )
 }
@@ -759,48 +616,6 @@ function SharedFolderRow({
           No shared folder added yet.
         </div>
       )}
-    </div>
-  )
-}
-
-function DarkField({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  placeholder,
-  disabled,
-  required,
-  hint,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  type?: string
-  placeholder?: string
-  disabled?: boolean
-  required?: boolean
-  hint?: string
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        className={`w-full rounded text-sm px-3 py-2 focus:outline-none ${
-          disabled
-            ? 'bg-surface-2 border-[0.5px] border-accent text-white cursor-not-allowed'
-            : 'bg-white border-2 border-accent ring-1 ring-inset ring-black text-black focus:border-accent'
-        }`}
-      />
-      {hint && <div className="text-xs text-white mt-1">{hint}</div>}
     </div>
   )
 }
