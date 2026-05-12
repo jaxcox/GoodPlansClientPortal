@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
+import { KPIS, emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
+import { InfoIcon } from './InfoIcon'
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, CustomKpi, Industry } from '../lib/types'
 import { Toggle } from './Toggle'
@@ -638,10 +639,10 @@ function FinancialsSection({
         These items are always on.
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
-        <AlwaysOnItem label="Income" />
-        <AlwaysOnItem label="COGS" />
-        <AlwaysOnItem label="Gross Profit" />
-        <AlwaysOnItem label="Gross Profit Margin" />
+        <AlwaysOnItem label="Income" tooltip={kpiDesc('revenue')} />
+        <AlwaysOnItem label="COGS" tooltip={kpiDesc('cogs')} />
+        <AlwaysOnItem label="Gross Profit" tooltip={kpiDesc('grossProfit')} />
+        <AlwaysOnItem label="Gross Profit Margin" tooltip={kpiDesc('grossMargin')} />
         <Toggle
           checked={tracksYtd}
           onChange={onTracksYtdChange}
@@ -655,15 +656,21 @@ function FinancialsSection({
 /** Visual sibling of the Toggle component for items that can't be turned off.
  *  The 28px-wide checkmark slot mirrors the Toggle pill so labels align in
  *  the same column. */
-function AlwaysOnItem({ label }: { label: string }) {
+function AlwaysOnItem({ label, tooltip }: { label: string; tooltip?: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="inline-flex justify-center w-7 text-accent text-xs font-bold">
         ✓
       </span>
       <span className="text-white text-xs">{label}</span>
+      {tooltip && <InfoIcon text={tooltip} />}
     </div>
   )
+}
+
+/** Look up a KPI description by id from the registry. */
+function kpiDesc(id: string): string | undefined {
+  return KPIS.find((k) => k.id === id)?.desc
 }
 
 function KpiTogglesGrouped({
@@ -686,12 +693,14 @@ function KpiTogglesGrouped({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
             {g.kpis.map((k) => (
-              <Toggle
-                key={k.id}
-                checked={Number(kpis[k.id]) === 1}
-                onChange={(on) => onToggle(k.id, on)}
-                label={k.label}
-              />
+              <div key={k.id} className="flex items-center gap-1.5">
+                <Toggle
+                  checked={Number(kpis[k.id]) === 1}
+                  onChange={(on) => onToggle(k.id, on)}
+                  label={k.label}
+                />
+                {k.desc && <InfoIcon text={k.desc} />}
+              </div>
             ))}
           </div>
         </div>
@@ -725,7 +734,9 @@ function KpiTogglesReadOnly({
             <ul className="text-xs text-white space-y-1">
               {active.map((k) => (
                 <li key={k.id} className="flex items-center gap-2">
-                  <span className="text-accent font-bold">✓</span> {k.label}
+                  <span className="text-accent font-bold">✓</span>
+                  <span>{k.label}</span>
+                  {k.desc && <InfoIcon text={k.desc} />}
                 </li>
               ))}
             </ul>

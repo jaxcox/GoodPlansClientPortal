@@ -2,6 +2,7 @@ import { CATEGORIES, KPIS, findKpi } from '../lib/kpis'
 import type { KpiCategory, KpiFormat } from '../lib/kpis'
 import type { Client } from '../lib/types'
 import { NumberField } from './NumberField'
+import { InfoIcon } from './InfoIcon'
 
 // Sum/$ KPI goals are stored as ANNUAL amounts and pro-rated by the dashboard
 // using the same season_pct distribution that drives monthly income targets.
@@ -21,6 +22,7 @@ type Row = {
   label: string
   format: KpiFormat
   derived: boolean
+  desc?: string
 }
 
 const numberFieldFormat: Record<KpiFormat, 'dollars' | 'percent' | 'count'> =
@@ -169,6 +171,7 @@ export function KpiGoalsCard({
       label: k.label,
       format: k.format,
       derived: DERIVABLE_GOAL_IDS.has(k.id),
+      desc: k.desc,
     })
     standardByCategory.set(k.category, list)
   }
@@ -229,8 +232,9 @@ export function KpiGoalsCard({
                   key={row.id}
                   className="flex flex-col h-full justify-end"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-                    {row.label}
+                  <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
+                    <span>{row.label}</span>
+                    {row.desc && <InfoIcon text={row.desc} />}
                   </div>
                   {row.derived ? (
                     <DerivedKpiBox

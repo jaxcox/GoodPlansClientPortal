@@ -29,6 +29,7 @@ import { useDirtyGuard } from '../lib/dirtyGuard'
 import { NumberField } from './NumberField'
 import { SaveBar } from './SaveBar'
 import { Card } from './Card'
+import { InfoIcon } from './InfoIcon'
 
 // =============================================================================
 // Phase 5 — Weekly Entry
@@ -55,6 +56,9 @@ type EntryRow = {
   /** Optional inline hint shown below the input — e.g. for snapshot KPIs
    *  that are end-of-week values rather than weekly totals. */
   hint?: string
+  /** Optional tooltip text for the label's info icon. Standard KPIs only;
+   *  custom KPIs don't have descriptions. */
+  desc?: string
 }
 
 const numberFieldFormat: Record<KpiFormat, 'dollars' | 'percent' | 'count'> = {
@@ -323,6 +327,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
           k.aggregation === 'last' && !DERIVABLE_WEEKLY_IDS.has(k.id)
             ? 'End-of-week snapshot'
             : undefined,
+        desc: k.desc,
       })
     }
     // Custom KPIs (never auto-derived)
@@ -586,8 +591,9 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                       <div className="space-y-3">
                         {inputRows.map((row) => (
                           <div key={row.id} className="flex flex-col">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-                              {row.label}
+                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
+                              <span>{row.label}</span>
+                              {row.desc && <InfoIcon text={row.desc} />}
                             </div>
                             <NumberField
                               value={kpiValues[row.id]}
@@ -656,8 +662,9 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
                     <div className="space-y-3">
                       {derivedRows.map((row) => (
                         <div key={row.id} className="flex flex-col">
-                          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-                            {row.label}
+                          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
+                            <span>{row.label}</span>
+                            {row.desc && <InfoIcon text={row.desc} />}
                           </div>
                           <DerivedKpiBox
                             value={formatDerivedWeekly(
