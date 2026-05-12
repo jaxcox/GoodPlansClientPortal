@@ -18,7 +18,7 @@ export function SaveBar({ isDirty, saving, savedAt, onCancel, onSave }: Props) {
       <button
         type="button"
         onClick={onCancel}
-        className="bg-white text-black border border-gray-300 px-4 py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
+        className="bg-white text-black border border-gray-300 px-4 py-2 sm:py-1.5 rounded text-xs font-semibold hover:bg-gray-50"
       >
         Cancel
       </button>
@@ -26,7 +26,7 @@ export function SaveBar({ isDirty, saving, savedAt, onCancel, onSave }: Props) {
         type="button"
         onClick={onSave}
         disabled={saving}
-        className={`px-4 py-1.5 rounded text-xs font-bold ${
+        className={`px-4 py-2 sm:py-1.5 rounded text-xs font-bold ${
           showSaved
             ? 'bg-good text-black hover:brightness-95'
             : 'bg-accent text-black hover:brightness-95'

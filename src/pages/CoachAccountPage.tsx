@@ -126,7 +126,7 @@ export function CoachAccountPage({ onLeave }: Props) {
 
   return (
     <section className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-ink text-lg font-bold">Account</h1>
         <SaveBar
           isDirty={isDirty}

@@ -93,7 +93,7 @@ export function IndustriesPage() {
 
   return (
     <section>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h1 className="text-ink text-lg font-bold">Custom Industries</h1>
         <button
           type="button"
@@ -336,7 +336,7 @@ function IndustryEditor({
 
   return (
     <section>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h1 className="text-ink text-lg font-bold">
           {industry ? 'Edit Industry' : 'New Industry'}
         </h1>

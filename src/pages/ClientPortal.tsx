@@ -105,7 +105,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           When a force-change-password is required, the nav links are
           suppressed so the client can't navigate around the interstitial.
           Logout / Back stays available. */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center flex-wrap gap-2">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-ink">
             {client.company_name}
@@ -116,7 +116,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs flex-wrap">
+        <div className="flex items-center gap-1 text-sm sm:text-xs flex-wrap">
           {!(client.must_change_password && !coachView) && (
             <>
               <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
@@ -131,7 +131,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               href={client.shared_folder_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent text-ink border border-gray-300 px-3 py-1 rounded ml-2 hover:bg-gray-50"
+              className="bg-transparent text-ink border border-gray-300 px-3 py-2 sm:py-1 rounded ml-2 hover:bg-gray-50"
               title={`Open ${client.company_name}'s shared folder`}
             >
               Shared Drive ↗
@@ -141,7 +141,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             <button
               type="button"
               onClick={guardedBack}
-              className="bg-surface-2 text-white border border-line px-3 py-1 rounded ml-2 hover:bg-surface-1"
+              className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
             >
               Back
             </button>
@@ -149,7 +149,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             <button
               type="button"
               onClick={guardedSignOut}
-              className="bg-surface-2 text-white border border-line px-3 py-1 rounded ml-2 hover:bg-surface-1"
+              className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
             >
               Logout
             </button>
@@ -158,7 +158,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
       </header>
 
       {/* Body */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {client.must_change_password && !coachView ? (
           <ForceChangePasswordPage
             clientId={clientId}
@@ -227,7 +227,7 @@ function NavLink({
     <button
       type="button"
       onClick={onClick}
-      className={`px-2 py-0.5 ${
+      className={`px-2 py-2 sm:py-1 ${
         active ? 'font-bold text-ink border-b-2 border-accent' : 'text-black'
       }`}
     >

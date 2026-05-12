@@ -89,7 +89,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
 
   return (
     <div className="min-h-screen bg-[#f5f3ec]">
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div>
           <span className="text-base font-extrabold text-ink">{brandName}</span>
           <span className="text-xs text-black ml-3">Admin Panel</span>
@@ -101,14 +101,14 @@ export function CoachAdmin({ onViewPortal }: Props) {
           <button
             type="button"
             onClick={guardedSignOut}
-            className="bg-surface-2 text-white border border-line px-3 py-1.5 rounded hover:bg-surface-1"
+            className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1.5 rounded hover:bg-surface-1"
           >
             Logout
           </button>
         </div>
       </header>
 
-      <nav className="bg-white border-b border-gray-100 px-6 flex gap-5">
+      <nav className="bg-white border-b border-gray-100 px-4 sm:px-6 flex gap-5">
         <TabButton active={tab === 'clients'} onClick={() => guardedSetTab('clients')}>
           Clients
         </TabButton>
@@ -120,7 +120,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
         </TabButton>
       </nav>
 
-      <main className="max-w-5xl mx-auto p-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {tab === 'clients' ? (
           <ClientsTab
             clients={clients}
@@ -153,7 +153,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`text-xs py-2.5 ${
+      className={`text-sm sm:text-xs py-3 sm:py-2.5 ${
         active
           ? 'font-bold text-ink border-b-2 border-accent -mb-px'
           : 'text-black'
@@ -223,7 +223,7 @@ function ClientsTab({
         <button
           type="button"
           onClick={() => setModalState({ kind: 'create' })}
-          className="bg-accent text-black px-4 py-1.5 rounded text-xs font-bold hover:brightness-95"
+          className="bg-accent text-black px-4 py-2 sm:py-1.5 rounded text-xs font-bold hover:brightness-95"
         >
           + Add Client
         </button>
@@ -466,7 +466,7 @@ function FilterButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 ${
+      className={`px-3 py-2 sm:py-1.5 ${
         active
           ? 'bg-ink text-white font-bold'
           : 'bg-white text-black hover:bg-gray-50'
@@ -641,11 +641,11 @@ function ClientCard({
           </div>
         )}
       </div>
-      <div className="flex flex-wrap justify-center gap-1.5">
+      <div className="flex flex-wrap justify-center sm:justify-start gap-1.5">
         <button
           type="button"
           onClick={onEdit}
-          className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
+          className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
         >
           Edit
         </button>
@@ -653,7 +653,7 @@ function ClientCard({
           <button
             type="button"
             onClick={onResetPassword}
-            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10"
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
             title="Set a temporary password — client will be required to pick their own on next sign-in"
           >
             Reset Password
@@ -664,7 +664,7 @@ function ClientCard({
             type="button"
             onClick={regenerateCode}
             disabled={busy}
-            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
           >
             Regenerate Code
           </button>
@@ -672,16 +672,20 @@ function ClientCard({
         <button
           type="button"
           onClick={onViewPortal}
-          className="bg-accent text-black text-xs font-bold px-3 py-1.5 rounded hover:brightness-95"
+          className="bg-accent text-black text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:brightness-95"
         >
           View Portal
         </button>
+        {/* Mobile-only row break — pushes Archive/Restore to its own row
+            below the action cluster (Edit / Reset / View Portal). On
+            desktop (sm+) this is hidden so all buttons sit on one row. */}
+        <div className="basis-full h-0 sm:hidden" aria-hidden />
         {client.archived ? (
           <button
             type="button"
             onClick={() => setArchived(false)}
             disabled={busy}
-            className="bg-transparent text-white border border-good text-xs font-bold px-3 py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-good text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
           >
             Restore
           </button>
@@ -690,7 +694,7 @@ function ClientCard({
             type="button"
             onClick={() => setArchived(true)}
             disabled={busy}
-            className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+            className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
           >
             Archive
           </button>
