@@ -331,6 +331,52 @@ function ClientsTab({
  *  that wasn't done, not a financial trailing indicator, so it warrants
  *  the more urgent treatment. White text on red per the project color
  *  rule (text-on-bg contrast). */
+/** Clickable invite-code chip. Click anywhere on the chip to copy the
+ *  code; the chip briefly swaps to "Copied ✓" so the coach knows it
+ *  landed (clipboard is otherwise invisible). The copy icon makes the
+ *  click affordance discoverable. */
+function CopyableCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false)
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+    } catch {
+      return
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      title={copied ? 'Copied to clipboard' : 'Click to copy'}
+      className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-mono transition-colors ${
+        copied
+          ? 'bg-good text-white'
+          : 'bg-line text-white hover:bg-line/80 cursor-pointer'
+      }`}
+    >
+      <span>{copied ? 'Copied ✓' : `Code: ${code}`}</span>
+      {!copied && (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-3 h-3"
+          aria-hidden
+        >
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
 function EntryStatusPill({ entered }: { entered: boolean }) {
   if (entered) {
     return (
@@ -591,9 +637,7 @@ function ClientCard({
         </div>
         {!client.activated && client.invite_code && (
           <div className="mt-2">
-            <span className="bg-line text-white rounded px-2 py-0.5 text-xs font-mono">
-              Code: {client.invite_code}
-            </span>
+            <CopyableCode code={client.invite_code} />
           </div>
         )}
       </div>
