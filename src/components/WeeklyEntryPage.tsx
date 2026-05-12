@@ -1074,8 +1074,8 @@ function HeadcountBlock({
   if (departments.length === 0) {
     return (
       <div className="text-white text-xs italic">
-        No departments yet. Add some in Settings → Capacity &amp; Utilization
-        Tracking.
+        No departments yet. Add some in Settings → Capacity &amp;
+        Utilization.
       </div>
     )
   }

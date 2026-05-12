@@ -13,7 +13,7 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#f5f3ec]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="text-2xl font-extrabold tracking-tight text-ink">
+          <div className="font-brand text-2xl font-bold text-ink">
             The Good Plans Co
           </div>
           <div className="text-sm text-white mt-1">Client Performance Portal</div>

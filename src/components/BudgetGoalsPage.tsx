@@ -373,8 +373,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     }
 
     // Capacity groups live on the client record, not the budget. Save them
-    // here too so the merged "Capacity & Utilization Tracking" card on the
-    // Targets tab persists structure + goals in one user action.
+    // here too so the merged "Capacity & Utilization" card on the Targets
+    // tab persists structure + goals in one user action.
     const { data: clientUpdated, error: clientErr } = await supabase
       .from('clients')
       .update({ capacity_groups: capacityGroups })

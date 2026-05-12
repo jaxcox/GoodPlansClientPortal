@@ -13,6 +13,7 @@
   --color-bad-soft: #f87171;
   --color-mute: #888888;
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-brand: "Playfair Display", Georgia, serif;
 }
 
 html, body, #root {

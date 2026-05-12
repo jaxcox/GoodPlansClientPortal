@@ -16,6 +16,8 @@ import type {
   CapacityMethod,
 } from '../lib/types'
 import { NumberField } from './NumberField'
+import { InfoIcon } from './InfoIcon'
+import { TEAM_CAPACITY_DESC } from './WeeklyDashboard'
 
 type Props = {
   groups: CapacityGroup[]
@@ -83,8 +85,9 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
     <div className="space-y-4">
       {/* Section header lives outside the cards, on the page background. */}
       <div className="space-y-3">
-        <h2 className="text-base font-bold text-ink">
-          Capacity &amp; Utilization Tracking
+        <h2 className="text-base font-bold text-ink flex items-center gap-1.5">
+          Capacity &amp; Utilization
+          <InfoIcon text={TEAM_CAPACITY_DESC} />
         </h2>
         <button
           type="button"

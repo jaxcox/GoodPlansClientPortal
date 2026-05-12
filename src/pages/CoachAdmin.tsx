@@ -91,7 +91,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
     <div className="min-h-screen bg-[#f5f3ec]">
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div>
-          <span className="text-base font-extrabold text-ink">{brandName}</span>
+          <span className="font-brand text-lg font-bold text-ink">{brandName}</span>
           <span className="text-xs text-black ml-3">Admin Panel</span>
         </div>
         <div className="flex items-center gap-3 text-xs">

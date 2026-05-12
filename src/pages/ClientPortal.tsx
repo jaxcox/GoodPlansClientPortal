@@ -6,6 +6,7 @@ import type { Client } from '../lib/types'
 import { SettingsPage } from '../components/SettingsPage'
 import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
 import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
+import { WeeklyDashboard } from '../components/WeeklyDashboard'
 import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 
 type Props = {
@@ -201,6 +202,8 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               }
             }}
           />
+        ) : tab === 'dashboard' ? (
+          <WeeklyDashboard clientId={clientId} coachView={coachView} />
         ) : (
           <Body tab={tab} />
         )}
@@ -208,7 +211,10 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
       {/* Footer — brand mark per Doc 03 PC */}
       <footer className="text-center text-xs text-black py-4">
-        Powered by {coach?.brand_name ?? 'The Good Plans Co'}
+        Powered by{' '}
+        <span className="font-brand font-bold">
+          {coach?.brand_name ?? 'The Good Plans Co'}
+        </span>
       </footer>
     </div>
   )
@@ -245,7 +251,7 @@ function Body({ tab }: { tab: NavTab }) {
     settings: 'Company Settings',
   }
   const subtitles: Record<NavTab, string> = {
-    dashboard: 'No entries yet — Weekly Dashboard lands in Phase 5.',
+    dashboard: '',
     entry: 'Weekly Entry form lands in Phase 5.',
     budget: '',
     history: 'History view lands in Phase 7.',
