@@ -128,29 +128,48 @@ export function newDepartment(): CapacityDepartment {
 // Computed totals — for header summaries on each group
 // -----------------------------------------------------------------------------
 
-export function totalCapacityHours(g: CapacityGroup): number {
-  if (!g.employees) return 0
-  return g.employees.reduce(
-    (sum, e) => sum + (e.capacityHoursPerWeek ?? 0),
+/** Total weekly capacity for the group, in the unit appropriate to its
+ *  method. Prefers the new `maxCapacityPerWeek` field; falls back to the
+ *  legacy employee / department tables for groups that haven't migrated
+ *  yet. Returns 0 when neither is populated. */
+export function groupMaxCapacity(g: CapacityGroup): number {
+  if (g.maxCapacityPerWeek != null) return g.maxCapacityPerWeek
+  // Legacy fallback by method:
+  if (g.method === 'labor') {
+    return (g.employees ?? []).reduce(
+      (sum, e) => sum + (e.capacityHoursPerWeek ?? 0),
+      0
+    )
+  }
+  if (g.method === 'revenue') {
+    return (g.employees ?? []).reduce(
+      (sum, e) => sum + (e.revenueCapacityPerWeek ?? 0),
+      0
+    )
+  }
+  if (g.method === 'headcount') {
+    if (!g.departments || !g.weeklyHoursPerFTE) return 0
+    return g.departments.reduce(
+      (sum, d) =>
+        sum +
+        (d.fullTimeCount + d.partTimeCount * 0.5) *
+          (g.weeklyHoursPerFTE ?? 0),
+      0
+    )
+  }
+  return 0
+}
+
+/** Total scheduled working hours per week — labor method only. Prefers
+ *  the new `workingHoursPerWeek` field; falls back to summing legacy
+ *  per-employee `weeklyWorkingHours`. */
+export function groupWorkingHours(g: CapacityGroup): number {
+  if (g.workingHoursPerWeek != null) return g.workingHoursPerWeek
+  if (g.method !== 'labor') return 0
+  return (g.employees ?? []).reduce(
+    (sum, e) => sum + (e.weeklyWorkingHours ?? 0),
     0
   )
 }
 
-export function totalRevenueCapacity(g: CapacityGroup): number {
-  if (!g.employees) return 0
-  return g.employees.reduce(
-    (sum, e) => sum + (e.revenueCapacityPerWeek ?? 0),
-    0
-  )
-}
-
-export function totalHeadcountCapacityHours(g: CapacityGroup): number {
-  if (!g.departments || !g.weeklyHoursPerFTE) return 0
-  return g.departments.reduce(
-    (sum, d) =>
-      sum +
-      (d.fullTimeCount + d.partTimeCount * 0.5) * (g.weeklyHoursPerFTE ?? 0),
-    0
-  )
-}
 

@@ -164,6 +164,10 @@ export function KpiGoalsCard({
   const standardByCategory: Map<KpiCategory, Row[]> = new Map()
   for (const k of KPIS) {
     if (k.always) continue
+    // Master-toggle KPIs (isCapacityFlag) have their goals defined
+    // elsewhere — capacity-group goals live on Budget & Goals →
+    // Capacity Utilization Goals, not as a single row here. Skip.
+    if (k.isCapacityFlag) continue
     if (!visibleStandardIds.has(k.id)) continue
     const list = standardByCategory.get(k.category) ?? []
     list.push({

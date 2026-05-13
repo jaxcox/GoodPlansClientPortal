@@ -7,9 +7,8 @@ import {
   type KpiFormat,
 } from '../lib/kpis'
 import {
-  totalCapacityHours,
-  totalHeadcountCapacityHours,
-  totalRevenueCapacity,
+  groupMaxCapacity,
+  groupWorkingHours,
 } from '../lib/capacity'
 import type {
   CapacityGroup,
@@ -153,9 +152,11 @@ function deriveWeeklyValue(
         v('newClients')
       )
     case 'efficiency': {
-      // Doc 04 PC #2: Labor Efficiency = sum of produced hours across
-      // labor-method capacity groups ÷ sum of scheduled working hours
-      // across all their employees.
+      // Labor Efficiency = sum of produced hours across labor-method
+      // capacity groups ÷ sum of scheduled working hours on those groups.
+      // Working hours comes from group.workingHoursPerWeek (Settings →
+      // Utilization), with a legacy fallback to the old per-employee
+      // weeklyWorkingHours sum for groups not yet migrated.
       let produced = 0
       let working = 0
       for (const grp of capacityGroups) {
@@ -164,9 +165,7 @@ function deriveWeeklyValue(
           | { producedHours?: number }
           | undefined
         produced += cv?.producedHours ?? 0
-        for (const e of grp.employees ?? []) {
-          working += e.weeklyWorkingHours ?? 0
-        }
+        working += groupWorkingHours(grp)
       }
       if (!working) return null
       return (produced / working) * 100
@@ -294,14 +293,11 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
 
   const setGuardDirty = useDirtyGuard(isDirty)
 
+  // Saved-banner clears only when the form becomes dirty again. Green
+  // "Saved ✓" persists between edits.
   useEffect(() => {
     if (savedAt && isDirty) setSavedAt(null)
   }, [savedAt, isDirty])
-  useEffect(() => {
-    if (savedAt === null) return
-    const t = setTimeout(() => setSavedAt(null), 3000)
-    return () => clearTimeout(t)
-  }, [savedAt])
 
   // ---- Build the input rows, grouped by category -------------------------
   const groupedRows = useMemo(() => {
@@ -935,43 +931,30 @@ function SlotsBlock({
   onChange: (next: WeeklyCapacityActual | undefined) => void
 }) {
   const v =
-    (values as { totalSlots?: number; slotsFilled?: number } | undefined) ??
+    (values as { slotsFilled?: number; totalSlots?: number } | undefined) ??
     {}
   const m = group.measurable?.trim()
-  const totalLabel = m ? `Total ${m}` : 'Total Slots'
   const filledLabel = m ? `${m} Filled` : 'Slots Filled'
-  const update = (patch: { totalSlots?: number; slotsFilled?: number }) => {
-    const merged = { ...v, ...patch }
-    const total = merged.totalSlots
-    const filled = merged.slotsFilled
-    if (total === undefined && filled === undefined) {
-      onChange(undefined)
-      return
-    }
-    onChange({
-      totalSlots: total ?? 0,
-      slotsFilled: filled ?? 0,
-    })
-  }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Labeled label={totalLabel}>
-        <NumberField
-          value={v.totalSlots}
-          onChange={(n) => update({ totalSlots: n })}
-          format="count"
-          ariaLabel={totalLabel}
-        />
-      </Labeled>
-      <Labeled label={filledLabel}>
-        <NumberField
-          value={v.slotsFilled}
-          onChange={(n) => update({ slotsFilled: n })}
-          format="count"
-          ariaLabel={filledLabel}
-        />
-      </Labeled>
-    </div>
+    <Labeled label={filledLabel}>
+      <NumberField
+        value={v.slotsFilled}
+        onChange={(n) => {
+          if (n === undefined) {
+            onChange(undefined)
+            return
+          }
+          // Preserve any legacy totalSlots value so historic entries
+          // continue to parse; the new max comes from group config.
+          onChange({
+            slotsFilled: n,
+            totalSlots: v.totalSlots ?? 0,
+          })
+        }}
+        format="count"
+        ariaLabel={filledLabel}
+      />
+    </Labeled>
   )
 }
 
@@ -985,7 +968,7 @@ function LaborBlock({
   onChange: (next: WeeklyCapacityActual | undefined) => void
 }) {
   const v = (values as { producedHours?: number } | undefined) ?? {}
-  const cap = totalCapacityHours(group)
+  const cap = groupMaxCapacity(group)
   const m = group.measurable?.trim()
   // Use the measurable verbatim, no "Completed" suffix.
   const label = m || 'Labor Hours Completed'
@@ -1018,7 +1001,7 @@ function RevenueBlock({
   onChange: (next: WeeklyCapacityActual | undefined) => void
 }) {
   const v = (values as { revenueProduced?: number } | undefined) ?? {}
-  const cap = totalRevenueCapacity(group)
+  const cap = groupMaxCapacity(group)
   // Use the measurable verbatim — the "$" prefix comes from the
   // NumberField input itself, no need to append "($)" to the label.
   const label = group.measurable?.trim() || 'Dollars Earned'
@@ -1053,51 +1036,32 @@ function HeadcountBlock({
 }) {
   const v =
     (values as
-      | { departments?: Record<string, { hoursWorked: number }> }
+      | {
+          hoursWorked?: number
+          departments?: Record<string, { hoursWorked: number }>
+        }
       | undefined) ?? {}
-  const departments = group.departments ?? []
-  const cap = totalHeadcountCapacityHours(group)
-
-  const update = (deptId: string, hours: number | undefined) => {
-    const nextDepts: Record<string, { hoursWorked: number }> = {
-      ...(v.departments ?? {}),
-    }
-    if (hours === undefined) delete nextDepts[deptId]
-    else nextDepts[deptId] = { hoursWorked: hours }
-    if (Object.keys(nextDepts).length === 0) {
-      onChange(undefined)
-      return
-    }
-    onChange({ departments: nextDepts })
-  }
-
-  if (departments.length === 0) {
-    return (
-      <div className="text-white text-xs italic">
-        No departments yet. Add some in Settings → Capacity &amp;
-        Utilization.
-      </div>
-    )
-  }
-  const m = group.measurable?.trim()
-  const unit = m || 'Hours Worked'
+  // Read the new single-field hoursWorked; fall back to the legacy
+  // per-department sum so old entries display correctly.
+  const totalFromLegacy = Object.values(v.departments ?? {}).reduce(
+    (sum, d) => sum + (d.hoursWorked ?? 0),
+    0
+  )
+  const current = v.hoursWorked ?? (totalFromLegacy || undefined)
+  const cap = groupMaxCapacity(group)
+  const label = group.measurable?.trim() || 'Hours Worked'
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-        {departments.map((d) => (
-          <Labeled
-            key={d.id}
-            label={`${d.name || 'Department'} — ${unit}`}
-          >
-            <NumberField
-              value={v.departments?.[d.id]?.hoursWorked}
-              onChange={(n) => update(d.id, n)}
-              format="count"
-              ariaLabel={`${d.name || 'Department'} ${unit.toLowerCase()}`}
-            />
-          </Labeled>
-        ))}
-      </div>
+      <Labeled label={label}>
+        <NumberField
+          value={current}
+          onChange={(n) =>
+            onChange(n === undefined ? undefined : { hoursWorked: n })
+          }
+          format="count"
+          ariaLabel={label}
+        />
+      </Labeled>
       <div className="text-xs text-white italic">
         Capacity: {cap} hrs/wk
       </div>
@@ -1137,34 +1101,34 @@ function computeLiveUtilization(
     return group.staticUtilPct ?? null
   }
   if (!values) return null
+  const cap = groupMaxCapacity(group)
+  if (!cap) return null
   switch (group.method) {
     case 'slots': {
-      const v = values as { totalSlots?: number; slotsFilled?: number }
-      if (!v.totalSlots) return null
-      return ((v.slotsFilled ?? 0) / v.totalSlots) * 100
+      const v = values as { slotsFilled?: number }
+      return ((v.slotsFilled ?? 0) / cap) * 100
     }
     case 'labor': {
       const v = values as { producedHours?: number }
-      const cap = totalCapacityHours(group)
-      if (!cap) return null
       return ((v.producedHours ?? 0) / cap) * 100
     }
     case 'revenue': {
       const v = values as { revenueProduced?: number }
-      const cap = totalRevenueCapacity(group)
-      if (!cap) return null
       return ((v.revenueProduced ?? 0) / cap) * 100
     }
     case 'headcount': {
+      // Legacy entries kept per-department hoursWorked; new entries
+      // store a single hoursWorked total. Try both shapes.
       const v = values as {
+        hoursWorked?: number
         departments?: Record<string, { hoursWorked?: number }>
       }
-      const cap = totalHeadcountCapacityHours(group)
-      if (!cap) return null
-      const total = Object.values(v.departments ?? {}).reduce(
-        (sum, d) => sum + (d.hoursWorked ?? 0),
-        0
-      )
+      const total =
+        v.hoursWorked ??
+        Object.values(v.departments ?? {}).reduce(
+          (sum, d) => sum + (d.hoursWorked ?? 0),
+          0
+        )
       return (total / cap) * 100
     }
     default:

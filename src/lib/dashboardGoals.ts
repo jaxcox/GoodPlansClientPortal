@@ -23,6 +23,7 @@ import type {
   WeeklyEntry,
 } from './types'
 import type { MonthlyGoal } from './budget'
+import { groupWorkingHours } from './capacity'
 import { dateFromIso } from './week'
 
 /** Per-month share fractions summing to exactly 1.0 — matches the math
@@ -233,8 +234,9 @@ export function actualValue(
   switch (kpiId) {
     case 'efficiency': {
       // Labor Efficiency aggregates across all labor-method capacity
-      // groups: total produced hours (from capacity_values) ÷ total
-      // working hours (from group employees on the client record).
+      // groups: sum of produced hours (from capacity_values) ÷ sum of
+      // working hours (group.workingHoursPerWeek, with a legacy fallback
+      // for old groups via groupWorkingHours).
       let produced = 0
       let working = 0
       const caps = entry.capacity_values ?? {}
@@ -242,9 +244,7 @@ export function actualValue(
         if (grp.method !== 'labor') continue
         const cv = caps[grp.id] as { producedHours?: number } | undefined
         produced += cv?.producedHours ?? 0
-        for (const e of grp.employees ?? []) {
-          working += e.weeklyWorkingHours ?? 0
-        }
+        working += groupWorkingHours(grp)
       }
       if (!working) return null
       return (produced / working) * 100

@@ -2,22 +2,17 @@ import {
   CAPACITY_METHODS,
   methodMeta,
   newCapacityGroup,
-  newDepartment,
-  newEmployee,
-  totalCapacityHours,
-  totalHeadcountCapacityHours,
-  totalRevenueCapacity,
-  type CapacityMethodMeta,
+  groupMaxCapacity,
+  groupWorkingHours,
 } from '../lib/capacity'
 import type {
-  CapacityDepartment,
-  CapacityEmployee,
   CapacityGroup,
   CapacityMethod,
 } from '../lib/types'
 import { NumberField } from './NumberField'
 import { InfoIcon } from './InfoIcon'
-import { TEAM_CAPACITY_DESC } from './WeeklyDashboard'
+import { Toggle } from './Toggle'
+import { UTILIZATION_DESC } from './WeeklyDashboard'
 
 type Props = {
   groups: CapacityGroup[]
@@ -25,7 +20,11 @@ type Props = {
   coachView: boolean
 }
 
-export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
+export function CapacityGroupsCard({
+  groups,
+  onChange,
+  coachView,
+}: Props) {
   // Read-only client view ----------------------------------------------------
   if (!coachView) {
     if (groups.length === 0) {
@@ -68,7 +67,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
     const label = g.name || methodMeta(g.method)?.label || 'this'
     if (
       !confirm(
-        `Remove the "${label}" group? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked.`
+        `Remove the "${label}" group? Historical data on weekly entries for this group is preserved, but the group will no longer be tracked. Its goal in Budget & Goals will also need to be cleaned up.`
       )
     )
       return
@@ -76,18 +75,20 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
   }
 
   const addGroup = () => {
+    // New groups land at the top of the list so the just-added card is
+    // immediately visible without scrolling past existing ones.
     // No method preselected — coach picks via the per-group dropdown
     // (project rule: every pick list defaults to "— Pick one —").
-    onChange([...groups, newCapacityGroup()])
+    onChange([newCapacityGroup(), ...groups])
   }
 
   return (
     <div className="space-y-4">
       {/* Section header lives outside the cards, on the page background. */}
-      <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-bold text-ink flex items-center gap-1.5">
-          Capacity &amp; Utilization
-          <InfoIcon text={TEAM_CAPACITY_DESC} />
+          Utilization
+          <InfoIcon text={UTILIZATION_DESC} />
         </h2>
         <button
           type="button"
@@ -103,7 +104,7 @@ export function CapacityGroupsCard({ groups, onChange, coachView }: Props) {
           No capacity groups yet. Click <strong>+ Add Group</strong> to start.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           {groups.map((g) => (
             <GroupPanel
               key={g.id}
@@ -136,7 +137,7 @@ function GroupPanel({
 }) {
   return (
     <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-md">
+      <div className="space-y-3">
         <FieldGroup label="Department / Team Name">
           <input
             type="text"
@@ -178,12 +179,28 @@ function GroupPanel({
         </div>
       )}
 
-      {group.method ? (
-        <MethodBody group={group} onChange={onChange} />
-      ) : (
+      {!group.method ? (
         <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
           Pick a tracking method above to continue.
         </div>
+      ) : group.method === 'manual' ? (
+        <ManualConfig group={group} onChange={onChange} />
+      ) : (
+        <CapacityFields group={group} onChange={onChange} />
+      )}
+
+      {/* Extras: only Labor Hours method produces dashboard tiles beyond
+          the implicit Capacity Utilization, so this only renders for
+          labor. Sits at the bottom so coaches see what they're getting
+          after configuring the group. Labor Efficiency is opt-out via
+          the toggle. */}
+      {group.method === 'labor' && (
+        <ExtrasList
+          showEfficiency={!group.hideLaborEfficiency}
+          onChangeShowEfficiency={(show) =>
+            onChange({ hideLaborEfficiency: !show })
+          }
+        />
       )}
 
       <div className="flex justify-end pt-1">
@@ -199,44 +216,147 @@ function GroupPanel({
   )
 }
 
-function MethodBody({
+/** "Extras" panel — only shown for labor-method groups. Labor Efficiency
+ *  is the unique derived metric the method unlocks; it's surfaced as a
+ *  toggle so coaches can hide it per-group when they don't want to track
+ *  it. Capacity Utilization and per-week hours produced stay implicit. */
+function ExtrasList({
+  showEfficiency,
+  onChangeShowEfficiency,
+}: {
+  showEfficiency: boolean
+  onChangeShowEfficiency: (show: boolean) => void
+}) {
+  return (
+    <div className="bg-surface-2 rounded p-3 sm:max-w-md">
+      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-2">
+        Extras
+      </div>
+      <Toggle
+        label="Labor Efficiency"
+        checked={showEfficiency}
+        onChange={onChangeShowEfficiency}
+      />
+    </div>
+  )
+}
+
+/** Per-method input unit + NumberField format. */
+const METHOD_FIELDS: Record<
+  Exclude<CapacityMethod, 'manual'>,
+  { unit: string; format: 'count' | 'dollars' | 'percent' }
+> = {
+  slots: { unit: 'slots', format: 'count' },
+  labor: { unit: 'hrs', format: 'count' },
+  revenue: { unit: '$', format: 'dollars' },
+  headcount: { unit: 'hrs', format: 'count' },
+}
+
+/** Legacy compute: pre-fills the new Max Capacity input from old
+ *  per-employee / per-department data so groups created before the
+ *  simplification still show the correct number on first load. */
+function legacyMaxCapacity(g: CapacityGroup): number {
+  if (g.method === 'labor') {
+    return (g.employees ?? []).reduce(
+      (s, e) => s + (e.capacityHoursPerWeek ?? 0),
+      0
+    )
+  }
+  if (g.method === 'revenue') {
+    return (g.employees ?? []).reduce(
+      (s, e) => s + (e.revenueCapacityPerWeek ?? 0),
+      0
+    )
+  }
+  if (g.method === 'headcount' && g.weeklyHoursPerFTE) {
+    return (g.departments ?? []).reduce(
+      (s, d) =>
+        s +
+        (d.fullTimeCount + d.partTimeCount * 0.5) *
+          (g.weeklyHoursPerFTE ?? 0),
+      0
+    )
+  }
+  return 0
+}
+
+function legacyWorkingHours(g: CapacityGroup): number {
+  if (g.method !== 'labor') return 0
+  return (g.employees ?? []).reduce(
+    (s, e) => s + (e.weeklyWorkingHours ?? 0),
+    0
+  )
+}
+
+/** Method-specific config rendered on every non-manual group card:
+ *  Max Capacity + (labor only) Working Hours. Slots also keeps the
+ *  30/60 min duration picker as an informational tag. */
+function CapacityFields({
   group,
   onChange,
 }: {
   group: CapacityGroup
   onChange: (patch: Partial<CapacityGroup>) => void
 }) {
-  switch (group.method) {
-    case 'manual':
-      return <ManualBody group={group} onChange={onChange} />
-    case 'slots':
-      return <SlotsBody group={group} onChange={onChange} />
-    case 'labor':
-      return (
-        <EmployeesBody
-          group={group}
-          method="labor"
-          onChange={onChange}
+  if (group.method === 'manual' || !group.method) return null
+  const meta = METHOD_FIELDS[group.method]
+  const maxValue =
+    group.maxCapacityPerWeek != null
+      ? group.maxCapacityPerWeek
+      : legacyMaxCapacity(group) || undefined
+  const workingValue =
+    group.workingHoursPerWeek != null
+      ? group.workingHoursPerWeek
+      : legacyWorkingHours(group) || undefined
+  return (
+    <div className="space-y-3 sm:max-w-md">
+      {group.method === 'slots' && (
+        <FieldGroup label="Slot Duration">
+          <div className="inline-flex border border-line rounded overflow-hidden">
+            {[30, 60].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() =>
+                  onChange({ slotDurationMinutes: m as 30 | 60 })
+                }
+                className={`px-4 py-1.5 text-xs font-semibold ${
+                  (group.slotDurationMinutes ?? 30) === m
+                    ? 'bg-accent text-black'
+                    : 'bg-transparent text-white hover:bg-white/10'
+                }`}
+              >
+                {m} min
+              </button>
+            ))}
+          </div>
+        </FieldGroup>
+      )}
+      <FieldGroup label={`Max Capacity (${meta.unit} / week)`}>
+        <NumberField
+          value={maxValue}
+          onChange={(n) => onChange({ maxCapacityPerWeek: n })}
+          format={meta.format}
+          ariaLabel="Max capacity per week"
         />
-      )
-    case 'revenue':
-      return (
-        <EmployeesBody
-          group={group}
-          method="revenue"
-          onChange={onChange}
-        />
-      )
-    case 'headcount':
-      return <HeadcountBody group={group} onChange={onChange} />
-    default:
-      return null
-  }
+      </FieldGroup>
+      {group.method === 'labor' && (
+        <FieldGroup label="Working Hours / week">
+          <NumberField
+            value={workingValue}
+            onChange={(n) => onChange({ workingHoursPerWeek: n })}
+            format="count"
+            ariaLabel="Working hours per week"
+          />
+        </FieldGroup>
+      )}
+    </div>
+  )
 }
 
-// ---- Manual % --------------------------------------------------------------
-
-function ManualBody({
+/** Manual method: one static utilization % stored in Settings, no weekly
+ *  entry input. The dashboard tile displays this value every week. */
+function ManualConfig({
   group,
   onChange,
 }: {
@@ -244,329 +364,19 @@ function ManualBody({
   onChange: (patch: Partial<CapacityGroup>) => void
 }) {
   return (
-    <FieldGroup label="Utilization">
-      <div className="w-28">
+    <div className="sm:max-w-md">
+      <FieldGroup label="Static Utilization %">
         <NumberField
           value={group.staticUtilPct}
           onChange={(n) => onChange({ staticUtilPct: n })}
           format="percent"
           ariaLabel="Static utilization percent"
         />
-      </div>
-    </FieldGroup>
-  )
-}
-
-// ---- Time Slots ------------------------------------------------------------
-
-function SlotsBody({
-  group,
-  onChange,
-}: {
-  group: CapacityGroup
-  onChange: (patch: Partial<CapacityGroup>) => void
-}) {
-  const value = group.slotDurationMinutes ?? 30
-  return (
-    <FieldGroup label="Slot Duration">
-      <div className="inline-flex border border-line rounded overflow-hidden">
-        {[30, 60].map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() =>
-              onChange({ slotDurationMinutes: m as 30 | 60 })
-            }
-            className={`px-4 py-1.5 text-xs font-semibold ${
-              value === m
-                ? 'bg-accent text-black'
-                : 'bg-transparent text-white hover:bg-white/10'
-            }`}
-          >
-            {m} min
-          </button>
-        ))}
-      </div>
-    </FieldGroup>
-  )
-}
-
-// ---- Labor Hours / Revenue (employees table) -------------------------------
-
-function EmployeesBody({
-  group,
-  method,
-  onChange,
-}: {
-  group: CapacityGroup
-  method: 'labor' | 'revenue'
-  onChange: (patch: Partial<CapacityGroup>) => void
-}) {
-  const employees = group.employees ?? []
-
-  const updateEmployee = (id: string, patch: Partial<CapacityEmployee>) => {
-    onChange({
-      employees: employees.map((e) =>
-        e.id === id ? { ...e, ...patch } : e
-      ),
-    })
-  }
-  const removeEmployee = (id: string) => {
-    onChange({ employees: employees.filter((e) => e.id !== id) })
-  }
-  const addEmployeeRow = () => {
-    onChange({ employees: [...employees, newEmployee(method)] })
-  }
-
-  return (
-    <div>
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={addEmployeeRow}
-          className="bg-accent text-black font-bold px-3 py-1 rounded text-xs hover:brightness-95"
-        >
-          + Add
-        </button>
-      </div>
-
-      {employees.length === 0 ? (
-        <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
-          No rows yet. Click + Add to start.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <div
-            className={`space-y-1.5 ${
-              method === 'labor' ? 'min-w-[540px]' : 'min-w-[440px]'
-            }`}
-          >
-            <RowHeader method={method} />
-            {employees.map((e) => (
-              <EmployeeRow
-                key={e.id}
-                method={method}
-                employee={e}
-                onChange={(patch) => updateEmployee(e.id, patch)}
-                onRemove={() => removeEmployee(e.id)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function RowHeader({ method }: { method: 'labor' | 'revenue' }) {
-  if (method === 'labor') {
-    return (
-      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
-        <div>Name</div>
-        <div>Role</div>
-        <div>Maximum Capacity</div>
-        <div>Working Hrs/Wk</div>
-        <div className="w-6" />
-      </div>
-    )
-  }
-  return (
-    <div className="grid grid-cols-[2fr_1fr_2fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
-      <div>Name</div>
-      <div>Role</div>
-      <div>Maximum Capacity</div>
-      <div className="w-6" />
-    </div>
-  )
-}
-
-function EmployeeRow({
-  method,
-  employee,
-  onChange,
-  onRemove,
-}: {
-  method: 'labor' | 'revenue'
-  employee: CapacityEmployee
-  onChange: (patch: Partial<CapacityEmployee>) => void
-  onRemove: () => void
-}) {
-  const textCell =
-    'bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-2 focus:outline-none focus:border-accent'
-  if (method === 'labor') {
-    return (
-      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center">
-        <input
-          type="text"
-          value={employee.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          placeholder="Name"
-          className={textCell}
-        />
-        <input
-          type="text"
-          value={employee.role}
-          onChange={(e) => onChange({ role: e.target.value })}
-          placeholder="Role"
-          className={textCell}
-        />
-        <NumberField
-          value={employee.capacityHoursPerWeek}
-          onChange={(n) => onChange({ capacityHoursPerWeek: n })}
-          format="count"
-          ariaLabel="Capacity hours per week"
-        />
-        <NumberField
-          value={employee.weeklyWorkingHours}
-          onChange={(n) => onChange({ weeklyWorkingHours: n })}
-          format="count"
-          ariaLabel="Working hours per week"
-        />
-        <RemoveX onClick={onRemove} />
-      </div>
-    )
-  }
-  return (
-    <div className="grid grid-cols-[2fr_1fr_2fr_auto] gap-2 items-center">
-      <input
-        type="text"
-        value={employee.name}
-        onChange={(e) => onChange({ name: e.target.value })}
-        placeholder="Name"
-        className={textCell}
-      />
-      <input
-        type="text"
-        value={employee.role}
-        onChange={(e) => onChange({ role: e.target.value })}
-        placeholder="Role"
-        className={textCell}
-      />
-      <NumberField
-        value={employee.revenueCapacityPerWeek}
-        onChange={(n) => onChange({ revenueCapacityPerWeek: n })}
-        format="dollars"
-        max={null}
-        ariaLabel="Weekly dollar capacity"
-      />
-      <RemoveX onClick={onRemove} />
-    </div>
-  )
-}
-
-function RemoveX({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Remove row"
-      className="text-white text-base leading-none w-6 hover:bg-bad/10 rounded"
-    >
-      ×
-    </button>
-  )
-}
-
-// ---- Headcount -------------------------------------------------------------
-
-function HeadcountBody({
-  group,
-  onChange,
-}: {
-  group: CapacityGroup
-  onChange: (patch: Partial<CapacityGroup>) => void
-}) {
-  const departments = group.departments ?? []
-
-  const updateDept = (id: string, patch: Partial<CapacityDepartment>) => {
-    onChange({
-      departments: departments.map((d) =>
-        d.id === id ? { ...d, ...patch } : d
-      ),
-    })
-  }
-  const removeDept = (id: string) => {
-    onChange({ departments: departments.filter((d) => d.id !== id) })
-  }
-  const addDept = () => {
-    onChange({ departments: [...departments, newDepartment()] })
-  }
-
-  return (
-    <div className="space-y-3">
-      <FieldGroup label="Hours/Week per FTE">
-        <div className="w-28">
-          <NumberField
-            value={group.weeklyHoursPerFTE}
-            onChange={(n) => onChange({ weeklyHoursPerFTE: n })}
-            format="count"
-            ariaLabel="Hours per week per full-time employee"
-          />
-        </div>
       </FieldGroup>
-
-      <div>
-        <div className="flex justify-end mb-2">
-          <button
-            type="button"
-            onClick={addDept}
-            className="bg-accent text-black font-bold px-3 py-1 rounded text-xs hover:brightness-95"
-          >
-            + Add
-          </button>
-        </div>
-
-        {departments.length === 0 ? (
-          <div className="bg-surface-2 rounded p-3 text-white text-xs text-center">
-            No departments yet. Click + Add to start.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <div className="space-y-1.5 min-w-[440px]">
-            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white">
-              <div>Department</div>
-              <div>Full Time #</div>
-              <div>Part Time #</div>
-              <div className="w-6" />
-            </div>
-            {departments.map((d) => (
-              <div
-                key={d.id}
-                className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 items-center"
-              >
-                <input
-                  type="text"
-                  value={d.name}
-                  onChange={(e) => updateDept(d.id, { name: e.target.value })}
-                  placeholder="Department"
-                  className="bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-2 focus:outline-none focus:border-accent"
-                />
-                <NumberField
-                  value={d.fullTimeCount}
-                  onChange={(n) =>
-                    updateDept(d.id, { fullTimeCount: n ?? 0 })
-                  }
-                  format="count"
-                  ariaLabel="Full-time count"
-                />
-                <NumberField
-                  value={d.partTimeCount}
-                  onChange={(n) =>
-                    updateDept(d.id, { partTimeCount: n ?? 0 })
-                  }
-                  format="count"
-                  ariaLabel="Part-time count"
-                />
-                <RemoveX onClick={() => removeDept(d.id)} />
-              </div>
-            ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
+
 
 // =============================================================================
 // Read-only display for client view
@@ -603,51 +413,60 @@ function ReadOnlySummary({
   meta,
 }: {
   group: CapacityGroup
-  meta: CapacityMethodMeta
+  meta: { value: CapacityMethod }
 }) {
   if (meta.value === 'manual') {
     return (
       <div className="text-white text-xs">
-        Static utilization: <strong className="text-white">{group.staticUtilPct ?? '—'}%</strong>
+        Static utilization:{' '}
+        <strong className="text-white">{group.staticUtilPct ?? '—'}%</strong>
       </div>
     )
   }
+  const max = groupMaxCapacity(group)
   if (meta.value === 'slots') {
     return (
       <div className="text-white text-xs">
-        Slot duration: <strong className="text-white">{group.slotDurationMinutes ?? 30} min</strong>
+        Max capacity:{' '}
+        <strong className="text-white">{max} slots/wk</strong>
+        {group.slotDurationMinutes && (
+          <>
+            {' · '}
+            <strong className="text-white">
+              {group.slotDurationMinutes} min
+            </strong>{' '}
+            per slot
+          </>
+        )}
       </div>
     )
   }
   if (meta.value === 'labor') {
+    const working = groupWorkingHours(group)
     return (
       <div className="text-white text-xs">
-        {group.employees?.length ?? 0} {(group.employees?.length ?? 0) === 1 ? 'person' : 'people'} ·{' '}
-        <strong className="text-white">{totalCapacityHours(group)} hrs/wk</strong>{' '}
-        capacity
+        Max capacity: <strong className="text-white">{max} hrs/wk</strong>
+        {working > 0 && (
+          <>
+            {' · '}Working hours:{' '}
+            <strong className="text-white">{working} hrs/wk</strong>
+          </>
+        )}
       </div>
     )
   }
   if (meta.value === 'revenue') {
     return (
       <div className="text-white text-xs">
-        {group.employees?.length ?? 0} {(group.employees?.length ?? 0) === 1 ? 'person' : 'people'} ·{' '}
-        <strong className="text-white">
-          {formatDollars(totalRevenueCapacity(group))}/wk
-        </strong>{' '}
-        capacity
+        Max capacity:{' '}
+        <strong className="text-white">{formatDollars(max)}/wk</strong>
       </div>
     )
   }
   // headcount
   return (
     <div className="text-white text-xs">
-      {group.departments?.length ?? 0} dept ·{' '}
-      <strong className="text-white">{group.weeklyHoursPerFTE ?? 0} hrs/FTE</strong> ·{' '}
-      <strong className="text-white">
-        {totalHeadcountCapacityHours(group)} hrs/wk
-      </strong>{' '}
-      capacity
+      Max capacity: <strong className="text-white">{max} hrs/wk</strong>
     </div>
   )
 }

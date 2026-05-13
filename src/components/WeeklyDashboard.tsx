@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CATEGORIES, KPIS } from '../lib/kpis'
 import type { KpiCategory, KpiDef } from '../lib/kpis'
@@ -18,10 +18,7 @@ import {
   visibleTileKpis,
   weeklyGoal,
 } from '../lib/dashboardGoals'
-import {
-  totalCapacityHours,
-  totalRevenueCapacity,
-} from '../lib/capacity'
+import { groupMaxCapacity, groupWorkingHours } from '../lib/capacity'
 import {
   dateFromIso,
   formatWeekShort,
@@ -33,13 +30,18 @@ import { KpiTile } from './KpiTile'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
 
-/** Tooltip text for every Capacity Utilization tile. Generic across all
- *  capacity groups (Body Team, Estimator Team, etc.) and clearly
- *  distinguishes capacity utilization from Labor Efficiency, which
- *  measures a different thing. Kept in sync with the same description on
- *  the Budget & Goals → Capacity & Utilization section header. */
+/** Per-tile description for each Utilization card on the dashboard.
+ *  Method-neutral — works for hours, time slots, dollars, headcount, etc.
+ *  The section-level description (UTILIZATION_DESC) covers the broader
+ *  feature on Settings / B&G. */
 export const TEAM_CAPACITY_DESC =
-  "What share of the team's available weekly capacity was used. Capacity is the maximum amount of work or money the team can produce in a week without overworking or working overtime. Different from Labor Efficiency, which measures productivity per working hour."
+  'Capacity is the maximum the team can produce in a week without overworking or working overtime.'
+
+/** Section-level description for Settings → Utilization and Budget &
+ *  Goals → Utilization Goals. Frames utilization as the measurement and
+ *  capacity as the baseline you compare against. */
+export const UTILIZATION_DESC =
+  "Tracks what share of the team's available capacity was used each week. Capacity is the baseline — define each team's employees, method, and capacity below. The dashboard then shows each team's actual use against a weekly goal."
 
 // =============================================================================
 // Phase 5b — Weekly Dashboard
@@ -422,7 +424,12 @@ function KpiGrid({
           capacityGroupGoals={capacityGroupGoals}
           standardKpis={visible.filter((k) => k.category === cat)}
           customKpis={customKpis.filter((c) => c.category === cat)}
-          capacityGroups={cat === 'Team' ? client.capacity_groups ?? [] : []}
+          capacityGroups={
+            cat === 'Team' &&
+            Number(client.kpis?.capacityUtilization) === 1
+              ? client.capacity_groups ?? []
+              : []
+          }
         />
       ))}
     </div>
@@ -490,55 +497,75 @@ function CategorySection({
         {category}
       </div>
 
-      <TileGrid>
-        {mainSales.map((kpi) => (
-          <StandardTile
-            key={kpi.id}
-            kpi={kpi}
-            entry={entry}
-            priorEntry={priorEntry}
-            monthlyGoal={monthlyGoal}
-            monthShares={monthShares}
-            kpiGoals={kpiGoals}
-            enabledIds={enabledIds}
-            annualRevenue={annualRevenue}
-            client={client}
-          />
-        ))}
-        {customKpis.map((c) => (
-          <CustomTile
-            key={c.id}
-            custom={c}
-            entry={entry}
-            priorEntry={priorEntry}
-            goal={kpiGoals[c.id]}
-          />
-        ))}
-        {/* Capacity tiles render in Team only, after standard + custom KPIs.
-            Goal source: per-group goal in budget.capacity_group_goals if
-            set, otherwise the standard teamCapacity % is used as a
-            consistent fallback for every group regardless of method. The
-            tile converts the % to the group's native unit (e.g. revenue
-            method: 85% × team $ capacity = $ target). */}
-        {capacityGroups.map((g) => {
-          const perGroup = capacityGroupGoals[g.id]
-          const fallback =
-            kpiGoals.teamCapacity != null
-              ? ({
-                  target: kpiGoals.teamCapacity,
-                  format: '%',
-                } as CapacityGroupGoal)
-              : undefined
-          return (
+      {(mainSales.length > 0 || customKpis.length > 0) && (
+        <TileGrid>
+          {mainSales.map((kpi) => (
+            <StandardTile
+              key={kpi.id}
+              kpi={kpi}
+              entry={entry}
+              priorEntry={priorEntry}
+              monthlyGoal={monthlyGoal}
+              monthShares={monthShares}
+              kpiGoals={kpiGoals}
+              enabledIds={enabledIds}
+              annualRevenue={annualRevenue}
+              client={client}
+            />
+          ))}
+          {customKpis.map((c) => (
+            <CustomTile
+              key={c.id}
+              custom={c}
+              entry={entry}
+              priorEntry={priorEntry}
+              goal={kpiGoals[c.id]}
+            />
+          ))}
+        </TileGrid>
+      )}
+
+      {/* Each capacity group becomes its own subsection within the Team
+          category: a sub-heading with the group's name, then a row of
+          tiles. Every group gets Capacity Utilization; labor-method
+          groups also get Labor Hours Produced + Labor Efficiency. */}
+      {capacityGroups.map((g, i) => (
+        <div
+          key={g.id}
+          className={
+            i > 0 || mainSales.length > 0 || customKpis.length > 0
+              ? 'mt-4'
+              : ''
+          }
+        >
+          <div className="text-xs font-bold text-ink uppercase tracking-wider pb-1 mb-2 border-b border-line">
+            {g.name || 'Untitled group'}
+          </div>
+          <TileGrid>
             <CapacityTile
-              key={g.id}
               group={g}
               entry={entry}
-              goal={perGroup ?? fallback}
+              goal={capacityGroupGoals[g.id]}
             />
-          )
-        })}
-      </TileGrid>
+            {g.method === 'labor' && (
+              <>
+                <LaborHoursTile
+                  group={g}
+                  entry={entry}
+                  goal={capacityGroupGoals[g.id]?.laborHoursGoal}
+                />
+                {!g.hideLaborEfficiency && (
+                  <LaborEfficiencyTile
+                    group={g}
+                    entry={entry}
+                    goal={capacityGroupGoals[g.id]?.laborEfficiencyGoal}
+                  />
+                )}
+              </>
+            )}
+          </TileGrid>
+        </div>
+      ))}
 
       {pipelineSales.length > 0 && (
         <div className="mt-4">
@@ -667,6 +694,99 @@ function CustomTile({
   )
 }
 
+/** Per-group tile: labor hours produced this week for one labor-method
+ *  capacity group. Optional weekly goal — when set, the tile colors
+ *  green/red against a ±10% band and shows "Goal: X hrs ±10%". */
+function LaborHoursTile({
+  group,
+  entry,
+  goal,
+}: {
+  group: CapacityGroup
+  entry: WeeklyEntry
+  goal: number | undefined
+}) {
+  const cv = (entry.capacity_values ?? {})[group.id] as
+    | { producedHours?: number }
+    | undefined
+  const produced = cv?.producedHours ?? 0
+  const onTrack =
+    goal && goal > 0 ? Math.abs(produced - goal) / goal <= 0.1 : null
+  const borderClass =
+    onTrack == null ? 'border-line' : onTrack ? 'border-good' : 'border-bad'
+  const footerColor =
+    onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
+  return (
+    <div
+      className={`bg-ink rounded-lg p-3 border ${borderClass} min-h-[110px] flex flex-col`}
+    >
+      <div className="flex items-center gap-1.5">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+          Labor Hours Produced
+        </div>
+        <InfoIcon text="Productive labor hours generated by this team this week." />
+      </div>
+      <div className="text-lg font-bold text-white mt-2">
+        {produced > 0 ? `${produced} hrs` : '—'}
+      </div>
+      <div className="flex-1" />
+      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
+        {goal && goal > 0 ? `Goal: ${goal} hrs ±10%` : 'No goal set'}
+      </div>
+    </div>
+  )
+}
+
+/** Per-group tile: labor efficiency for one labor-method capacity group.
+ *  Formula: this group's produced hours ÷ this group's working hours × 100.
+ *  Optional goal — ±10% band coloring. */
+function LaborEfficiencyTile({
+  group,
+  entry,
+  goal,
+}: {
+  group: CapacityGroup
+  entry: WeeklyEntry
+  goal: number | undefined
+}) {
+  const cv = (entry.capacity_values ?? {})[group.id] as
+    | { producedHours?: number }
+    | undefined
+  const produced = cv?.producedHours ?? 0
+  const working = groupWorkingHours(group)
+  const pct = working > 0 ? (produced / working) * 100 : null
+  const onTrack =
+    goal && goal > 0 && pct != null ? Math.abs(pct - goal) <= 10 : null
+  const borderClass =
+    onTrack == null ? 'border-line' : onTrack ? 'border-good' : 'border-bad'
+  const footerColor =
+    onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
+  return (
+    <div
+      className={`bg-ink rounded-lg p-3 border ${borderClass} min-h-[110px] flex flex-col`}
+    >
+      <div className="flex items-center gap-1.5">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+          Labor Efficiency
+        </div>
+        <InfoIcon text="How productively the team used their scheduled time this week." />
+      </div>
+      <div className="text-lg font-bold text-white mt-2">
+        {pct != null ? `${pct.toFixed(1)}%` : '—'}
+      </div>
+      {pct != null && (
+        <div className="text-xs text-white mt-1">
+          {produced} / {working} hrs
+        </div>
+      )}
+      <div className="flex-1" />
+      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
+        {goal && goal > 0 ? `Goal: ${goal}% ±10%` : 'No goal set'}
+      </div>
+    </div>
+  )
+}
+
 function CapacityTile({
   group,
   entry,
@@ -678,13 +798,15 @@ function CapacityTile({
   goal: CapacityGroupGoal | undefined
 }) {
   const cv = (entry.capacity_values ?? {})[group.id]
-  const totalCapacity = totalCapacityHours(group)
+  const cap = groupMaxCapacity(group)
 
-  // Two parallel "actual" values depending on the method:
-  //   - actualPct: utilization % (used for labor / slots / manual /
-  //     headcount tiles where the goal is also a utilization target)
-  //   - actualDollars: produced $ for revenue-method groups (used when
-  //     the goal is a dollar target)
+  // Big number is the weekly result (what the coach/client entered on
+  // Weekly Entry — produced hours, slots filled, $ produced, etc.).
+  // Sub-label is the utilization % derived from that value vs the team's
+  // defined capacity.
+  //
+  // Manual method is the one exception: the input IS already a %, so the
+  // big number is the % and there's no separate utilization line.
   let actualPct: number | null = null
   let actualDollars: number | null = null
   let valueText = '—'
@@ -695,38 +817,39 @@ function CapacityTile({
     actualPct = v?.utilizationPct ?? group.staticUtilPct ?? null
     valueText = actualPct != null ? `${actualPct.toFixed(1)}%` : '—'
   } else if (group.method === 'slots') {
-    const v = cv as { slotsFilled?: number; totalSlots?: number } | undefined
+    const v = cv as { slotsFilled?: number } | undefined
     const filled = v?.slotsFilled ?? 0
-    const total = v?.totalSlots ?? totalCapacity
-    actualPct = total ? (filled / total) * 100 : null
-    valueText = actualPct != null ? `${actualPct.toFixed(1)}%` : '—'
-    subLabel = `${filled} / ${total} slots`
+    actualPct = cap ? (filled / cap) * 100 : null
+    valueText = `${filled} slots`
+    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
   } else if (group.method === 'labor') {
     const v = cv as { producedHours?: number } | undefined
     const produced = v?.producedHours ?? 0
-    actualPct = totalCapacity ? (produced / totalCapacity) * 100 : null
-    valueText = actualPct != null ? `${actualPct.toFixed(1)}%` : '—'
-    subLabel = `${produced} / ${totalCapacity} hrs`
+    actualPct = cap ? (produced / cap) * 100 : null
+    valueText = `${produced} hrs`
+    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
   } else if (group.method === 'revenue') {
     const v = cv as { revenueProduced?: number } | undefined
     const produced = v?.revenueProduced ?? 0
     actualDollars = produced
-    const cap = totalRevenueCapacity(group)
-    // Big number is the $ produced; capacity goes on the sub-label so the
-    // coach can see the headroom.
+    actualPct = cap ? (produced / cap) * 100 : null
     valueText = `$${produced.toLocaleString()}`
-    subLabel = `of $${cap.toLocaleString()} capacity`
+    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
   } else if (group.method === 'headcount') {
     const v = cv as
-      | { departments?: Record<string, { hoursWorked: number }> }
+      | {
+          hoursWorked?: number
+          departments?: Record<string, { hoursWorked: number }>
+        }
       | undefined
-    let totalWorked = 0
-    for (const d of group.departments ?? []) {
-      totalWorked += v?.departments?.[d.id]?.hoursWorked ?? 0
-    }
-    actualPct = totalCapacity ? (totalWorked / totalCapacity) * 100 : null
-    valueText = actualPct != null ? `${actualPct.toFixed(1)}%` : '—'
-    subLabel = `${totalWorked} / ${totalCapacity} hrs`
+    const legacy = Object.values(v?.departments ?? {}).reduce(
+      (s, d) => s + (d.hoursWorked ?? 0),
+      0
+    )
+    const totalWorked = v?.hoursWorked ?? legacy
+    actualPct = cap ? (totalWorked / cap) * 100 : null
+    valueText = `${totalWorked} hrs`
+    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
   }
 
   // Goal label + comparison.
@@ -741,7 +864,7 @@ function CapacityTile({
     if (group.method === 'revenue') {
       // Revenue method always compares in dollars. Convert % goals to a
       // dollar target by applying the % to the team's revenue capacity.
-      const revCap = totalRevenueCapacity(group)
+      const revCap = groupMaxCapacity(group)
       const targetDollars =
         goal.format === '$' ? goal.target : (revCap * goal.target) / 100
       goalLabel = `Goal: $${Math.round(targetDollars).toLocaleString()} ±10%`
@@ -775,14 +898,11 @@ function CapacityTile({
     <div
       className={`bg-ink rounded-lg p-3 border ${borderClass} min-h-[110px] flex flex-col`}
     >
-      <div>
-        <div className="flex items-center gap-1.5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-white">
-            Capacity Utilization
-          </div>
-          <InfoIcon text={TEAM_CAPACITY_DESC} />
+      <div className="flex items-center gap-1.5">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+          Capacity Utilization
         </div>
-        <div className="text-xs text-white">{group.name}</div>
+        <InfoIcon text={TEAM_CAPACITY_DESC} />
       </div>
       <div className="text-lg font-bold text-white mt-2">{valueText}</div>
       {subLabel && (

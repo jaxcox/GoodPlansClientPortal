@@ -16,7 +16,7 @@ import {
 } from '../lib/budget'
 import type {
   Budget,
-  CapacityGroup,
+  CapacityGroupGoal,
   Client,
   SeasonType,
 } from '../lib/types'
@@ -24,7 +24,7 @@ import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
 import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
 import { useDirtyGuard } from '../lib/dirtyGuard'
-import { CapacityGroupsCard } from './CapacityGroupsCard'
+import { CapacityGoalsCard } from './CapacityGoalsCard'
 import { SaveBar } from './SaveBar'
 import { Card } from './Card'
 
@@ -74,9 +74,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
-  // Capacity groups themselves (definitions, employee tables, etc.)
-  // Lives on the client record but managed here on the Budget & Goals tab.
-  const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
+  // Per-capacity-group utilization goal (single % per group). Lives on
+  // the budget record. Group definitions themselves (employees / method /
+  // hours) live on the client record and are managed on Settings.
+  const [capacityGroupGoals, setCapacityGroupGoals] = useState<
+    Record<string, CapacityGroupGoal>
+  >({})
 
   // Tab within the Budget & Goals page
   const [budgetTab, setBudgetTab] = useState<'targets' | 'monthly'>('targets')
@@ -123,8 +126,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       looksAutoDistributed(seededCogs, b?.ytd_thru_month ?? null)
     setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
-    // capacityGroups is seeded from the client record, not the budget.
-    // It's mirrored from the client load in the useEffect below.
+    setCapacityGroupGoals(b?.capacity_group_goals ?? {})
     setSavedAt(null)
     setSaveError(null)
   }
@@ -145,7 +147,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         return
       }
       setClient(clientData as Client)
-      setCapacityGroups((clientData as Client).capacity_groups ?? [])
 
       const { data: budgetData, error: budgetErr } = await supabase
         .from('budgets')
@@ -203,8 +204,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       JSON.stringify(ytdExpensesByMonth) !==
         JSON.stringify(savedExpensesByMonth) ||
       JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {}) ||
-      JSON.stringify(capacityGroups) !==
-        JSON.stringify(client?.capacity_groups ?? [])
+      JSON.stringify(capacityGroupGoals) !==
+        JSON.stringify(budget?.capacity_group_goals ?? {})
     )
   }, [
     budget,
@@ -219,21 +220,18 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdCogsByMonth,
     ytdExpensesByMonth,
     kpiGoals,
-    capacityGroups,
+    capacityGroupGoals,
   ])
 
   // Register dirty state with the app-wide leave guard.
   const setGuardDirty = useDirtyGuard(isDirty)
 
-  // Saved-banner clears when dirty + auto-expires after 3 seconds.
+  // Saved-banner clears only when the form becomes dirty again — green
+  // "Saved ✓" persists between edits so the user has clear, lasting
+  // feedback that their changes were committed.
   useEffect(() => {
     if (savedAt && isDirty) setSavedAt(null)
   }, [savedAt, isDirty])
-  useEffect(() => {
-    if (savedAt === null) return
-    const t = setTimeout(() => setSavedAt(null), 3000)
-    return () => clearTimeout(t)
-  }, [savedAt])
 
   // ---- Derived display ---------------------------------------------------
   const gpDollars = annualGrossProfitDollars(
@@ -359,6 +357,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       ytd_expenses_by_month:
         ytdThruMonth === null ? null : ytdExpensesByMonth,
       goals: kpiGoals,
+      capacity_group_goals: capacityGroupGoals,
     }
 
     const op = budget
@@ -372,23 +371,8 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       return
     }
 
-    // Capacity groups live on the client record, not the budget. Save them
-    // here too so the merged "Capacity & Utilization" card on the Targets
-    // tab persists structure + goals in one user action.
-    const { data: clientUpdated, error: clientErr } = await supabase
-      .from('clients')
-      .update({ capacity_groups: capacityGroups })
-      .eq('id', client.id)
-      .select()
-      .single()
-
     setSaving(false)
-    if (clientErr) {
-      setSaveError(clientErr.message)
-      return
-    }
     setBudget(data as Budget)
-    setClient(clientUpdated as Client)
     seedDraftFromBudget(data as Budget)
     setSavedAt(Date.now())
   }
@@ -586,14 +570,17 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         </div>
       </div>
 
-      {/* Row 3: Capacity & Utilization — section header + one full-width
-          card per group. CapacityGroupsCard owns the layout so adding a
-          group adds a new card. */}
-      <CapacityGroupsCard
-        groups={capacityGroups}
-        onChange={setCapacityGroups}
-        coachView={true}
-      />
+      {/* Row 3: Capacity Utilization Goals — compact per-group goal inputs.
+          The capacity-group definitions (employees, methods, hours) live
+          on Settings → Utilization. Gated on the master toggle
+          so it's hidden when capacity tracking is off. */}
+      {Number(client?.kpis?.capacityUtilization) === 1 && (
+        <CapacityGoalsCard
+          groups={client?.capacity_groups ?? []}
+          goals={capacityGroupGoals}
+          onChange={setCapacityGroupGoals}
+        />
+      )}
         </>
       ) : (
         <Card title="Monthly Financial Goals">

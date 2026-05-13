@@ -1,3 +1,5 @@
+import { InfoIcon } from './InfoIcon'
+
 type Props = {
   label: string
   value: string
@@ -7,6 +9,10 @@ type Props = {
   disabled?: boolean
   required?: boolean
   hint?: string
+  /** Optional tooltip shown as an InfoIcon next to the label. Preferred over
+   *  `hint` per the "Explainer text in InfoIcon" rule — keep inline copy
+   *  for true status messages only. */
+  info?: string
 }
 
 // Labeled text input used on every dark-card form (Settings, Coach Account).
@@ -21,11 +27,13 @@ export function DarkField({
   disabled,
   required,
   hint,
+  info,
 }: Props) {
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
-        {label}
+      <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white mb-1">
+        <span>{label}</span>
+        {info && <InfoIcon text={info} />}
       </label>
       <input
         type={type}

@@ -3,7 +3,12 @@ import { supabase } from '../lib/supabase'
 import { KPIS, emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
 import { InfoIcon } from './InfoIcon'
 import { useKpiToggle } from '../lib/useKpiToggle'
-import type { Client, CustomKpi, Industry } from '../lib/types'
+import type {
+  CapacityGroup,
+  Client,
+  CustomKpi,
+  Industry,
+} from '../lib/types'
 import { Toggle } from './Toggle'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { formatPhone } from '../lib/phone'
@@ -16,6 +21,7 @@ import {
 } from './CustomKpisCard'
 import { SaveBar } from './SaveBar'
 import { Card } from './Card'
+import { CapacityGroupsCard } from './CapacityGroupsCard'
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { DarkField } from './DarkField'
 
@@ -46,6 +52,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [kpis, setKpis] = useState<Record<string, number>>(emptyKpiDefaults())
   const [tracksYtd, setTracksYtd] = useState(true)
   const [weeklyReminder, setWeeklyReminder] = useState(true)
+  // Capacity groups (Body Team, Estimator Team, etc.) — definition lives
+  // on the client record. Gated on the `capacityUtilization` toggle in the
+  // Active KPIs list; when off, the section is hidden but the data stays.
+  const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
@@ -79,6 +89,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setKpis({ ...emptyKpiDefaults(), ...(c.kpis ?? {}) })
     setTracksYtd(c.tracks_ytd_actuals ?? true)
     setWeeklyReminder(c.weekly_reminder_enabled ?? true)
+    setCapacityGroups(c.capacity_groups ?? [])
   }
 
   useEffect(() => {
@@ -127,6 +138,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         JSON.stringify({ ...emptyKpiDefaults(), ...(client.kpis ?? {}) }) ||
       tracksYtd !== (client.tracks_ytd_actuals ?? true) ||
       weeklyReminder !== (client.weekly_reminder_enabled ?? true) ||
+      JSON.stringify(capacityGroups) !==
+        JSON.stringify(client.capacity_groups ?? []) ||
       false
     )
   }, [
@@ -140,24 +153,19 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     kpis,
     tracksYtd,
     weeklyReminder,
+    capacityGroups,
   ])
 
   // Register dirty state with the app-wide leave guard so top-bar tab
   // clicks / Back / Logout prompt the user before discarding changes.
   const setGuardDirty = useDirtyGuard(isDirty)
 
-  // Saved-banner clears the moment the form is changed again, and also
-  // auto-expires after a few seconds so the default state on screen is
-  // always the yellow "Save Settings" button — the green confirmation is
-  // a transient post-save flash, not the resting state.
+  // Saved-banner clears only when the form becomes dirty again. Green
+  // "Saved ✓" persists between edits so the user has lasting feedback
+  // that their changes committed.
   useEffect(() => {
     if (savedAt && isDirty) setSavedAt(null)
   }, [savedAt, isDirty])
-  useEffect(() => {
-    if (savedAt === null) return
-    const t = setTimeout(() => setSavedAt(null), 3000)
-    return () => clearTimeout(t)
-  }, [savedAt])
 
   const onIndustryChange = (id: string) => {
     if (id === CREATE_NEW_INDUSTRY) {
@@ -297,6 +305,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       updates.industry_id = industryId || null
       updates.kpis = kpis
       updates.tracks_ytd_actuals = tracksYtd
+      updates.capacity_groups = capacityGroups
     }
     if (emailEditable) {
       updates.email = email.trim().toLowerCase()
@@ -379,7 +388,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             value={email}
             onChange={setEmail}
             disabled={!emailEditable}
-            hint={
+            info={
               emailLocked && coachView
                 ? "Locked — this client has activated. Email is the login key and can't be changed here."
                 : undefined
@@ -398,8 +407,11 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             canEdit={canEditAll}
           />
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
-              Industry {canEditAll && '*'}
+            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white mb-1">
+              <span>Industry {canEditAll && '*'}</span>
+              {canEditAll && (
+                <InfoIcon text="Switching industry replaces the indicator toggles on the right." />
+              )}
             </label>
             {canEditAll ? (
               <select
@@ -423,11 +435,17 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 {industries?.find((i) => i.id === industryId)?.name ?? '—'}
               </div>
             )}
-            {canEditAll && (
-              <div className="text-xs text-white mt-1">
-                Switching industry replaces the indicator toggles on the right.
-              </div>
-            )}
+          </div>
+
+          <div className="pt-4 space-y-2">
+            <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-line">
+              Notifications
+            </div>
+            <Toggle
+              label="Weekly entry reminder email"
+              checked={weeklyReminder}
+              onChange={setWeeklyReminder}
+            />
           </div>
         </Card>
 
@@ -466,8 +484,23 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         </Card>
       </div>
 
-      {/* ===== Row 2: Custom KPI Creator + Change Password (half width each) ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      {/* ===== Row 2: Utilization — gated on the master toggle
+          in Active KPIs. Lives above Custom KPIs since it's a primary
+          tracking concept; Custom KPIs is a long-tail add-on. ===== */}
+      {Number(kpis.capacityUtilization) === 1 && (
+        <CapacityGroupsCard
+          groups={capacityGroups}
+          onChange={setCapacityGroups}
+          coachView={canEditAll}
+        />
+      )}
+
+      {/* ===== Row 3: Custom KPIs + Change Password, third-width each.
+          Change Password only renders for clients viewing their own portal
+          — coach view sees Custom KPIs alone in the row. The weekly entry
+          reminder toggle lives at the bottom of Company Info now, so no
+          separate Notifications card. ===== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         {canEditAll && (
           <div ref={creatorRef}>
             <Card title="Custom KPIs">
@@ -485,9 +518,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             </Card>
           </div>
         )}
-        {/* Change Password — only when the client is viewing their own
-            portal (not coach via View Portal — the coach changing their
-            own password is a separate path). */}
         {!coachView && (
           <div>
             <Card title="Change Password">
@@ -495,18 +525,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             </Card>
           </div>
         )}
-      </div>
-
-      {/* ===== Row 3: Notifications ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <Card title="Notifications">
-          <NotificationToggle
-            label="Weekly entry reminder email"
-            hint="Sends a friendly nudge if the prior week hasn't been logged by Tuesday morning."
-            checked={weeklyReminder}
-            onChange={setWeeklyReminder}
-          />
-        </Card>
       </div>
 
       {/* ===== Bottom Save/Cancel ===== */}
@@ -536,25 +554,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 // Helpers
 // =============================================================================
 
-function NotificationToggle({
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  label: string
-  hint?: string
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <div>
-      <Toggle label={label} checked={checked} onChange={onChange} />
-      {hint && <div className="text-xs text-white mt-1.5">{hint}</div>}
-    </div>
-  )
-}
-
 function SharedFolderRow({
   value,
   onChange,
@@ -569,8 +568,9 @@ function SharedFolderRow({
   if (canEdit) {
     return (
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
-          Shared Folder Link
+        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white mb-1">
+          <span>Shared Folder Link</span>
+          <InfoIcon text={`Clients see this as a "Shared Folder" button — they don't see the URL.`} />
         </label>
         <div className="flex gap-2">
           <input
@@ -591,9 +591,6 @@ function SharedFolderRow({
               Open ↗
             </a>
           )}
-        </div>
-        <div className="text-xs text-white mt-1">
-          Clients see this as a "Shared Folder" button — they don't see the URL.
         </div>
       </div>
     )

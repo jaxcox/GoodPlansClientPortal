@@ -267,23 +267,13 @@ export const KPIS: KpiDef[] = [
   },
   {
     id: 'avgRepairOrder',
-    label: 'Avg Repair Order',
+    label: 'Average per Job',
     desc: 'Income ÷ Jobs Completed. The typical dollar value of a completed job.',
     category: 'Operations',
     format: '$',
     aggregation: 'derived',
     auto: true,
     dependsOn: ['jobsCompleted'],
-  },
-  {
-    id: 'efficiency',
-    label: 'Labor Efficiency',
-    desc: 'Produced hours ÷ Working hours, shown as a percent. How many hours of billable or productive work your team generated out of the total hours they were on the clock.',
-    category: 'Operations',
-    format: '%',
-    aggregation: 'avg',
-    auto: true,
-    dependsOn: ['laborHoursCompleted'],
   },
   {
     id: 'warrantyReturns',
@@ -305,18 +295,17 @@ export const KPIS: KpiDef[] = [
   },
 
   // ----- Team -----
+  // Master toggle for the capacity-and-efficiency package. When on,
+  // Settings exposes the Utilization setup card and the
+  // dashboard renders three tile types automatically (Capacity Utilization
+  // per group, Labor Hours Produced, Labor Efficiency). When off, no
+  // capacity setup is shown and the data stays stored but invisible.
+  // isCapacityFlag=true keeps this KPI out of the standard tile pipeline
+  // — it's a switch, not a tile.
   {
-    id: 'laborHoursCompleted',
-    label: 'Labor Hours Completed',
-    desc: 'The number of productive or billable hours your team logged. Used as the numerator in Labor Efficiency.',
-    category: 'Team',
-    format: '#',
-    aggregation: 'sum',
-  },
-  {
-    id: 'teamCapacity',
-    label: 'Team Capacity',
-    desc: 'The maximum amount of work that can be expected from a person, team, or department. The detailed setup lives in Capacity Groups under Settings.',
+    id: 'capacityUtilization',
+    label: 'Utilization',
+    desc: 'Tracks what share of the team\'s available weekly capacity was used. Define teams under Settings → Utilization; the dashboard shows utilization per team against a goal.',
     category: 'Team',
     format: '%',
     aggregation: 'avg',

@@ -60,19 +60,36 @@ export type CapacityGroup = {
   /** Optional so newly-added groups can default to "— Pick one —" until the
    * coach explicitly chooses a tracking method. */
   method?: CapacityMethod
-  /** 'revenue' (Dollars) method: free-text label for what the dollars
-   * represent — e.g. "Estimates Written", "Sales", "Contracts Won". */
+  /** Free-text label for what's being measured — e.g. "Estimates Written",
+   * "Sales", "Contracts Won", "Appointment slots." */
   measurable?: CapacityMeasurable
-  /** 'manual' method: single static utilization % stored once in Settings
-   * (Doc 04 PC #3 — no longer a weekly entry input). */
+  /** Single weekly max capacity entered directly by the coach. Unit is
+   * method-specific:
+   *   - labor / headcount: hours per week
+   *   - revenue: dollars per week
+   *   - slots: number of slots per week
+   *   - manual: not used (the entered % IS the utilization)
+   * Replaces the previous per-employee / per-department tables. */
+  maxCapacityPerWeek?: number
+  /** Total scheduled working hours per week for the group — labor method
+   * only. Drives Labor Efficiency (produced ÷ working × 100). */
+  workingHoursPerWeek?: number
+  /** Per-group preference: when true, the Labor Efficiency tile is
+   *  hidden from the dashboard for this group even if working hours are
+   *  defined. Defaults to false (shown). Labor method only. */
+  hideLaborEfficiency?: boolean
+  /** 'manual' method: single static utilization %. */
   staticUtilPct?: number
-  /** 'slots' method: 30 or 60 minutes per slot. */
+  /** 'slots' method: 30 or 60 minutes per slot (informational). */
   slotDurationMinutes?: 30 | 60
-  /** 'headcount' method: hours/week per FTE. */
+  /** @deprecated Legacy per-FTE hours — superseded by maxCapacityPerWeek.
+   *  Kept on the type so old DB rows still parse. */
   weeklyHoursPerFTE?: number
-  /** 'labor' or 'revenue' methods. */
+  /** @deprecated Per-employee tracking — superseded by maxCapacityPerWeek
+   *  + workingHoursPerWeek. Kept on the type so old DB rows still parse. */
   employees?: CapacityEmployee[]
-  /** 'headcount' method. */
+  /** @deprecated Per-department tracking — superseded by maxCapacityPerWeek.
+   *  Kept on the type so old DB rows still parse. */
   departments?: CapacityDepartment[]
 }
 
@@ -150,9 +167,14 @@ export type Industry = {
 export type SeasonType = 'even' | 'seasonal'
 
 export type CapacityGroupGoal = {
+  /** Utilization target. ± 10% band for the dashboard tile coloring. */
   target: number
   /** '%' = utilization target, '$' = weekly dollar capacity target. */
   format: '%' | '$'
+  /** Labor Hours Produced weekly target — labor method only. */
+  laborHoursGoal?: number
+  /** Labor Efficiency % weekly target — labor method only. */
+  laborEfficiencyGoal?: number
 }
 
 export type Budget = {
