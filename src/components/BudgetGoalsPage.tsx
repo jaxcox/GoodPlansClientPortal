@@ -567,20 +567,23 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
               onChange={setKpiGoals}
             />
           </Card>
+
+          {/* Utilization Goals — compact per-group goal inputs, half the
+              right column (≈ 1/4 of the page). The capacity-group
+              definitions (method, max capacity, working hours) live on
+              Settings → Utilization. Gated on the master toggle so it's
+              hidden when capacity tracking is off. */}
+          {Number(client?.kpis?.capacityUtilization) === 1 && (
+            <div className="lg:w-1/2">
+              <CapacityGoalsCard
+                groups={client?.capacity_groups ?? []}
+                goals={capacityGroupGoals}
+                onChange={setCapacityGroupGoals}
+              />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Row 3: Capacity Utilization Goals — compact per-group goal inputs.
-          The capacity-group definitions (employees, methods, hours) live
-          on Settings → Utilization. Gated on the master toggle
-          so it's hidden when capacity tracking is off. */}
-      {Number(client?.kpis?.capacityUtilization) === 1 && (
-        <CapacityGoalsCard
-          groups={client?.capacity_groups ?? []}
-          goals={capacityGroupGoals}
-          onChange={setCapacityGroupGoals}
-        />
-      )}
         </>
       ) : (
         <Card title="Monthly Financial Goals">

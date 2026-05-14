@@ -51,7 +51,7 @@ export function CapacityGoalsCard({ groups, goals, onChange }: Props) {
           set their goals.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+        <div className="grid grid-cols-1 gap-3 items-start">
           {groups.map((g) => {
             const meta = methodMeta(g.method)
             const goal = goals[g.id]

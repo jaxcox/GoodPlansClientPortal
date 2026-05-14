@@ -388,11 +388,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             value={email}
             onChange={setEmail}
             disabled={!emailEditable}
-            info={
-              emailLocked && coachView
-                ? "Locked — this client has activated. Email is the login key and can't be changed here."
-                : undefined
-            }
           />
           <DarkField
             label="Phone"
@@ -407,11 +402,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             canEdit={canEditAll}
           />
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white mb-1">
-              <span>Industry {canEditAll && '*'}</span>
-              {canEditAll && (
-                <InfoIcon text="Switching industry replaces the indicator toggles on the right." />
-              )}
+            <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
+              Industry {canEditAll && '*'}
             </label>
             {canEditAll ? (
               <select
@@ -568,9 +560,8 @@ function SharedFolderRow({
   if (canEdit) {
     return (
       <div>
-        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white mb-1">
-          <span>Shared Folder Link</span>
-          <InfoIcon text={`Clients see this as a "Shared Folder" button — they don't see the URL.`} />
+        <label className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
+          Shared Folder Link
         </label>
         <div className="flex gap-2">
           <input

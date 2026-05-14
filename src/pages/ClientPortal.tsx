@@ -132,7 +132,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               href={client.shared_folder_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent text-ink border border-gray-300 px-3 py-2 sm:py-1 rounded ml-2 hover:bg-gray-50"
+              className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
               title={`Open ${client.company_name}'s shared folder`}
             >
               Shared Drive ↗
