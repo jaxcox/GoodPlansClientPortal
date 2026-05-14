@@ -7,6 +7,7 @@ import { SettingsPage } from '../components/SettingsPage'
 import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
 import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
 import { WeeklyDashboard } from '../components/WeeklyDashboard'
+import { HistoryPage } from '../components/HistoryPage'
 import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 
 type Props = {
@@ -204,6 +205,8 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           />
         ) : tab === 'dashboard' ? (
           <WeeklyDashboard clientId={clientId} coachView={coachView} />
+        ) : tab === 'history' ? (
+          <HistoryPage clientId={clientId} coachView={coachView} />
         ) : (
           <Body tab={tab} />
         )}

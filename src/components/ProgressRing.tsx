@@ -152,6 +152,39 @@ const COLOR_RED: RingColor = {
  *    > 110% = red.
  *  - range (AR): within ±10% = green. ±10–15% = yellow. > ±15% = red.
  *    Ring is always full for range KPIs. */
+/** Returns just the color band identifier (no fill/overlay info). Same
+ *  thresholds as `computeRingStatus` — used by surfaces other than the
+ *  ring that need the band tag (e.g. History cells, FinancialsRowTile
+ *  result text). Null when no goal or no value. */
+export function computeBand({
+  value,
+  goal,
+  direction,
+  range,
+}: {
+  value: number | null
+  goal: number | null
+  direction: 'hi' | 'lo'
+  range: boolean
+}): 'green' | 'yellow' | 'red' | null {
+  if (value == null || goal == null || goal === 0) return null
+  if (range) {
+    const dev = Math.abs(value - goal) / goal
+    if (dev <= 0.1) return 'green'
+    if (dev <= 0.15) return 'yellow'
+    return 'red'
+  }
+  const ratio = value / goal
+  if (direction === 'hi') {
+    if (ratio >= 1) return 'green'
+    if (ratio >= 0.9) return 'yellow'
+    return 'red'
+  }
+  if (ratio <= 1) return 'green'
+  if (ratio <= 1.1) return 'yellow'
+  return 'red'
+}
+
 export function computeRingStatus({
   value,
   goal,
