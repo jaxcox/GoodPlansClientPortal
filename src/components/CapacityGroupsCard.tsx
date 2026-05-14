@@ -133,7 +133,16 @@ function GroupPanel({
   onRemove: () => void
 }) {
   return (
-    <div className="bg-surface-1 border border-line rounded-lg p-4 space-y-4">
+    <div className="relative bg-surface-1 border border-line rounded-lg p-4 space-y-4">
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remove group"
+        title="Remove group"
+        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-white text-base leading-none rounded hover:bg-bad/10 focus:outline-none focus:bg-bad/10"
+      >
+        ×
+      </button>
       <div className="space-y-3">
         <FieldGroup label="Department / Team Name">
           <input
@@ -200,15 +209,6 @@ function GroupPanel({
         />
       )}
 
-      <div className="flex justify-end pt-1">
-        <button
-          type="button"
-          onClick={onRemove}
-          className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1 rounded hover:bg-bad/10"
-        >
-          Remove Group
-        </button>
-      </div>
     </div>
   )
 }

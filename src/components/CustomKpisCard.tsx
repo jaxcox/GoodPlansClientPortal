@@ -68,7 +68,7 @@ export function CustomKpisListSection({
 /** Per-KPI management card rendered inside the Custom KPIs Card on
  *  Settings → Custom KPIs. Inline-editable like the Utilization
  *  GroupPanel — coach edits name / category / format / direction
- *  directly on the card. Remove button sits at the bottom. */
+ *  directly on the card. × in the top-right deletes the KPI. */
 export function CustomKpiManageCard({
   customKpi,
   onChange,
@@ -79,7 +79,16 @@ export function CustomKpiManageCard({
   onRemove: () => void
 }) {
   return (
-    <div className="bg-surface-1 border border-line rounded-lg p-4 space-y-3">
+    <div className="relative bg-surface-1 border border-line rounded-lg p-4 space-y-3">
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${customKpi.name || 'custom KPI'}`}
+        title="Remove KPI"
+        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-white text-base leading-none rounded hover:bg-bad/10 focus:outline-none focus:bg-bad/10"
+      >
+        ×
+      </button>
       <FieldGroup label="Indicator Name">
         <input
           type="text"
@@ -129,15 +138,6 @@ export function CustomKpiManageCard({
           onChange={(d) => onChange({ direction: d })}
         />
       </FieldGroup>
-      <div className="flex justify-end pt-1">
-        <button
-          type="button"
-          onClick={onRemove}
-          className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-1 rounded hover:bg-bad/10"
-        >
-          Remove KPI
-        </button>
-      </div>
     </div>
   )
 }

@@ -6,10 +6,7 @@ import {
   type KpiCategory,
   type KpiFormat,
 } from '../lib/kpis'
-import {
-  groupMaxCapacity,
-  groupWorkingHours,
-} from '../lib/capacity'
+import { groupMaxCapacity } from '../lib/capacity'
 import type {
   CapacityGroup,
   Client,
@@ -83,7 +80,6 @@ const DERIVABLE_WEEKLY_IDS = new Set<string>([
   'avgTransactionValue',
   'avgRepairOrder',
   'contractValuePerNewClient',
-  'efficiency',
 ])
 
 function safeDivide(
@@ -166,25 +162,6 @@ function deriveWeeklyValue(
         wonDollarsActual(kpiValues, visible),
         v('newClients')
       )
-    case 'efficiency': {
-      // Labor Efficiency = sum of produced hours across labor-method
-      // capacity groups ÷ sum of scheduled working hours on those groups.
-      // Working hours comes from group.workingHoursPerWeek (Settings →
-      // Utilization), with a legacy fallback to the old per-employee
-      // weeklyWorkingHours sum for groups not yet migrated.
-      let produced = 0
-      let working = 0
-      for (const grp of capacityGroups) {
-        if (grp.method !== 'labor') continue
-        const cv = capacityValues[grp.id] as
-          | { producedHours?: number }
-          | undefined
-        produced += cv?.producedHours ?? 0
-        working += groupWorkingHours(grp)
-      }
-      if (!working) return null
-      return (produced / working) * 100
-    }
     default:
       return null
   }

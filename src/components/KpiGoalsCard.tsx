@@ -50,11 +50,6 @@ const DERIVABLE_GOAL_IDS = new Set<string>([
   'contractValuePerNewClient', // contractsWonDollars / newClients
 ])
 
-/** Percent KPIs whose goal can legitimately exceed 100% (so the input
- *  shouldn't clamp at 100). Currently just Labor Efficiency, where
- *  produced ÷ working hours can be > 100% during overtime weeks. */
-const PERCENT_GOAL_NO_MAX = new Set<string>(['efficiency'])
-
 function safeDivide(
   num: number | undefined,
   den: number | undefined
@@ -257,13 +252,7 @@ export function KpiGoalsCard({
                       value={goals[row.id]}
                       onChange={(n) => setGoal(row.id, n)}
                       format={numberFieldFormat[row.format]}
-                      max={
-                        row.format === '%'
-                          ? PERCENT_GOAL_NO_MAX.has(row.id)
-                            ? null
-                            : 100
-                          : null
-                      }
+                      max={row.format === '%' ? 100 : null}
                       ariaLabel={`Goal for ${row.label}`}
                     />
                   )}
