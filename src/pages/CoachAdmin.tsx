@@ -88,7 +88,8 @@ export function CoachAdmin({ onViewPortal }: Props) {
   const brandName = coach?.brand_name ?? 'Portal'
 
   return (
-    <div className="min-h-screen bg-[#f5f3ec]">
+    <div className="min-h-screen bg-[#dad7c5]">
+      <div className="sticky top-0 z-30">
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div>
           <span className="font-brand text-lg font-bold text-ink">{brandName}</span>
@@ -119,6 +120,7 @@ export function CoachAdmin({ onViewPortal }: Props) {
           Account
         </TabButton>
       </nav>
+      </div>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {tab === 'clients' ? (

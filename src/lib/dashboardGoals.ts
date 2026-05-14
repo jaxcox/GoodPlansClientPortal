@@ -179,6 +179,19 @@ export function weeklyGoal({
     if (!monthlyGoal) return null
     return monthlyGoal.gpPct
   }
+  if (kpi.id === 'expenses') {
+    if (!monthlyGoal) return null
+    return monthlyGoal.expenses * frac
+  }
+  if (kpi.id === 'netProfit') {
+    if (!monthlyGoal) return null
+    return monthlyGoal.netProfit * frac
+  }
+  if (kpi.id === 'netProfitMargin') {
+    // NP% is a ratio — not pro-rated, just the month's planned %
+    if (!monthlyGoal) return null
+    return monthlyGoal.netProfitPct
+  }
 
   // Derived KPIs: their "goal" is composed from related KPI goals (e.g.
   // closeRate = wonDollars goal ÷ proposalsDollars goal × 100). Same logic
@@ -260,6 +273,20 @@ export function actualValue(
       const cogs = v('cogs')
       if (!rev || rev === 0) return null
       return ((rev - (cogs ?? 0)) / rev) * 100
+    }
+    case 'netProfit': {
+      const rev = v('revenue')
+      const cogs = v('cogs')
+      const exp = v('expenses')
+      if (rev == null || cogs == null || exp == null) return null
+      return rev - cogs - exp
+    }
+    case 'netProfitMargin': {
+      const rev = v('revenue')
+      const cogs = v('cogs')
+      const exp = v('expenses')
+      if (!rev || rev === 0) return null
+      return ((rev - (cogs ?? 0) - (exp ?? 0)) / rev) * 100
     }
     case 'conversionRate': {
       const leads = v('leads')

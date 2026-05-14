@@ -13,6 +13,7 @@ import { NumberField } from './NumberField'
 import { InfoIcon } from './InfoIcon'
 import { Toggle } from './Toggle'
 import { UTILIZATION_DESC } from './WeeklyDashboard'
+import { Card } from './Card'
 
 type Props = {
   groups: CapacityGroup[]
@@ -27,19 +28,20 @@ export function CapacityGroupsCard({
 }: Props) {
   // Read-only client view ----------------------------------------------------
   if (!coachView) {
-    if (groups.length === 0) {
-      return (
-        <div className="text-white text-xs">
-          No capacity tracking set up yet.
-        </div>
-      )
-    }
     return (
-      <div className="space-y-3">
-        {groups.map((g) => (
-          <ReadOnlyGroup key={g.id} group={g} />
-        ))}
-      </div>
+      <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization">
+        {groups.length === 0 ? (
+          <div className="text-white text-xs">
+            No capacity tracking set up yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {groups.map((g) => (
+              <ReadOnlyGroup key={g.id} group={g} />
+            ))}
+          </div>
+        )}
+      </Card>
     )
   }
 
@@ -83,13 +85,8 @@ export function CapacityGroupsCard({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Section header lives outside the cards, on the page background. */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-ink flex items-center gap-1.5">
-          Utilization
-          <InfoIcon text={UTILIZATION_DESC} />
-        </h2>
+    <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={addGroup}
@@ -100,11 +97,11 @@ export function CapacityGroupsCard({
       </div>
 
       {groups.length === 0 ? (
-        <div className="bg-ink border border-line rounded-lg p-5 text-white text-xs text-center">
+        <div className="text-white text-xs">
           No capacity groups yet. Click <strong>+ Add Group</strong> to start.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           {groups.map((g) => (
             <GroupPanel
               key={g.id}
@@ -116,7 +113,7 @@ export function CapacityGroupsCard({
           ))}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -136,7 +133,7 @@ function GroupPanel({
   onRemove: () => void
 }) {
   return (
-    <div className="bg-ink border border-line rounded-lg p-5 space-y-4">
+    <div className="bg-surface-1 border border-line rounded-lg p-4 space-y-4">
       <div className="space-y-3">
         <FieldGroup label="Department / Team Name">
           <input

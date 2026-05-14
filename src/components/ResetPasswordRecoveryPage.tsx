@@ -51,7 +51,7 @@ export function ResetPasswordRecoveryPage() {
   const visibility = { show, toggle: () => setShow((s) => !s) }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#f5f3ec]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#dad7c5]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
           <div className="font-brand text-2xl font-bold text-ink">

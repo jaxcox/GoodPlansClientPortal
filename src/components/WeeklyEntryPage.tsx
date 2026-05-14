@@ -74,6 +74,8 @@ const numberFieldFormat: Record<KpiFormat, 'dollars' | 'percent' | 'count'> = {
 const DERIVABLE_WEEKLY_IDS = new Set<string>([
   'grossProfit',
   'grossMargin',
+  'netProfit',
+  'netProfitMargin',
   'conversionRate',
   'avgEstimateValue',
   'avgPipelineDeal',
@@ -126,6 +128,19 @@ function deriveWeeklyValue(
       const rev = v('revenue')
       if (!rev) return null
       return ((rev - (v('cogs') ?? 0)) / rev) * 100
+    }
+    case 'netProfit': {
+      const rev = v('revenue')
+      const cogs = v('cogs')
+      const exp = v('expenses')
+      if (rev === undefined && cogs === undefined && exp === undefined)
+        return null
+      return (rev ?? 0) - (cogs ?? 0) - (exp ?? 0)
+    }
+    case 'netProfitMargin': {
+      const rev = v('revenue')
+      if (!rev) return null
+      return ((rev - (v('cogs') ?? 0) - (v('expenses') ?? 0)) / rev) * 100
     }
     case 'conversionRate': {
       const r = safeDivide(v('newClients'), v('leads'))
@@ -518,8 +533,8 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
 
   return (
     <section className="space-y-4">
-      {/* Header + Save bar */}
-      <div className="flex flex-wrap justify-between items-center gap-3">
+      {/* Sticky header + Save bar */}
+      <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 sm:-mt-8 flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-lg font-bold text-ink">Weekly Entry</h1>
         <SaveBar
           isDirty={isDirty}
@@ -547,10 +562,11 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
         <div className="text-xs text-black italic">Loading week…</div>
       )}
 
-      {/* KPI actuals split into two separate cards: inputs on the left,
-          auto-calculated on the right. Each card groups rows by category
-          with a subheader; empty categories hide entirely. Stacks
-          single-column on smaller screens. */}
+      {/* KPI actuals as one Card per category. Within each card, rows
+          render in registry order — inputs and derived interleave per the
+          KPI registry, distinguished visually by NumberField (editable
+          yellow ring) vs DerivedKpiBox (read-only gray border). Cards
+          collapse independently via the Card's +/− button. */}
       {!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
         <Card title="KPI Actuals">
           <div className="text-white text-xs">
@@ -559,173 +575,116 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          {/* Left card: inputs (what the client fills in) */}
-          <Card title="Your entries">
-            <div className="space-y-5">
-              {CATEGORIES.map((cat) => {
-                const inputRows = (groupedRows.get(cat) ?? []).filter(
-                  (r) => !r.derived
-                )
-                // Capacity groups in Team — Manual % groups are hidden
-                // on the left (no weekly input). All groups appear on
-                // the right as auto-calculated utilization rows.
-                const teamGroups =
-                  cat === 'Team'
-                    ? (client.capacity_groups ?? []).filter(
-                        (g) => g.method !== 'manual'
-                      )
-                    : []
-                if (inputRows.length === 0 && teamGroups.length === 0)
-                  return null
-                return (
-                  <div key={`L-${cat}`}>
-                    <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
-                      {cat}
-                    </div>
-                    {inputRows.length > 0 && (
-                      <div className="space-y-3">
-                        {inputRows.map((row) => (
-                          <div key={row.id} className="flex flex-col">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
-                              <span>{row.label}</span>
-                              {row.desc && <InfoIcon text={row.desc} />}
-                            </div>
-                            <NumberField
-                              value={kpiValues[row.id]}
-                              onChange={(n) => setKpi(row.id, n)}
-                              format={numberFieldFormat[row.format]}
-                              max={row.format === '%' ? 100 : null}
-                              ariaLabel={`${row.label} this week`}
-                            />
-                            {row.hint && (
-                              <div className="text-xs text-white italic mt-1">
-                                {row.hint}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+        (() => {
+          // Build the flat card list, then distribute into two independent
+          // column-stacks (evens → left, odds → right). Each column packs
+          // its cards top-to-bottom with space-y-4 so collapsing a card
+          // lets the one below it shift up — no shared row height.
+          const cards: React.ReactNode[] = []
+          for (const cat of CATEGORIES) {
+            const rows = groupedRows.get(cat) ?? []
+            const capacityGroupsHere =
+              cat === 'Team' ? (client.capacity_groups ?? []) : []
+            if (rows.length === 0 && capacityGroupsHere.length === 0) continue
+            cards.push(
+              <Card key={cat} title={cat}>
+                {rows.map((row) =>
+                  row.derived ? (
+                    <div key={row.id} className="flex flex-col">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
+                        <span>{row.label}</span>
+                        {row.desc && <InfoIcon text={row.desc} />}
                       </div>
-                    )}
-                    {teamGroups.length > 0 && (
-                      <div
-                        className={`space-y-3 ${
-                          inputRows.length > 0 ? 'mt-4' : ''
-                        }`}
-                      >
-                        {teamGroups.map((g) => (
-                          <CapacityGroupEntryBlock
-                            key={g.id}
-                            group={g}
-                            values={capacityValues[g.id]}
-                            onChange={(next) =>
-                              setCapacityValues((prev) => {
-                                const out = { ...prev }
-                                if (next === undefined) delete out[g.id]
-                                else out[g.id] = next
-                                return out
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
-
-          {/* Right column: Auto-calculated card + Notes card stacked */}
-          <div className="space-y-4">
-          <Card title="Auto-calculated">
-            <div className="space-y-5">
-              {CATEGORIES.map((cat) => {
-                const derivedRows = (groupedRows.get(cat) ?? []).filter(
-                  (r) => r.derived
-                )
-                // All capacity groups (including Manual %) get an
-                // auto-calculated utilization row under Team here.
-                const capacityRows =
-                  cat === 'Team' ? (client.capacity_groups ?? []) : []
-                if (derivedRows.length === 0 && capacityRows.length === 0)
-                  return null
-                return (
-                  <div key={`R-${cat}`}>
-                    <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
-                      {cat}
+                      <DerivedKpiBox
+                        value={formatDerivedWeekly(
+                          deriveWeeklyValue(
+                            row.id,
+                            kpiValues,
+                            capacityValues,
+                            client.capacity_groups ?? [],
+                            visibleStandardIds
+                          ),
+                          row.format
+                        )}
+                      />
                     </div>
-                    <div className="space-y-3">
-                      {derivedRows.map((row) => (
-                        <div key={row.id} className="flex flex-col">
-                          <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
-                            <span>{row.label}</span>
-                            {row.desc && <InfoIcon text={row.desc} />}
-                          </div>
-                          <DerivedKpiBox
-                            value={formatDerivedWeekly(
-                              deriveWeeklyValue(
-                                row.id,
-                                kpiValues,
-                                capacityValues,
-                                client.capacity_groups ?? [],
-                                visibleStandardIds
-                              ),
-                              row.format
-                            )}
-                          />
+                  ) : (
+                    <div key={row.id} className="flex flex-col">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1 flex items-center gap-1.5">
+                        <span>{row.label}</span>
+                        {row.desc && <InfoIcon text={row.desc} />}
+                      </div>
+                      <NumberField
+                        value={kpiValues[row.id]}
+                        onChange={(n) => setKpi(row.id, n)}
+                        format={numberFieldFormat[row.format]}
+                        max={row.format === '%' ? 100 : null}
+                        ariaLabel={`${row.label} this week`}
+                      />
+                      {row.hint && (
+                        <div className="text-xs text-white italic mt-1">
+                          {row.hint}
                         </div>
-                      ))}
-                      {capacityRows.map((g) => {
-                        const v = computeLiveUtilization(
-                          g,
-                          capacityValues[g.id]
-                        )
-                        return (
-                          <div key={g.id} className="flex flex-col">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-                              {capacityUtilizationLabel(g)}
-                            </div>
-                            <DerivedKpiBox
-                              value={
-                                v === null ? '—' : `${v.toFixed(1)}%`
-                              }
-                            />
-                          </div>
-                        )
-                      })}
+                      )}
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                )}
+                {capacityGroupsHere.map((g) => {
+                  const v = computeLiveUtilization(g, capacityValues[g.id])
+                  return (
+                    <div key={g.id} className="space-y-3">
+                      {g.method !== 'manual' && (
+                        <CapacityGroupEntryBlock
+                          group={g}
+                          values={capacityValues[g.id]}
+                          onChange={(next) =>
+                            setCapacityValues((prev) => {
+                              const out = { ...prev }
+                              if (next === undefined) delete out[g.id]
+                              else out[g.id] = next
+                              return out
+                            })
+                          }
+                        />
+                      )}
+                      <div className="flex flex-col">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+                          {capacityUtilizationLabel(g)}
+                        </div>
+                        <DerivedKpiBox
+                          value={v === null ? '—' : `${v.toFixed(1)}%`}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </Card>
+            )
+          }
+          cards.push(
+            <Card key="notes" title="Notes">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Anything notable about this week? (Optional.)"
+                rows={3}
+                className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent resize-y"
+              />
+            </Card>
+          )
+          const leftCol = cards.filter((_, i) => i % 2 === 0)
+          const rightCol = cards.filter((_, i) => i % 2 === 1)
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <div className="space-y-4">{leftCol}</div>
+              <div className="space-y-4">{rightCol}</div>
             </div>
-          </Card>
-          <Card title="Notes">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Anything notable about this week? (Optional.)"
-              rows={3}
-              className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent resize-y"
-            />
-          </Card>
-          </div>
-        </div>
+          )
+        })()
       )}
 
-      {/* Bottom save */}
-      <div className="flex justify-end pt-2">
-        <SaveBar
-          isDirty={isDirty}
-          saving={saving}
-          savedAt={savedAt}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
-      </div>
-
       {/* Delete this entry — only when a saved entry exists for this week.
-          Per Doc 06: small subtle link below the Save bar, requires confirm. */}
+          Per Doc 06: small subtle link below the sticky top Save bar, requires confirm. */}
       {entry && (
         <div className="flex justify-end">
           <button

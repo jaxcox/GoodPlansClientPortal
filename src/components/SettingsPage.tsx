@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { KPIS, emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
 import { InfoIcon } from './InfoIcon'
@@ -14,10 +14,9 @@ import { useDirtyGuard } from '../lib/dirtyGuard'
 import { formatPhone } from '../lib/phone'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 import {
-  CustomKpiForm,
   CustomKpisListSection,
-  newCustomKpiId,
-  type CustomKpiFormValues,
+  CustomKpiManageCard,
+  newCustomKpi,
 } from './CustomKpisCard'
 import { SaveBar } from './SaveBar'
 import { Card } from './Card'
@@ -56,28 +55,15 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   // on the client record. Gated on the `capacityUtilization` toggle in the
   // Active KPIs list; when off, the section is hidden but the data stays.
   const [capacityGroups, setCapacityGroups] = useState<CapacityGroup[]>([])
+  // Custom KPIs — edited inline (each panel patches local state) and
+  // committed via the page-level Save bar. Mirrors capacityGroups.
+  const [customKpis, setCustomKpis] = useState<CustomKpi[]>([])
 
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [industryModalOpen, setIndustryModalOpen] = useState(false)
-
-  // ---- Custom KPI editing state -----------------------------------------
-  // Lifted out of CustomKpisCard so the Active KPIs list and the Creator
-  // card can coordinate (clicking "edit" in the list pre-fills the Creator).
-  const [editingCustomKpiId, setEditingCustomKpiId] = useState<string | null>(
-    null
-  )
-  const creatorRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (editingCustomKpiId && creatorRef.current) {
-      creatorRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      })
-    }
-  }, [editingCustomKpiId])
 
   const seedDraft = (c: Client) => {
     setCompanyName(c.company_name)
@@ -90,6 +76,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setTracksYtd(c.tracks_ytd_actuals ?? true)
     setWeeklyReminder(c.weekly_reminder_enabled ?? true)
     setCapacityGroups(c.capacity_groups ?? [])
+    setCustomKpis(c.custom_kpis ?? [])
   }
 
   useEffect(() => {
@@ -140,6 +127,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       weeklyReminder !== (client.weekly_reminder_enabled ?? true) ||
       JSON.stringify(capacityGroups) !==
         JSON.stringify(client.capacity_groups ?? []) ||
+      JSON.stringify(customKpis) !==
+        JSON.stringify(client.custom_kpis ?? []) ||
       false
     )
   }, [
@@ -154,6 +143,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     tracksYtd,
     weeklyReminder,
     capacityGroups,
+    customKpis,
   ])
 
   // Register dirty state with the app-wide leave guard so top-bar tab
@@ -195,68 +185,39 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setKpis
   )
 
-  // ---- Custom KPI persistence (immediate, independent of Save Settings) -
-  const persistCustomKpis = async (next: CustomKpi[]): Promise<boolean> => {
-    if (!client) return false
-    const { data, error } = await supabase
-      .from('clients')
-      .update({ custom_kpis: next })
-      .eq('id', client.id)
-      .select()
-      .single()
-    if (error || !data) {
-      setSaveError(error?.message ?? 'Saving custom KPI failed')
-      return false
-    }
-    setClient(data as Client)
-    return true
+  // ---- Custom KPI local-state mutations (saved with the rest via Save bar)
+  const addCustomKpi = () => {
+    setCustomKpis((prev) => [...prev, newCustomKpi()])
   }
 
-  const addCustomKpi = async (values: CustomKpiFormValues) => {
-    if (!client) return
-    const next: CustomKpi[] = [
-      ...(client.custom_kpis ?? []),
-      { ...values, id: newCustomKpiId(), active: true },
-    ]
-    await persistCustomKpis(next)
-  }
-
-  const updateCustomKpi = async (id: string, values: CustomKpiFormValues) => {
-    if (!client) return
-    const next = (client.custom_kpis ?? []).map((k) =>
-      k.id === id ? { ...k, ...values } : k
+  const updateCustomKpi = (id: string, patch: Partial<CustomKpi>) => {
+    setCustomKpis((prev) =>
+      prev.map((k) => (k.id === id ? { ...k, ...patch } : k))
     )
-    const ok = await persistCustomKpis(next)
-    if (ok) setEditingCustomKpiId(null)
   }
 
-  const deleteCustomKpi = async (id: string) => {
-    if (!client) return
-    const k = (client.custom_kpis ?? []).find((x) => x.id === id)
+  const removeCustomKpi = (id: string) => {
+    const k = customKpis.find((x) => x.id === id)
     if (!k) return
-    if (
-      !confirm(
-        `Delete "${k.name}"? This custom indicator has no historical data yet, but if you re-add it later, it'll be a new indicator — old values won't return.`
-      )
-    )
-      return
-    const next = (client.custom_kpis ?? []).filter((x) => x.id !== id)
-    await persistCustomKpis(next)
-    if (editingCustomKpiId === id) setEditingCustomKpiId(null)
+    // Only confirm when the KPI has saved data. New unsaved entries (no
+    // name yet) drop silently.
+    if (k.name.trim().length > 0) {
+      if (
+        !confirm(
+          `Delete "${k.name}"? Save Settings to commit. This custom indicator has no historical data yet, but if you re-add it later, it'll be a new indicator — old values won't return.`
+        )
+      ) {
+        return
+      }
+    }
+    setCustomKpis((prev) => prev.filter((x) => x.id !== id))
   }
 
-  const toggleCustomKpiActive = async (id: string, active: boolean) => {
-    if (!client) return
-    const next = (client.custom_kpis ?? []).map((k) =>
-      k.id === id ? { ...k, active } : k
+  const toggleCustomKpiActive = (id: string, active: boolean) => {
+    setCustomKpis((prev) =>
+      prev.map((k) => (k.id === id ? { ...k, active } : k))
     )
-    await persistCustomKpis(next)
   }
-
-  const editingCustomKpi = editingCustomKpiId
-    ? (client?.custom_kpis ?? []).find((k) => k.id === editingCustomKpiId) ??
-      null
-    : null
 
   // Cancel = exit Settings. If the form is dirty, confirm before leaving.
   // Always enabled regardless of dirty state.
@@ -292,6 +253,17 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       setSaveError('Pick an industry.')
       return
     }
+    if (canEditAll) {
+      const invalid = customKpis.find(
+        (k) => !k.name.trim() || !k.category || !k.format
+      )
+      if (invalid) {
+        setSaveError(
+          `Custom KPI "${invalid.name.trim() || '(unnamed)'}" is missing name, category, or format.`
+        )
+        return
+      }
+    }
     setSaving(true)
 
     const updates: Partial<Client> = {
@@ -306,6 +278,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       updates.kpis = kpis
       updates.tracks_ytd_actuals = tracksYtd
       updates.capacity_groups = capacityGroups
+      updates.custom_kpis = customKpis.map((k) => ({
+        ...k,
+        name: k.name.trim(),
+      }))
     }
     if (emailEditable) {
       updates.email = email.trim().toLowerCase()
@@ -348,8 +324,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
 
   return (
     <section className="space-y-4">
-      {/* ===== Header row + top Save/Cancel ===== */}
-      <div className="flex flex-wrap justify-between items-center gap-3">
+      {/* ===== Header row + sticky Save/Cancel ===== */}
+      <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 sm:-mt-8 flex flex-wrap justify-between items-center gap-3">
         <div>
           <h1 className="text-lg font-bold text-ink">Company Settings</h1>
         </div>
@@ -368,8 +344,13 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         </div>
       )}
 
-      {/* ===== Row 1: Company Info + Active KPIs ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* ===== Two-column layout. Each column stacks its cards
+          independently (space-y-4) so when a top card collapses, the
+          lower card moves up — no shared row-height with the other
+          column. Left col: Company Info + Utilization. Right col:
+          Active KPIs + Custom KPIs (coach) / Change Password (client). ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className="space-y-4">
         <Card title="Company Info">
           <DarkField
             label="Company Name *"
@@ -441,12 +422,24 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           </div>
         </Card>
 
+          {Number(kpis.capacityUtilization) === 1 && (
+            <CapacityGroupsCard
+              groups={capacityGroups}
+              onChange={setCapacityGroups}
+              coachView={canEditAll}
+            />
+          )}
+        </div>
+
+        <div className="space-y-4">
         <Card title="Active KPIs">
           {canEditAll ? (
             <div className="space-y-3">
               <FinancialsSection
                 tracksYtd={tracksYtd}
                 onTracksYtdChange={setTracksYtd}
+                kpis={kpis}
+                onToggle={onKpiToggle}
               />
               <KpiTogglesGrouped
                 groups={groups}
@@ -455,79 +448,52 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                 feedback={kpiFeedback}
               />
               <CustomKpisListSection
-                customKpis={client.custom_kpis ?? []}
-                editingId={editingCustomKpiId}
-                onEdit={setEditingCustomKpiId}
-                onDelete={deleteCustomKpi}
+                customKpis={customKpis}
                 onToggleActive={toggleCustomKpiActive}
               />
             </div>
           ) : (
             <div className="space-y-3">
+              <FinancialsReadOnly kpis={kpis} />
               <KpiTogglesReadOnly groups={groups} kpis={kpis} />
               <CustomKpisListSection
-                customKpis={(client.custom_kpis ?? []).filter(
-                  (k) => k.active !== false
-                )}
+                customKpis={customKpis.filter((k) => k.active !== false)}
                 readOnly
               />
             </div>
           )}
         </Card>
-      </div>
-
-      {/* ===== Row 2: Utilization — gated on the master toggle
-          in Active KPIs. Lives above Custom KPIs since it's a primary
-          tracking concept; Custom KPIs is a long-tail add-on. ===== */}
-      {Number(kpis.capacityUtilization) === 1 && (
-        <CapacityGroupsCard
-          groups={capacityGroups}
-          onChange={setCapacityGroups}
-          coachView={canEditAll}
-        />
-      )}
-
-      {/* ===== Row 3: Custom KPIs + Change Password, third-width each.
-          Change Password only renders for clients viewing their own portal
-          — coach view sees Custom KPIs alone in the row. The weekly entry
-          reminder toggle lives at the bottom of Company Info now, so no
-          separate Notifications card. ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         {canEditAll && (
-          <div ref={creatorRef}>
-            <Card title="Custom KPIs">
-              <CustomKpiForm
-                editing={editingCustomKpi}
-                onSubmit={async (values) => {
-                  if (editingCustomKpi) {
-                    await updateCustomKpi(editingCustomKpi.id, values)
-                  } else {
-                    await addCustomKpi(values)
-                  }
-                }}
-                onCancel={() => setEditingCustomKpiId(null)}
-              />
-            </Card>
-          </div>
+          <Card title="Custom KPIs">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={addCustomKpi}
+                className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
+              >
+                + Add Custom KPI
+              </button>
+            </div>
+            {customKpis.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+                {customKpis.map((k) => (
+                  <CustomKpiManageCard
+                    key={k.id}
+                    customKpi={k}
+                    onChange={(patch) => updateCustomKpi(k.id, patch)}
+                    onRemove={() => removeCustomKpi(k.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
         )}
         {!coachView && (
-          <div>
-            <Card title="Change Password">
-              <ChangePasswordForm email={client.email ?? ''} />
-            </Card>
-          </div>
+          <Card title="Change Password">
+            <ChangePasswordForm email={client.email ?? ''} />
+          </Card>
         )}
-      </div>
-
-      {/* ===== Bottom Save/Cancel ===== */}
-      <div className="flex justify-end pt-2">
-        <SaveBar
-          isDirty={isDirty}
-          saving={saving}
-          savedAt={savedAt}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
+        </div>
       </div>
 
       {coachView && (
@@ -609,22 +575,29 @@ function SharedFolderRow({
   )
 }
 
-/** Always-on financial KPIs + the per-client YTD Actuals toggle, rendered
- *  in the same two-column grid as the toggleable categories below it. */
+/** Financials section in Settings → Active KPIs. Mixes always-on items
+ *  (Income / COGS / Gross Profit / GP Margin) with the per-client YTD
+ *  Actuals toggle and any toggleable Financials KPIs (Accounts
+ *  Receivable). Rendered in the same two-column grid as the toggleable
+ *  categories below it. */
 function FinancialsSection({
   tracksYtd,
   onTracksYtdChange,
+  kpis,
+  onToggle,
 }: {
   tracksYtd: boolean
   onTracksYtdChange: (v: boolean) => void
+  kpis: Record<string, number>
+  onToggle: (id: string, on: boolean) => void
 }) {
+  const toggleableFinancials = KPIS.filter(
+    (k) => k.category === 'Financials' && !k.always && !k.hideTile
+  )
   return (
     <div>
       <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
         Financials
-      </div>
-      <div className="text-xs text-white italic mb-2">
-        These items are always on.
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
         <AlwaysOnItem label="Income" tooltip={kpiDesc('revenue')} />
@@ -636,6 +609,16 @@ function FinancialsSection({
           onChange={onTracksYtdChange}
           label="YTD Actuals (year 1 only)"
         />
+        {toggleableFinancials.map((k) => (
+          <div key={k.id} className="flex items-center gap-1.5">
+            <Toggle
+              checked={Number(kpis[k.id]) === 1}
+              onChange={(on) => onToggle(k.id, on)}
+              label={k.label}
+            />
+            {k.desc && <InfoIcon text={k.desc} />}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -699,6 +682,48 @@ function KpiTogglesGrouped({
         </div>
       )}
     </div>
+  )
+}
+
+/** Read-only Financials section for the client view. Lists the always-on
+ *  items (Income / COGS / Gross Profit / GP Margin) and any toggleable
+ *  Financials KPIs (Accounts Receivable) the coach has enabled. */
+function FinancialsReadOnly({ kpis }: { kpis: Record<string, number> }) {
+  const enabledToggleable = KPIS.filter(
+    (k) =>
+      k.category === 'Financials' &&
+      !k.always &&
+      !k.hideTile &&
+      Number(kpis[k.id]) === 1
+  )
+  return (
+    <div>
+      <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+        Financials
+      </div>
+      <ul className="text-xs text-white space-y-1">
+        <ReadOnlyItem label="Income" tooltip={kpiDesc('revenue')} />
+        <ReadOnlyItem label="COGS" tooltip={kpiDesc('cogs')} />
+        <ReadOnlyItem label="Gross Profit" tooltip={kpiDesc('grossProfit')} />
+        <ReadOnlyItem
+          label="Gross Profit Margin"
+          tooltip={kpiDesc('grossMargin')}
+        />
+        {enabledToggleable.map((k) => (
+          <ReadOnlyItem key={k.id} label={k.label} tooltip={k.desc} />
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function ReadOnlyItem({ label, tooltip }: { label: string; tooltip?: string }) {
+  return (
+    <li className="flex items-center gap-2">
+      <span className="text-accent font-bold">✓</span>
+      <span>{label}</span>
+      {tooltip && <InfoIcon text={tooltip} />}
+    </li>
   )
 }
 

@@ -394,38 +394,38 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   return (
     <section className="space-y-4">
-      {/* Header + Save bar */}
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <h1 className="text-lg font-bold text-ink">Budget &amp; Goals</h1>
-        <SaveBar
-          isDirty={isDirty}
-          saving={saving}
-          savedAt={savedAt}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
-      </div>
-
-      {saveError && (
-        <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3">
-          {saveError}
+      {/* Sticky header bar: title + Save + tab nav travel together so the
+          coach always sees which tab and the save state while scrolling. */}
+      <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 -mt-6 sm:-mt-8">
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <h1 className="text-lg font-bold text-ink">Budget &amp; Goals</h1>
+          <SaveBar
+            isDirty={isDirty}
+            saving={saving}
+            savedAt={savedAt}
+            onCancel={onCancel}
+            onSave={onSave}
+          />
         </div>
-      )}
-
-      {/* Budget tab nav */}
-      <div className="flex gap-1 border-b border-gray-300">
-        <BudgetTabButton
-          active={budgetTab === 'targets'}
-          onClick={() => setBudgetTab('targets')}
-        >
-          Targets &amp; Actuals
-        </BudgetTabButton>
-        <BudgetTabButton
-          active={budgetTab === 'monthly'}
-          onClick={() => setBudgetTab('monthly')}
-        >
-          Monthly Financial Goals
-        </BudgetTabButton>
+        {saveError && (
+          <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3 mt-2">
+            {saveError}
+          </div>
+        )}
+        <div className="flex gap-1 border-b border-gray-300 mt-2">
+          <BudgetTabButton
+            active={budgetTab === 'targets'}
+            onClick={() => setBudgetTab('targets')}
+          >
+            Targets &amp; Actuals
+          </BudgetTabButton>
+          <BudgetTabButton
+            active={budgetTab === 'monthly'}
+            onClick={() => setBudgetTab('monthly')}
+          >
+            Monthly Financial Goals
+          </BudgetTabButton>
+        </div>
       </div>
 
       {budgetTab === 'targets' ? (
@@ -591,16 +591,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         </Card>
       )}
 
-      {/* Bottom save */}
-      <div className="flex justify-end pt-2">
-        <SaveBar
-          isDirty={isDirty}
-          saving={saving}
-          savedAt={savedAt}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
-      </div>
     </section>
   )
 }
@@ -723,7 +713,7 @@ function YtdActualsBody({
 
   return (
     <div className="space-y-4">
-      <Labeled label="YTD Through">
+      <Labeled label="Most Recent Closed Month">
         <select
           value={ytdThruMonth ?? 'none'}
           onChange={(e) => onThruMonthChange(e.target.value)}
@@ -732,7 +722,7 @@ function YtdActualsBody({
           <option value="none">— Pick one —</option>
           {MONTH_LABELS.map((m, i) => (
             <option key={m} value={i}>
-              End of {m}
+              {m}
             </option>
           ))}
         </select>
@@ -740,7 +730,7 @@ function YtdActualsBody({
 
       {enabled && (
         <>
-          <Labeled label="How do you want to enter actuals?">
+          <Labeled label="Enter Actuals">
             <div className="inline-flex border border-line rounded overflow-hidden">
               <ModeButton
                 active={entryMode === 'bulk'}

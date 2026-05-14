@@ -74,7 +74,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-black">
+      <div className="min-h-screen flex items-center justify-center bg-[#dad7c5] text-sm text-black">
         <div className="text-center">
           <div className="font-bold mb-2">Couldn't load client</div>
           <div className="text-xs text-black mb-4">{error}</div>
@@ -94,19 +94,19 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   if (!client) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-sm text-black">
+      <div className="min-h-screen flex items-center justify-center bg-[#dad7c5] text-sm text-black">
         Loading…
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3ec] flex flex-col">
+    <div className="min-h-screen bg-[#dad7c5] flex flex-col">
       {/* Top bar — client name primary, brand to footer (per Doc 03 PC).
           When a force-change-password is required, the nav links are
           suppressed so the client can't navigate around the interstitial.
           Logout / Back stays available. */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-ink">
             {client.company_name}

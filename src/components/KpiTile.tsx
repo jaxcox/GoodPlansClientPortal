@@ -1,5 +1,6 @@
 import { InfoIcon } from './InfoIcon'
 import type { KpiFormat, KpiDirection } from '../lib/kpis'
+import { ProgressRing, computeRingStatus } from './ProgressRing'
 
 type Props = {
   label: string
@@ -20,11 +21,16 @@ type Props = {
    *  goal row). Used for custom KPIs where the % comparison reads
    *  weirdly (e.g. "Goal: 4.8 reviews · 98%"). */
   hideGoalPct?: boolean
+  /** Tile visualization: 'number' (default) shows the big number inline;
+   *  'ring' wraps the number in a circular progress ring that fills from
+   *  red → yellow → green based on actual/goal. Used on Financials
+   *  dashboard tiles. */
+  view?: 'number' | 'ring'
 }
 
 // Tile-format helpers ---------------------------------------------------------
 
-function formatValue(n: number | null, format: KpiFormat): string {
+export function formatValue(n: number | null, format: KpiFormat): string {
   if (n == null || !Number.isFinite(n)) return '—'
   if (format === '$') {
     if (Math.abs(n) >= 100000) {
@@ -84,37 +90,82 @@ export function KpiTile({
   delta,
   range = false,
   hideGoalPct = false,
+  view = 'number',
 }: Props) {
   const effectiveGoal = goal
   const onTrack = isOnTrack(value, effectiveGoal, direction, range)
   const pct = pctOfGoal(value, effectiveGoal)
+  const ring =
+    view === 'ring'
+      ? computeRingStatus({ value, goal: effectiveGoal, direction, range })
+      : null
 
-  // Border colors — green when on track, red when behind, neutral gray
-  // when no goal exists.
-  const borderClass =
-    onTrack == null
-      ? 'border-line'
-      : onTrack
-        ? 'border-good'
-        : 'border-bad'
-
-  // Footer text color matches the border state, but always white on the
-  // "no goal set" case (per the font color rule — no gray text).
+  // Footer goal text shifts color with on-track status — green when at
+  // goal or better, red when behind. White when no goal/value yet.
   const footerColor =
     onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
 
-  // Delta arrow color: directional. ▲ green for higher-better KPIs going
-  // up; red when going the wrong way. Inverted KPIs flip.
+  // Delta arrow color: directional. Higher-better KPIs going up is good
+  // (green); wrong way is bad (red). Inverted KPIs flip. Ring view uses
+  // black inside the cream ring since the ring color carries status.
   const deltaColor = (() => {
-    if (delta == null) return 'text-white'
-    if (delta === 0) return 'text-white'
+    if (view === 'ring') return 'text-black'
+    if (delta == null || delta === 0) return 'text-white'
     const isGood = direction === 'lo' ? delta < 0 : delta > 0
     return isGood ? 'text-good' : 'text-bad'
   })()
 
+  // Ring view: no dark card wrapper. Modeled after the Apple Card payment
+  // ring — title above, big value inside the ring, goal caption below.
+  if (ring) {
+    return (
+      <div className="relative flex flex-col items-center text-center px-2 py-3">
+        {!range && onTrack === true && (
+          <div className="absolute top-0 right-2 text-[10px] font-bold text-good">
+            Achieved!
+          </div>
+        )}
+        <div className="text-xs font-semibold uppercase tracking-wider text-black mb-2 flex items-center justify-center gap-1.5">
+          <span>{label}</span>
+          {desc && <InfoIcon text={desc} />}
+        </div>
+        <ProgressRing
+          progress={ring.progress}
+          color={ring.color}
+          size={240}
+          strokeWidth={20}
+        >
+          <div className="flex flex-col items-center justify-center max-w-[180px]">
+            <div className="text-3xl font-bold text-black leading-none">
+              {formatValue(value, format)}
+            </div>
+            {delta != null && delta !== 0 && (
+              <div className={`text-xs mt-1 ${deltaColor}`}>
+                {formatDelta(delta, format)}
+              </div>
+            )}
+            <div className="text-xs text-black mt-1">
+              {effectiveGoal == null ? (
+                <span>No goal set</span>
+              ) : range ? (
+                <span>
+                  Goal: {formatValue(effectiveGoal, format)} (±10%)
+                </span>
+              ) : format === '%' ? (
+                <span>Goal: {effectiveGoal.toFixed(1)}%</span>
+              ) : (
+                <span>Goal: {formatValue(effectiveGoal, format)}</span>
+              )}
+            </div>
+          </div>
+        </ProgressRing>
+      </div>
+    )
+  }
+
   return (
     <div
-      className={`bg-ink rounded-lg p-3 border ${borderClass} min-h-[110px] flex flex-col relative`}
+      className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative"
     >
       {/* "Achieved!" badge — top-right, only for non-range on-track KPIs */}
       {!range && onTrack === true && (
@@ -123,7 +174,7 @@ export function KpiTile({
         </div>
       )}
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-0.5">
         <div className="text-xs font-semibold uppercase tracking-wider text-white">
           {label}
         </div>

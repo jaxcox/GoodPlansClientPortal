@@ -31,7 +31,7 @@ function AppInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-black text-sm">
+      <div className="min-h-screen flex items-center justify-center bg-[#dad7c5] text-black text-sm">
         Loading…
       </div>
     )
@@ -61,7 +61,7 @@ function AppInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] text-black p-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#dad7c5] text-black p-6">
       <div className="text-center">
         <div className="font-bold mb-2">Account not fully set up</div>
         <div className="text-sm">
@@ -74,7 +74,7 @@ function AppInner() {
 
 function SetupNeeded() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f3ec] p-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#dad7c5] p-6">
       <div className="max-w-lg bg-white border border-gray-200 rounded-lg p-6 shadow">
         <h1 className="text-lg font-extrabold mb-2">Set up Supabase first</h1>
         <p className="text-sm text-black mb-3">

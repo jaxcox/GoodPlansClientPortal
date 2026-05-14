@@ -1,8 +1,6 @@
 import type { CapacityGroup, CapacityGroupGoal } from '../lib/types'
 import { methodMeta } from '../lib/capacity'
 import { NumberField } from './NumberField'
-import { InfoIcon } from './InfoIcon'
-import { UTILIZATION_DESC } from './WeeklyDashboard'
 
 type Props = {
   /** Capacity groups defined on the client record. Read-only here — to
@@ -37,13 +35,6 @@ export function CapacityGoalsCard({ groups, goals, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1.5">
-        <h2 className="text-base font-bold text-ink">
-          Utilization Goals
-        </h2>
-        <InfoIcon text={UTILIZATION_DESC} />
-      </div>
-
       {groups.length === 0 ? (
         <div className="bg-ink border border-line rounded-lg p-5 text-white text-xs">
           No capacity groups yet. Add them in{' '}
