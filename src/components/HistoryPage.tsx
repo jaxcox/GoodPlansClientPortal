@@ -8,13 +8,7 @@ import type {
   CustomKpi,
   WeeklyEntry,
 } from '../lib/types'
-import {
-  weekStartSunday,
-  isoDate,
-  shiftWeek,
-  dateFromIso,
-  formatWeekShort,
-} from '../lib/week'
+import { isoDate, dateFromIso, formatWeekShort } from '../lib/week'
 import {
   visibleTileKpis,
   weeklyGoal,
@@ -27,6 +21,7 @@ import { formatValue as formatKpiValue } from './KpiTile'
 import { groupMaxCapacity, groupWorkingHours } from '../lib/capacity'
 import { computeBand } from './ProgressRing'
 import type { CapacityGroupGoal } from '../lib/types'
+import writeXlsxFile from 'write-excel-file/browser'
 
 type Props = {
   clientId: string
@@ -63,13 +58,14 @@ export function HistoryPage({ clientId, coachView: _coachView }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadingEntries, setLoadingEntries] = useState(false)
 
-  // Default date range — last 12 weeks (the current Sunday plus 11 prior).
-  // Sunday-anchored throughout (matches the rest of the portal).
+  // Default date range — Quarter-to-Date: from the first day of the
+  // current calendar quarter through today.
   const defaultRange = useMemo(() => {
-    const sunday = weekStartSunday(new Date())
+    const today = new Date()
+    const q = Math.floor(today.getMonth() / 3) // 0..3 for current quarter
     return {
-      from: isoDate(shiftWeek(sunday, -11)),
-      to: isoDate(sunday),
+      from: isoDate(new Date(today.getFullYear(), q * 3, 1)),
+      to: isoDate(today),
     }
   }, [])
 
@@ -261,33 +257,51 @@ export function HistoryPage({ clientId, coachView: _coachView }: Props) {
     )
   }
 
-  const hasAnyGoals =
-    budget != null &&
-    (budget.annual_revenue != null ||
-      budget.cogs_target_pct != null ||
-      Object.keys(budget.goals ?? {}).length > 0)
-
   return (
     <section className="space-y-4">
       {/* Sticky header bar */}
       <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 sm:-mt-8 flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-lg font-bold text-ink">Weekly History</h1>
-        {hasAnyGoals && (
-          <div className="flex gap-4 items-center text-xs text-black flex-wrap">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm bg-good" />
-              On track / Above goal
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm bg-accent" />
-              Within 10% of goal
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm bg-bad" />
-              More than 10% off goal
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-4 flex-wrap">
+          <button
+            type="button"
+            onClick={async () => {
+              console.log('[History] Export Excel click', {
+                entries: entries.length,
+              })
+              if (entries.length === 0) return
+              try {
+                await exportXlsx({
+                  rows,
+                  entries,
+                  client,
+                  capacityGroups: client.capacity_groups ?? [],
+                  monthlyGoalForEntry,
+                  monthShares,
+                  kpiGoals: budget?.goals ?? {},
+                  capacityGroupGoals: budget?.capacity_group_goals ?? {},
+                  enabledIds,
+                  annualRevenue:
+                    budget?.annual_revenue != null
+                      ? Number(budget.annual_revenue)
+                      : undefined,
+                  fromDate,
+                  toDate,
+                })
+                console.log('[History] Export Excel completed')
+              } catch (err) {
+                console.error('[History] Excel export failed:', err)
+                alert(
+                  `Excel export failed: ${err instanceof Error ? err.message : String(err)}`
+                )
+              }
+            }}
+            disabled={entries.length === 0}
+            className="bg-accent text-black font-bold px-3 py-2 sm:py-1.5 rounded text-xs hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            Export Excel ↓
+          </button>
+        </div>
       </div>
 
       {/* Date range card */}
@@ -348,6 +362,158 @@ function Card({
   )
 }
 
+/** A single cell shape that `write-excel-file` accepts. `null` = blank
+ *  cell (per the library's convention). */
+type ExcelCell =
+  | null
+  | {
+      value: string | number
+      type?: typeof Number | typeof String
+      format?: string
+      fontWeight?: 'bold'
+      align?: 'left' | 'right' | 'center'
+      backgroundColor?: string
+      color?: string
+    }
+
+/** Excel hex colors for the three goal bands. Match the on-screen
+ *  Tailwind variables (--color-good / --color-accent / --color-bad)
+ *  exactly so the export looks the same as the page. Text is black on
+ *  all three bands for consistency. */
+const BAND_COLORS = {
+  green: { bg: '#7ED957', text: '#000000' },
+  yellow: { bg: '#FFF200', text: '#000000' },
+  red: { bg: '#FF3131', text: '#000000' },
+} as const
+
+/** Build + download a real .xlsx workbook of the current History view. */
+async function exportXlsx({
+  rows,
+  entries,
+  client,
+  capacityGroups,
+  monthlyGoalForEntry,
+  monthShares,
+  kpiGoals,
+  capacityGroupGoals,
+  enabledIds,
+  annualRevenue,
+  fromDate,
+  toDate,
+}: {
+  rows: Row[]
+  entries: WeeklyEntry[]
+  client: Client
+  capacityGroups: CapacityGroup[]
+  monthlyGoalForEntry: (entry: WeeklyEntry) => MonthlyGoal | null
+  monthShares: number[]
+  kpiGoals: Record<string, number>
+  capacityGroupGoals: Record<string, CapacityGroupGoal>
+  enabledIds: Set<string>
+  annualRevenue: number | undefined
+  fromDate: string
+  toDate: string
+}): Promise<void> {
+  const headerRow: ExcelCell[] = [
+    { value: 'KPI', fontWeight: 'bold' },
+    ...entries.map(
+      (e): ExcelCell => ({
+        value: formatWeekShort(dateFromIso(e.week_start_date)),
+        fontWeight: 'bold',
+        align: 'right',
+      })
+    ),
+  ]
+
+  const dataRows: ExcelCell[][] = rows.map((row) => {
+    const cells: ExcelCell[] = [{ value: row.label, fontWeight: 'bold' }]
+    for (const entry of entries) {
+      const { value, goal, format, direction, range } = computeCell({
+        row,
+        entry,
+        client,
+        capacityGroups,
+        monthlyGoal: monthlyGoalForEntry(entry),
+        monthShares,
+        kpiGoals,
+        capacityGroupGoals,
+        enabledIds,
+        annualRevenue,
+      })
+      const band = computeBand({ value, goal, direction, range })
+      cells.push(xlsxCell(value, format, band))
+    }
+    return cells
+  })
+
+  const sheet: ExcelCell[][] = [headerRow, ...dataRows]
+  const filename = `${client.company_name} - History - ${fromDate} to ${toDate}.xlsx`
+  // `write-excel-file` (browser build) returns a builder object with
+  // `toFile(fileName)` and `toBlob()` methods — NOT a promise directly.
+  // Calling `.toFile(name)` builds the workbook and triggers a
+  // browser download.
+  const result = (writeXlsxFile as unknown as (
+    rows: ExcelCell[][],
+    opts: {
+      stickyRowsCount?: number
+      stickyColumnsCount?: number
+    }
+  ) => {
+    toFile: (fileName: string) => Promise<void>
+    toBlob: () => Promise<Blob>
+  })(sheet, {
+    stickyRowsCount: 1,
+    stickyColumnsCount: 1,
+  })
+  await result.toFile(filename)
+}
+
+/** Map a value + KPI format (+ optional goal band) to an Excel cell.
+ *  Blank cell (null) when value is null. When a band is provided the
+ *  cell is tinted with the matching green / yellow / red background
+ *  and contrasting text color, so the exported workbook looks like the
+ *  on-screen table. */
+function xlsxCell(
+  value: number | null,
+  format: '$' | '%' | '#',
+  band: 'green' | 'yellow' | 'red' | null
+): ExcelCell {
+  if (value == null || !Number.isFinite(value)) {
+    return null
+  }
+  const colors = band ? BAND_COLORS[band] : null
+  const base: ExcelCell = (() => {
+    if (format === '$') {
+      return {
+        type: Number,
+        value,
+        format: '"$"#,##0',
+        align: 'right',
+      }
+    }
+    if (format === '%') {
+      // KPI %-format values are stored as 0–100 numbers; Excel's % format
+      // multiplies by 100 so we divide first.
+      return {
+        type: Number,
+        value: value / 100,
+        format: '0.0%',
+        align: 'right',
+      }
+    }
+    return {
+      type: Number,
+      value,
+      format: '#,##0.##',
+      align: 'right',
+    }
+  })()
+  if (colors && base) {
+    return { ...base, backgroundColor: colors.bg, color: colors.text }
+  }
+  return base
+}
+
 function DateField({
   label,
   value,
@@ -366,7 +532,9 @@ function DateField({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-2 py-1.5 focus:outline-none focus:border-accent"
+        // text-base (16px) on the input prevents iOS Safari from
+        // auto-zooming into the form when the user taps the picker.
+        className="bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-base sm:text-sm px-2 py-1.5 focus:outline-none focus:border-accent"
       />
     </div>
   )
@@ -396,17 +564,29 @@ function HistoryTable({
   const groups = client.capacity_groups ?? []
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Table wrapper IS the scroll container — both directions. Sticky
+          headers anchor to the wrapper's edges, so the date header
+          stays glued to its top during vertical scroll, the KPI column
+          to its left during horizontal scroll, and the corner cell to
+          both. max-height caps the wrapper so the page-level layout
+          stays balanced; the table scrolls inside it. */}
+      {/* svh (small viewport height) accounts for mobile browser UI
+          chrome (address bar, etc.) so the table area doesn't overflow
+          when chrome is showing. Falls back to vh on browsers that
+          don't support svh. */}
+      <div className="overflow-auto max-h-[calc(100svh-280px)]">
         <table className="border-collapse bg-white text-xs">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white text-black uppercase tracking-wider text-[10px] font-bold border-r border-b-2 border-gray-300 px-2 py-2 text-left">
+              {/* Top-left corner — sticky in BOTH directions, highest z
+                  so it overlays the date-header row and KPI column. */}
+              <th className="sticky left-0 top-0 z-30 bg-[#f2f2f2] text-black uppercase tracking-wider text-[10px] font-bold border-r border-b-2 border-gray-400 px-2 py-2 text-left">
                 KPI
               </th>
               {entries.map((entry) => (
                 <th
                   key={entry.id}
-                  className="bg-ink text-accent uppercase tracking-wider text-[10px] font-bold border-r border-line px-2 py-2 text-right whitespace-nowrap"
+                  className="sticky top-0 z-20 bg-[#f2f2f2] text-black uppercase tracking-wider text-[10px] font-bold border-r border-b-2 border-gray-400 px-2 py-2 text-right whitespace-nowrap"
                 >
                   {formatWeekShort(dateFromIso(entry.week_start_date))}
                 </th>
@@ -416,7 +596,7 @@ function HistoryTable({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-gray-300">
-                <td className="sticky left-0 z-10 bg-white text-black font-bold border-r border-gray-300 px-2 py-1.5 text-left whitespace-nowrap">
+                <td className="sticky left-0 z-10 bg-[#f2f2f2] text-black font-bold border-r border-gray-400 px-2 py-1.5 text-left whitespace-nowrap">
                   {row.label}
                 </td>
                 {entries.map((entry) => (
@@ -485,9 +665,9 @@ function Cell({
   const band = computeBand({ value, goal, direction, range })
   const cellClass = (() => {
     if (band === null) return 'bg-white text-black'
-    if (band === 'green') return 'bg-good text-white'
+    if (band === 'green') return 'bg-good text-black'
     if (band === 'yellow') return 'bg-accent text-black'
-    return 'bg-bad text-white'
+    return 'bg-bad text-black'
   })()
 
   const display =
