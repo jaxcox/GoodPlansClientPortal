@@ -1,6 +1,6 @@
 import { InfoIcon } from './InfoIcon'
 import type { KpiFormat, KpiDirection } from '../lib/kpis'
-import { ProgressRing, computeRingStatus } from './ProgressRing'
+import { ProgressRing, computeRingStatus, computeBand } from './ProgressRing'
 
 type Props = {
   label: string
@@ -50,7 +50,7 @@ export function formatValue(n: number | null, format: KpiFormat): string {
   })
 }
 
-function formatDelta(n: number, format: KpiFormat): string {
+export function formatDelta(n: number, format: KpiFormat): string {
   const sign = n > 0 ? '▲' : '▼'
   const abs = Math.abs(n)
   return `${sign} ${formatValue(abs, format)}`
@@ -163,55 +163,62 @@ export function KpiTile({
     )
   }
 
-  return (
-    <div
-      className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative"
-    >
-      {/* "Achieved!" badge — top-right, only for non-range on-track KPIs */}
-      {!range && onTrack === true && (
-        <div className="absolute top-1 right-2 text-[10px] font-bold text-good">
-          Achieved!
-        </div>
-      )}
+  // Suppress unused-state warnings — derived values kept for future
+  // re-use even though the current number-view layout doesn't render
+  // an explicit goal-pct or "Achieved!" badge.
+  void footerColor
+  void pct
+  void hideGoalPct
 
+  // Value-text color from the same three-tone band the rings + primary
+  // tiles use. Defaults to white when there's no goal / value yet.
+  const band = computeBand({
+    value,
+    goal: effectiveGoal,
+    direction,
+    range,
+  })
+  const valueColor =
+    band === 'green'
+      ? 'text-good'
+      : band === 'yellow'
+        ? 'text-accent'
+        : band === 'red'
+          ? 'text-bad'
+          : 'text-white'
+
+  // Number view: title in the top-left corner, value (band-colored)
+  // + optional delta arrow + goal caption stacked centered below.
+  // Matches the visual rhythm of the primary FinancialsRowTile so the
+  // whole dashboard reads consistently.
+  return (
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
       <div className="flex items-center gap-0.5">
         <div className="text-xs font-semibold uppercase tracking-wider text-white">
           {label}
         </div>
         {desc && <InfoIcon text={desc} />}
       </div>
-
-      <div className="text-lg font-bold text-white mt-2">
-        {formatValue(value, format)}
-      </div>
-
-      {delta != null && delta !== 0 && (
-        <div className={`text-xs mt-1 ${deltaColor}`}>
-          {formatDelta(delta, format)}
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className={`text-lg font-bold leading-none ${valueColor}`}>
+          {formatValue(value, format)}
         </div>
-      )}
-
-      <div className="flex-1" />
-
-      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
-        {effectiveGoal == null ? (
-          <span className="text-white">No goal set</span>
-        ) : range ? (
-          <span>
-            {formatValue(value, format)} vs {formatValue(effectiveGoal, format)}{' '}
-            (±10%)
-          </span>
-        ) : format === '%' ? (
-          // % KPIs: just show the goal. The actual value is already the
-          // big number above, so a "delta vs goal" line reads as if the
-          // delta is the actual (e.g. "0% vs 95% goal" looks like actual=0).
-          <span>Goal: {effectiveGoal.toFixed(1)}%</span>
-        ) : (
-          <div className="flex justify-between gap-2">
-            <span>Goal: {formatValue(effectiveGoal, format)}</span>
-            {!hideGoalPct && pct != null && <span>{Math.round(pct)}%</span>}
+        {delta != null && delta !== 0 && (
+          <div className={`text-xs mt-1 ${deltaColor}`}>
+            {formatDelta(delta, format)}
           </div>
         )}
+        <div className="text-sm text-white mt-1">
+          {effectiveGoal == null ? (
+            <span>No goal set</span>
+          ) : range ? (
+            <span>Goal: {formatValue(effectiveGoal, format)} (±10%)</span>
+          ) : format === '%' ? (
+            <span>Goal: {effectiveGoal.toFixed(1)}%</span>
+          ) : (
+            <span>Goal: {formatValue(effectiveGoal, format)}</span>
+          )}
+        </div>
       </div>
     </div>
   )

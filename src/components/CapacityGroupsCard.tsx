@@ -29,7 +29,7 @@ export function CapacityGroupsCard({
   // Read-only client view ----------------------------------------------------
   if (!coachView) {
     return (
-      <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization">
+      <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization" fit>
         {groups.length === 0 ? (
           <div className="text-white text-xs">
             No capacity tracking set up yet.
@@ -85,8 +85,8 @@ export function CapacityGroupsCard({
   }
 
   return (
-    <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization">
-      <div className="flex justify-end">
+    <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization" fit>
+      <div className="flex justify-start">
         <button
           type="button"
           onClick={addGroup}
@@ -101,7 +101,11 @@ export function CapacityGroupsCard({
           No capacity groups yet. Click <strong>+ Add Group</strong> to start.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <div
+          className={`grid gap-4 items-start ${
+            groups.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+          }`}
+        >
           {groups.map((g) => (
             <GroupPanel
               key={g.id}

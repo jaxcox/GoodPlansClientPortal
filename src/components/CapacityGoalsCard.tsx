@@ -1,6 +1,7 @@
 import type { CapacityGroup, CapacityGroupGoal } from '../lib/types'
 import { methodMeta } from '../lib/capacity'
 import { NumberField } from './NumberField'
+import { Card } from './Card'
 
 type Props = {
   /** Capacity groups defined on the client record. Read-only here — to
@@ -34,15 +35,15 @@ export function CapacityGoalsCard({ groups, goals, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <Card title="Utilization">
       {groups.length === 0 ? (
-        <div className="bg-ink border border-line rounded-lg p-5 text-white text-xs">
+        <div className="text-white text-xs">
           No capacity groups yet. Add them in{' '}
           <strong>Settings → Utilization</strong>, then come back here to
           set their goals.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
           {groups.map((g) => {
             const meta = methodMeta(g.method)
             const goal = goals[g.id]
@@ -52,7 +53,7 @@ export function CapacityGoalsCard({ groups, goals, onChange }: Props) {
             return (
               <div
                 key={g.id}
-                className="bg-ink border border-line rounded-lg p-4 space-y-3"
+                className="bg-surface-1 border border-line rounded-lg p-4 space-y-3"
               >
                 <div className="text-white text-sm font-bold">
                   {g.name || '(unnamed group)'}
@@ -98,7 +99,7 @@ export function CapacityGoalsCard({ groups, goals, onChange }: Props) {
           })}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 

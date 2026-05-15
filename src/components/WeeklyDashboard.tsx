@@ -26,7 +26,11 @@ import {
   mostRecentCompletedWeekStart,
   shiftWeek,
 } from '../lib/week'
-import { KpiTile, formatValue as formatKpiValue } from './KpiTile'
+import {
+  KpiTile,
+  formatValue as formatKpiValue,
+  formatDelta as formatKpiDelta,
+} from './KpiTile'
 import { computeRingStatus } from './ProgressRing'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
@@ -211,7 +215,7 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
   if (!client) return null
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 font-acumin">
       <Header
         clientName={client.company_name}
         mode={mode}
@@ -313,7 +317,7 @@ function Header({
         <ModePills mode={mode} onMode={onMode} />
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap text-xs">
+      <div className="flex items-center gap-2 flex-wrap text-base">
         {!displayedEntry ? (
           <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
             No entries yet
@@ -403,7 +407,13 @@ function KpiGrid({
   annualRevenue: number | undefined
   capacityGroupGoals: Record<string, CapacityGroupGoal>
 }) {
-  const visible = visibleTileKpis(client)
+  // Expenses is tracked weekly (for entry + cumulative rollups) but only
+  // surfaced on MTD/QTD/YTD dashboards — a single week's expense number
+  // isn't actionable on its own. Hide it from the weekly tile grid.
+  const WEEKLY_HIDDEN_IDS = new Set<string>(['expenses'])
+  const visible = visibleTileKpis(client).filter(
+    (k) => !WEEKLY_HIDDEN_IDS.has(k.id)
+  )
   const customKpis = (client.custom_kpis ?? []).filter(
     (c) => c.active !== false
   )
@@ -483,28 +493,21 @@ function CategorySection({
     'pipelineDeals',
     'avgPipelineDeal',
   ])
-  // Financials uses a custom two-row layout: Income / Gross Profit $ /
-  // Gross Profit Margin centered across the top, everything else
-  // (Expenses, AR, Net Profit $/%, custom KPIs) in a centered row below.
-  const financialsTopIds = new Set<string>([
+  // "Primary" KPIs — the true output measures of each department, as
+  // opposed to the input drivers. Render in the tall 1/4-width tile at
+  // the top of their category.
+  const primaryKpiIds = new Set<string>([
     'revenue',
     'grossProfit',
-    'grossMargin',
+    'newClients',
+    'estimatesWonDollars',
+    'contractsWonDollars',
+    'jobsCompleted',
   ])
-  const financialsTop =
-    category === 'Financials'
-      ? standardKpis.filter((k) => financialsTopIds.has(k.id))
-      : []
-  const financialsBottom =
-    category === 'Financials'
-      ? standardKpis.filter((k) => !financialsTopIds.has(k.id))
-      : []
   const mainSales =
     category === 'Sales'
       ? standardKpis.filter((k) => !pipelineIds.has(k.id))
-      : category === 'Financials'
-        ? []
-        : standardKpis
+      : standardKpis
   const pipelineSales =
     category === 'Sales'
       ? standardKpis.filter((k) => pipelineIds.has(k.id))
@@ -527,101 +530,54 @@ function CategorySection({
 
   return (
     <div>
-      <div className="text-xs font-bold text-ink uppercase tracking-wider pb-1 mb-3 border-b-2 border-accent">
+      <div className="text-base font-bold text-ink uppercase tracking-wider pb-1 mb-3 border-b-2 border-accent">
         {category}
       </div>
 
-      {category === 'Financials' ? (
-        <div className="space-y-4">
-          {/* Top row: Income (1/2 page) + GP$ (1/4) + GP% (1/4). Income
-              and GP$ get a pacebar at the bottom; GP% is compact, no
-              pacebar (it's already a ratio). */}
-          {financialsTop.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch">
-              {financialsTop.find((k) => k.id === 'revenue') && (
-                <div className="md:col-span-2">
-                  <FinancialsRowTile
-                    kpi={financialsTop.find((k) => k.id === 'revenue')!}
+      {(() => {
+        const primaries = mainSales.filter((k) => primaryKpiIds.has(k.id))
+        const regulars = mainSales.filter((k) => !primaryKpiIds.has(k.id))
+        return (
+          <>
+            {primaries.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch mb-4">
+                {primaries.map((kpi) => (
+                  <div key={kpi.id} className="md:col-span-1">
+                    <FinancialsRowTile
+                      kpi={kpi}
+                      entry={entry}
+                      priorEntry={priorEntry}
+                      monthlyGoal={monthlyGoal}
+                      monthShares={monthShares}
+                      kpiGoals={kpiGoals}
+                      enabledIds={enabledIds}
+                      annualRevenue={annualRevenue}
+                      client={client}
+                      showPacebar
+                      compact
+                      tall
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {(regulars.length > 0 || customKpis.length > 0) && (
+              <TileGrid>
+                {regulars.map(renderStandardTile)}
+                {customKpis.map((c) => (
+                  <CustomTile
+                    key={c.id}
+                    custom={c}
                     entry={entry}
                     priorEntry={priorEntry}
-                    monthlyGoal={monthlyGoal}
-                    monthShares={monthShares}
-                    kpiGoals={kpiGoals}
-                    enabledIds={enabledIds}
-                    annualRevenue={annualRevenue}
-                    client={client}
-                    showPacebar
+                    goal={kpiGoals[c.id]}
                   />
-                </div>
-              )}
-              {financialsTop.find((k) => k.id === 'grossProfit') && (
-                <div className="md:col-span-1">
-                  <FinancialsRowTile
-                    kpi={financialsTop.find((k) => k.id === 'grossProfit')!}
-                    entry={entry}
-                    priorEntry={priorEntry}
-                    monthlyGoal={monthlyGoal}
-                    monthShares={monthShares}
-                    kpiGoals={kpiGoals}
-                    enabledIds={enabledIds}
-                    annualRevenue={annualRevenue}
-                    client={client}
-                    showPacebar
-                  />
-                </div>
-              )}
-              {financialsTop.find((k) => k.id === 'grossMargin') && (
-                <div className="md:col-span-1">
-                  <FinancialsRowTile
-                    kpi={financialsTop.find((k) => k.id === 'grossMargin')!}
-                    entry={entry}
-                    priorEntry={priorEntry}
-                    monthlyGoal={monthlyGoal}
-                    monthShares={monthShares}
-                    kpiGoals={kpiGoals}
-                    enabledIds={enabledIds}
-                    annualRevenue={annualRevenue}
-                    client={client}
-                    showPacebar={false}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          {/* Bottom row: Expenses, AR (and any future NP / custom KPIs)
-              render as the standard dark number tile, same as Sales /
-              Team / etc. */}
-          {(financialsBottom.length > 0 || customKpis.length > 0) && (
-            <TileGrid>
-              {financialsBottom.map(renderStandardTile)}
-              {customKpis.map((c) => (
-                <CustomTile
-                  key={c.id}
-                  custom={c}
-                  entry={entry}
-                  priorEntry={priorEntry}
-                  goal={kpiGoals[c.id]}
-                />
-              ))}
-            </TileGrid>
-          )}
-        </div>
-      ) : (
-        (mainSales.length > 0 || customKpis.length > 0) && (
-          <TileGrid>
-            {mainSales.map(renderStandardTile)}
-            {customKpis.map((c) => (
-              <CustomTile
-                key={c.id}
-                custom={c}
-                entry={entry}
-                priorEntry={priorEntry}
-                goal={kpiGoals[c.id]}
-              />
-            ))}
-          </TileGrid>
+                ))}
+              </TileGrid>
+            )}
+          </>
         )
-      )}
+      })()}
 
       {/* Each capacity group becomes its own subsection within the Team
           category: a sub-heading with the group's name, then a row of
@@ -704,15 +660,15 @@ function TileGrid({ children }: { children: React.ReactNode }) {
 // Individual tile renderers (standard / custom / capacity)
 // =============================================================================
 
-/** Title-left / value-right financials tile. Optional pacebar at the
- *  bottom that fills based on actual / goal and colors with the same
- *  three-tone threshold the rings use. Result text shifts to green at
- *  goal+ / red when more than 10% behind / black in the within-10% zone
- *  (no yellow text per the font color rule). */
+/** Financials tile with optional pacebar. Wide (Income, col-span-2)
+ *  uses a title-left / value-right horizontal layout. Compact tiles
+ *  (col-span-1 like Expenses / AR) stack vertically — title top-left,
+ *  value/goal centered below — so long labels like "Accounts
+ *  Receivable" with wide dollar values don't crowd the right edge. */
 function FinancialsRowTile({
   kpi,
   entry,
-  priorEntry: _priorEntry,
+  priorEntry,
   monthlyGoal,
   monthShares,
   kpiGoals,
@@ -720,6 +676,9 @@ function FinancialsRowTile({
   annualRevenue,
   client,
   showPacebar,
+  compact = false,
+  lightBgHex,
+  tall = false,
 }: {
   kpi: KpiDef
   entry: WeeklyEntry
@@ -731,9 +690,23 @@ function FinancialsRowTile({
   annualRevenue: number | undefined
   client: Client
   showPacebar: boolean
+  /** When true, use the vertical (stacked) layout. Pass on narrow
+   *  col-span-1 tiles. */
+  compact?: boolean
+  /** Optional light-background hex (e.g. "#f2f2f2"). When set, the tile
+   *  paints the bg with this color and switches label / goal text to
+   *  black. Used to experiment with a light Income tile while leaving
+   *  the rest of the dashboard untouched. */
+  lightBgHex?: string
+  /** Double-height variant. Min-height bumps from 110px to 220px and
+   *  the value text gets bigger to fill the space. Used for primary
+   *  KPIs that get a 1/4-page-wide but tall tile. */
+  tall?: boolean
 }) {
   const groups = client.capacity_groups ?? []
   const value = actualValue(kpi.id, entry, groups)
+  const prior = priorEntry ? actualValue(kpi.id, priorEntry, groups) : null
+  const delta = value != null && prior != null ? value - prior : null
   const goal = weeklyGoal({
     kpi,
     entry,
@@ -750,10 +723,14 @@ function FinancialsRowTile({
   const ratio =
     value != null && goal != null && goal !== 0 ? value / goal : null
 
+  const isLight = !!lightBgHex
+
   // Result text follows the same three-tone band as the ring: green at
-  // goal or better, yellow in the within-10% band, red beyond.
+  // goal or better, yellow in the within-10% band, red beyond. When
+  // there's no ratio yet, fall back to the body text color so the
+  // value stays legible on whichever background the tile is using.
   const resultColor = (() => {
-    if (ratio == null) return 'text-black'
+    if (ratio == null) return isLight ? 'text-black' : 'text-white'
     if (range) {
       const dev = Math.abs((value ?? 0) - (goal ?? 0)) / (goal ?? 1)
       if (dev <= 0.1) return 'text-good'
@@ -770,39 +747,112 @@ function FinancialsRowTile({
     return 'text-bad'
   })()
 
-  return (
-    <div className="bg-ink rounded-lg p-3 flex flex-col min-h-[110px]">
-      <div className="flex items-start justify-between gap-3 flex-1">
-        <div className="text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap">
-          {kpi.label}
-          {kpi.desc && (
-            <span className="ml-0.5 align-middle inline-block">
-              <InfoIcon text={kpi.desc} />
-            </span>
-          )}
+  // Delta arrow color: directional. Higher-better KPIs moving up is
+  // green; the wrong way is red. Range KPIs (AR) pick "good" as
+  // movement toward goal. Falls back to body text color when there's
+  // no movement.
+  const deltaColor = (() => {
+    if (delta == null || delta === 0) {
+      return isLight ? 'text-black' : 'text-white'
+    }
+    if (range) {
+      if (value == null || goal == null) {
+        return isLight ? 'text-black' : 'text-white'
+      }
+      const before = Math.abs((prior ?? 0) - goal)
+      const after = Math.abs(value - goal)
+      return after < before ? 'text-good' : 'text-bad'
+    }
+    const isGood = direction === 'lo' ? delta < 0 : delta > 0
+    return isGood ? 'text-good' : 'text-bad'
+  })()
+  const tileStyle = isLight ? { backgroundColor: lightBgHex } : undefined
+  const tileBg = isLight ? '' : 'bg-ink'
+  const labelText = isLight ? 'text-black' : 'text-white'
+  const goalText = isLight ? 'text-black' : 'text-white'
+  const pacebarTrack = isLight ? 'bg-[#d9d9d9]' : 'bg-[#3a3a3a]'
+  const minH = tall ? 'min-h-[220px]' : 'min-h-[110px]'
+  const valueText = tall
+    ? 'text-3xl font-semibold leading-none'
+    : 'text-lg font-bold leading-none'
+
+  const pacebar = showPacebar ? (
+    <div
+      className={`mt-3 w-full h-2 rounded-full overflow-hidden ${pacebarTrack}`}
+    >
+      {status.color && (
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.min(ratio ?? 0, 1) * 100}%`,
+            backgroundColor: status.color.stroke,
+          }}
+        />
+      )}
+    </div>
+  ) : null
+
+  if (compact) {
+    return (
+      <div
+        className={`rounded-lg p-3 flex flex-col ${minH} ${tileBg}`}
+        style={tileStyle}
+      >
+        <div className="flex items-center gap-0.5">
+          <div
+            className={`text-xs font-semibold uppercase tracking-wider ${labelText}`}
+          >
+            {kpi.label}
+          </div>
+          {kpi.desc && <InfoIcon text={kpi.desc} />}
         </div>
-        <div className="text-right self-center">
-          <div className={`text-lg font-bold leading-none ${resultColor}`}>
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <div className={`${valueText} ${resultColor}`}>
             {formatKpiValue(value, kpi.format)}
           </div>
-          <div className="text-xs text-white mt-1">
+          {delta != null && delta !== 0 && (
+            <div className={`text-xs mt-1 ${deltaColor}`}>
+              {formatKpiDelta(delta, kpi.format)}
+            </div>
+          )}
+          <div className={`text-base mt-1 ${goalText}`}>
+            Goal: {formatKpiValue(goal, kpi.format)}
+          </div>
+        </div>
+        {pacebar}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`rounded-lg p-3 flex flex-col ${minH} ${tileBg}`}
+      style={tileStyle}
+    >
+      <div className="flex items-start justify-between gap-3 flex-1">
+        <div className="flex items-center gap-0.5">
+          <div
+            className={`text-xs font-semibold uppercase tracking-wider whitespace-nowrap ${labelText}`}
+          >
+            {kpi.label}
+          </div>
+          {kpi.desc && <InfoIcon text={kpi.desc} />}
+        </div>
+        <div className="text-right self-center">
+          <div className={`${valueText} ${resultColor}`}>
+            {formatKpiValue(value, kpi.format)}
+          </div>
+          {delta != null && delta !== 0 && (
+            <div className={`text-xs mt-1 ${deltaColor}`}>
+              {formatKpiDelta(delta, kpi.format)}
+            </div>
+          )}
+          <div className={`text-base mt-1 ${goalText}`}>
             Goal: {formatKpiValue(goal, kpi.format)}
           </div>
         </div>
       </div>
-      {showPacebar && (
-        <div className="mt-3 w-full h-2 rounded-full bg-[#3a3a3a] overflow-hidden">
-          {status.color && (
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(ratio ?? 0, 1) * 100}%`,
-                backgroundColor: status.color.stroke,
-              }}
-            />
-          )}
-        </div>
-      )}
+      {pacebar}
     </div>
   )
 }

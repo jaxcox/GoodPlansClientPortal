@@ -10,6 +10,10 @@ type Props = {
   id?: string
   /** Optional tooltip rendered as an InfoIcon next to the title. */
   info?: string
+  /** When true, the card sizes to its content rather than filling the
+   *  column. Used on Utilization + Custom KPIs so the card stays narrow
+   *  with few entries and grows as groups / KPIs are added. */
+  fit?: boolean
 }
 
 // Module-level store: collapsed state keyed by card id (or title). Persists
@@ -37,7 +41,7 @@ export function useCardCollapsed(key: string): {
 // Shared dark "ink" card used across Settings, Budget & Goals, and Weekly
 // Entry. Title separated from children by mb-4 when expanded; collapsed
 // cards drop the gap so the header sits tight against the bottom padding.
-export function Card({ title, children, id, info }: Props) {
+export function Card({ title, children, id, info, fit = false }: Props) {
   const key = id ?? title
   const [collapsed, setCollapsed] = useState<boolean>(
     () => collapsedById.get(key) ?? false
@@ -48,11 +52,13 @@ export function Card({ title, children, id, info }: Props) {
     collapsedById.set(key, next)
   }
   return (
-    <div className="bg-ink border border-line rounded-lg p-5">
+    <div
+      className={`bg-ink border border-line rounded-lg p-5 ${fit ? 'w-fit max-w-full' : ''}`}
+    >
       <div
         className={`flex items-center justify-between ${collapsed ? '' : 'mb-4'}`}
       >
-        <h2 className="text-white text-sm font-bold flex items-center gap-1.5">
+        <h2 className="text-white text-base font-bold flex items-center gap-1.5">
           <span>{title}</span>
           {info && <InfoIcon text={info} />}
         </h2>

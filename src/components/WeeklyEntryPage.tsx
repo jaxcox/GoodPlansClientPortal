@@ -75,11 +75,12 @@ const DERIVABLE_WEEKLY_IDS = new Set<string>([
   'netProfitMargin',
   'conversionRate',
   'avgEstimateValue',
+  'avgEstimateWon',
+  'avgContractWon',
   'avgPipelineDeal',
   'closeRate',
   'avgTransactionValue',
   'avgRepairOrder',
-  'contractValuePerNewClient',
 ])
 
 function safeDivide(
@@ -144,6 +145,10 @@ function deriveWeeklyValue(
     }
     case 'avgEstimateValue':
       return safeDivide(v('proposalsDollars'), v('estimatesWritten'))
+    case 'avgEstimateWon':
+      return safeDivide(v('estimatesWonDollars'), v('estimatesWonCount'))
+    case 'avgContractWon':
+      return safeDivide(v('contractsWonDollars'), v('contractsWonCount'))
     case 'avgPipelineDeal':
       return safeDivide(v('pipelineValue'), v('pipelineDeals'))
     case 'closeRate': {
@@ -157,11 +162,6 @@ function deriveWeeklyValue(
       return safeDivide(v('revenue'), v('transactions'))
     case 'avgRepairOrder':
       return safeDivide(v('revenue'), v('jobsCompleted'))
-    case 'contractValuePerNewClient':
-      return safeDivide(
-        wonDollarsActual(kpiValues, visible),
-        v('newClients')
-      )
     default:
       return null
   }
@@ -332,7 +332,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
   }, [client])
 
   // Active standard-KPI ids — drives the contracts/estimates Won mutex
-  // lookup in deriveWeeklyValue (closeRate / contractValuePerNewClient).
+  // lookup in deriveWeeklyValue (closeRate).
   const visibleStandardIds = useMemo(() => {
     const s = new Set<string>()
     if (!client) return s
@@ -702,7 +702,7 @@ function WeekPicker({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs">
+    <div className="flex flex-wrap items-center gap-3 text-base">
       {/* Calendar (date picker, capped at last completed Saturday — no
           current-or-future weeks). */}
       <label className="flex items-center gap-2">
@@ -712,7 +712,7 @@ function WeekPicker({
           value={selectedIso}
           max={maxIso}
           onChange={(e) => onPickDate(e.target.value)}
-          className="bg-white border border-gray-300 rounded text-black text-xs px-2 py-1 focus:outline-none focus:border-gray-400"
+          className="bg-white border border-gray-300 rounded text-black text-base px-2 py-1 focus:outline-none focus:border-gray-400"
         />
       </label>
 

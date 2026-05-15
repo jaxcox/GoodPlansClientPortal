@@ -295,7 +295,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 
   const onSave = async () => {
     if (!client) return
-    if (!isDirty) return
+    if (!isDirty) {
+      // No changes — flash the green confirmation anyway so the click
+      // feels acknowledged. Matches SettingsPage / WeeklyEntryPage.
+      setSavedAt(Date.now())
+      return
+    }
     setSaveError(null)
     if (
       seasonType === 'seasonal' &&
@@ -435,7 +440,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
           Right → KPI Goals (top) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <div className="space-y-4">
-          <Card title="Annual Targets">
+          <Card title="Financials">
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Labeled label="Income Target">
@@ -498,6 +503,56 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
                   />
                 </Labeled>
               </div>
+              {Number(client?.kpis?.accountsReceivable) === 1 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Labeled label="Accounts Receivable">
+                    <NumberField tone="light"
+                      value={kpiGoals.accountsReceivable}
+                      onChange={(n) => {
+                        const next = { ...kpiGoals }
+                        if (n === undefined) delete next.accountsReceivable
+                        else next.accountsReceivable = n
+                        setKpiGoals(next)
+                      }}
+                      format="dollars"
+                      max={null}
+                      ariaLabel="Accounts Receivable goal"
+                    />
+                  </Labeled>
+                </div>
+              )}
+              {(client?.custom_kpis ?? [])
+                .filter(
+                  (c) => c.active !== false && c.category === 'Financials'
+                )
+                .map((c) => (
+                  <div
+                    key={c.id}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                  >
+                    <Labeled label={c.name}>
+                      <NumberField
+                        tone="light"
+                        value={kpiGoals[c.id]}
+                        onChange={(n) => {
+                          const next = { ...kpiGoals }
+                          if (n === undefined) delete next[c.id]
+                          else next[c.id] = n
+                          setKpiGoals(next)
+                        }}
+                        format={
+                          c.format === '$'
+                            ? 'dollars'
+                            : c.format === '%'
+                              ? 'percent'
+                              : 'count'
+                        }
+                        max={c.format === '%' ? 100 : null}
+                        ariaLabel={`${c.name} goal`}
+                      />
+                    </Labeled>
+                  </div>
+                ))}
             </div>
             <RoundingNote />
           </Card>
@@ -559,14 +614,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         </div>
 
         <div className="space-y-4">
-          <Card title="KPI Goals">
-            <KpiGoalsCard
-              client={client}
-              goals={kpiGoals}
-              annualRevenue={annualRevenue}
-              onChange={setKpiGoals}
-            />
-          </Card>
+          <KpiGoalsCard
+            client={client}
+            goals={kpiGoals}
+            annualRevenue={annualRevenue}
+            onChange={setKpiGoals}
+          />
 
           {/* Utilization Goals — compact per-group goal inputs, half the
               right column (≈ 1/4 of the page). The capacity-group
@@ -574,14 +627,56 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
               Settings → Utilization. Gated on the master toggle so it's
               hidden when capacity tracking is off. */}
           {Number(client?.kpis?.capacityUtilization) === 1 && (
-            <div className="lg:w-1/2">
-              <CapacityGoalsCard
-                groups={client?.capacity_groups ?? []}
-                goals={capacityGroupGoals}
-                onChange={setCapacityGroupGoals}
-              />
-            </div>
+            <CapacityGoalsCard
+              groups={client?.capacity_groups ?? []}
+              goals={capacityGroupGoals}
+              onChange={setCapacityGroupGoals}
+            />
           )}
+
+          {/* Custom KPIs — all active custom KPIs except Financials (which
+              live on the renamed Financials card in the left column).
+              Always the last item in the right column. */}
+          {(() => {
+            const customs = (client?.custom_kpis ?? []).filter(
+              (c) => c.active !== false && c.category !== 'Financials'
+            )
+            if (customs.length === 0) return null
+            return (
+              <Card title="Custom KPIs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                  {customs.map((c) => (
+                    <div
+                      key={c.id}
+                      className="flex flex-col h-full justify-end"
+                    >
+                      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+                        {c.name}
+                      </div>
+                      <NumberField
+                        value={kpiGoals[c.id]}
+                        onChange={(n) => {
+                          const next = { ...kpiGoals }
+                          if (n === undefined) delete next[c.id]
+                          else next[c.id] = n
+                          setKpiGoals(next)
+                        }}
+                        format={
+                          c.format === '$'
+                            ? 'dollars'
+                            : c.format === '%'
+                              ? 'percent'
+                              : 'count'
+                        }
+                        max={c.format === '%' ? 100 : null}
+                        ariaLabel={`${c.name} goal`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )
+          })()}
         </div>
       </div>
         </>
@@ -993,7 +1088,7 @@ function BudgetTabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 text-xs font-bold ${
+      className={`px-4 py-2 text-base font-bold ${
         active
           ? 'text-black border-b-2 border-accent -mb-px'
           : 'text-black/60 hover:text-black'

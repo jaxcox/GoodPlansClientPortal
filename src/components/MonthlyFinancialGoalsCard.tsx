@@ -20,6 +20,9 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
   }
 
   const anyAdjusted = view.months.some((m) => m.isAdjusted)
+  // Adjustments fire symmetrically: a negative gpGap means YTD is behind
+  // plan (raise future targets); positive means ahead (lower them).
+  const aheadOfPlan = view.gpGap > 0
 
   return (
     <div className="space-y-3">
@@ -41,8 +44,17 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
       </div>
       {anyAdjusted && (
         <div className="text-white text-xs italic">
-          Future-month targets above the baseline are <strong>adjusted</strong>{' '}
-          to close the YTD GP gap.
+          {aheadOfPlan ? (
+            <>
+              YTD is ahead of plan — future-month targets are lowered so the
+              year still lands on the annual Gross Profit goal.
+            </>
+          ) : (
+            <>
+              YTD is behind plan — future-month targets are raised so the year
+              still lands on the annual Gross Profit goal.
+            </>
+          )}
         </div>
       )}
       <div className="text-white text-xs italic">

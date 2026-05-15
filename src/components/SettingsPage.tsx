@@ -271,13 +271,16 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       contact_name: contactName.trim() || null,
       phone: phone.trim() || null,
       weekly_reminder_enabled: weeklyReminder,
+      // Clients can edit their own Utilization groups now, so include
+      // capacity_groups on both code paths — otherwise their edits get
+      // silently dropped.
+      capacity_groups: capacityGroups,
     }
     if (canEditAll) {
       updates.shared_folder_link = sharedFolderLink.trim() || null
       updates.industry_id = industryId || null
       updates.kpis = kpis
       updates.tracks_ytd_actuals = tracksYtd
-      updates.capacity_groups = capacityGroups
       updates.custom_kpis = customKpis.map((k) => ({
         ...k,
         name: k.name.trim(),
@@ -422,12 +425,17 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           </div>
         </Card>
 
-          {Number(kpis.capacityUtilization) === 1 && (
+          {coachView && Number(kpis.capacityUtilization) === 1 && (
             <CapacityGroupsCard
               groups={capacityGroups}
               onChange={setCapacityGroups}
-              coachView={canEditAll}
+              coachView
             />
+          )}
+          {!coachView && (
+            <Card title="Change Password">
+              <ChangePasswordForm email={client.email ?? ''} />
+            </Card>
           )}
         </div>
 
@@ -464,8 +472,8 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
           )}
         </Card>
         {canEditAll && (
-          <Card title="Custom KPIs">
-            <div className="flex justify-end">
+          <Card title="Custom KPIs" fit>
+            <div className="flex justify-start">
               <button
                 type="button"
                 onClick={addCustomKpi}
@@ -475,7 +483,13 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               </button>
             </div>
             {customKpis.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+              <div
+                className={`grid gap-3 items-start ${
+                  customKpis.length === 1
+                    ? 'grid-cols-1'
+                    : 'grid-cols-1 md:grid-cols-2'
+                }`}
+              >
                 {customKpis.map((k) => (
                   <CustomKpiManageCard
                     key={k.id}
@@ -488,10 +502,12 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             )}
           </Card>
         )}
-        {!coachView && (
-          <Card title="Change Password">
-            <ChangePasswordForm email={client.email ?? ''} />
-          </Card>
+        {!coachView && Number(kpis.capacityUtilization) === 1 && (
+          <CapacityGroupsCard
+            groups={capacityGroups}
+            onChange={setCapacityGroups}
+            coachView
+          />
         )}
         </div>
       </div>
@@ -644,6 +660,24 @@ function kpiDesc(id: string): string | undefined {
   return KPIS.find((k) => k.id === id)?.desc
 }
 
+/** Sales left column: estimating workflow on top, then transactions
+ *  family beneath it with a small gap. The right column gets
+ *  everything else (Contracts workflow, Close Rate, Pipeline family).
+ *  IDs match the registry; registry order drives the vertical sequence
+ *  inside each group. */
+const SALES_ESTIMATING_IDS = new Set<string>([
+  'proposalsDollars',
+  'estimatesWritten',
+  'avgEstimateValue',
+  'estimatesWonDollars',
+  'estimatesWonCount',
+  'avgEstimateWon',
+])
+const SALES_LEFT_BOTTOM_IDS = new Set<string>([
+  'transactions',
+  'avgTransactionValue',
+])
+
 function KpiTogglesGrouped({
   groups,
   kpis,
@@ -655,27 +689,69 @@ function KpiTogglesGrouped({
   onToggle: (id: string, on: boolean) => void
   feedback: string | null
 }) {
+  const renderToggle = (k: {
+    id: string
+    label: string
+    desc?: string
+  }) => (
+    <div key={k.id} className="flex items-center gap-1.5">
+      <Toggle
+        checked={Number(kpis[k.id]) === 1}
+        onChange={(on) => onToggle(k.id, on)}
+        label={k.label}
+      />
+      {k.desc && <InfoIcon text={k.desc} />}
+    </div>
+  )
+
   return (
     <div className="space-y-3">
-      {groups.map((g) => (
-        <div key={g.category}>
-          <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
-            {g.category}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
-            {g.kpis.map((k) => (
-              <div key={k.id} className="flex items-center gap-1.5">
-                <Toggle
-                  checked={Number(kpis[k.id]) === 1}
-                  onChange={(on) => onToggle(k.id, on)}
-                  label={k.label}
-                />
-                {k.desc && <InfoIcon text={k.desc} />}
+      {groups.map((g) => {
+        if (g.category === 'Sales') {
+          const estimating = g.kpis.filter((k) =>
+            SALES_ESTIMATING_IDS.has(k.id)
+          )
+          const leftBottom = g.kpis.filter((k) =>
+            SALES_LEFT_BOTTOM_IDS.has(k.id)
+          )
+          // Right column = everything not in the left column
+          // (Contracts workflow, Close Rate, Pipeline family).
+          const rightCol = g.kpis.filter(
+            (k) =>
+              !SALES_ESTIMATING_IDS.has(k.id) &&
+              !SALES_LEFT_BOTTOM_IDS.has(k.id)
+          )
+          return (
+            <div key={g.category}>
+              <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+                {g.category}
               </div>
-            ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="space-y-1.5">
+                  {estimating.map(renderToggle)}
+                  {/* Small breathing room between estimating workflow
+                      and the transactions family below it. */}
+                  {estimating.length > 0 && leftBottom.length > 0 && (
+                    <div className="h-3" />
+                  )}
+                  {leftBottom.map(renderToggle)}
+                </div>
+                <div className="space-y-1.5">{rightCol.map(renderToggle)}</div>
+              </div>
+            </div>
+          )
+        }
+        return (
+          <div key={g.category}>
+            <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
+              {g.category}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+              {g.kpis.map(renderToggle)}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
       {feedback && (
         <div className="text-xs text-white bg-accent/10 border border-accent/40 rounded px-3 py-2">
           {feedback}

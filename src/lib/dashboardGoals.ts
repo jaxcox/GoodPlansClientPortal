@@ -84,6 +84,10 @@ export function deriveAnnualGoal(
     }
     case 'avgEstimateValue':
       return safeDivide(g('proposalsDollars'), g('estimatesWritten'))
+    case 'avgEstimateWon':
+      return safeDivide(g('estimatesWonDollars'), g('estimatesWonCount'))
+    case 'avgContractWon':
+      return safeDivide(g('contractsWonDollars'), g('contractsWonCount'))
     case 'avgPipelineDeal':
       return safeDivide(g('pipelineValue'), g('pipelineDeals'))
     case 'closeRate': {
@@ -97,11 +101,6 @@ export function deriveAnnualGoal(
       return safeDivide(annualRevenue, g('transactions'))
     case 'avgRepairOrder':
       return safeDivide(annualRevenue, g('jobsCompleted'))
-    case 'contractValuePerNewClient':
-      return safeDivide(
-        wonDollarsGoal(goals, enabledIds),
-        g('newClients')
-      )
     default:
       return null
   }
@@ -282,6 +281,18 @@ export function actualValue(
       if (!count) return null
       return (dollars ?? 0) / count
     }
+    case 'avgEstimateWon': {
+      const dollars = v('estimatesWonDollars')
+      const count = v('estimatesWonCount')
+      if (!count) return null
+      return (dollars ?? 0) / count
+    }
+    case 'avgContractWon': {
+      const dollars = v('contractsWonDollars')
+      const count = v('contractsWonCount')
+      if (!count) return null
+      return (dollars ?? 0) / count
+    }
     case 'avgPipelineDeal': {
       const value = v('pipelineValue')
       const deals = v('pipelineDeals')
@@ -308,13 +319,6 @@ export function actualValue(
       const jobs = v('jobsCompleted')
       if (!jobs) return null
       return (rev ?? 0) / jobs
-    }
-    case 'contractValuePerNewClient': {
-      const wins =
-        v('contractsWonDollars') ?? v('estimatesWonDollars')
-      const nc = v('newClients')
-      if (!nc) return null
-      return (wins ?? 0) / nc
     }
     default:
       return null
