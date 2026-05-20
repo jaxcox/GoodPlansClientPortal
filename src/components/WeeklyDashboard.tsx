@@ -35,7 +35,11 @@ import { computeRingStatus, computeBand } from './ProgressRing'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
 import { CumulativeKpiGrid } from './CumulativeKpiGrid'
-import { entryInPeriod, periodLabel } from '../lib/cumulative'
+import {
+  entryInPeriod,
+  periodLabel,
+  ytdActualsContribution,
+} from '../lib/cumulative'
 
 /** Per-tile description for each Utilization card on the dashboard.
  *  Method-neutral — works for hours, time slots, dollars, headcount, etc.
@@ -296,7 +300,20 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
           <div className="text-base font-bold text-black">
             {periodLabel(mode, currentYear, currentMonth)}
           </div>
-          {entriesInPeriod.length === 0 ? (
+          {/* QTD onboarding disclaimer — for clients who started mid-
+              quarter, the pre-coaching month(s) folded into QTD are
+              derived from the YTD actuals, which may have been entered
+              as a single total and spread by the seasonality config. */}
+          {mode === 'qtd' &&
+            ytdActualsContribution(budget, mode, currentYear, currentMonth)
+              .monthsCovered.length > 0 && (
+              <div className="text-xs text-black italic">
+                Earlier months estimated from your YTD actuals.
+              </div>
+            )}
+          {entriesInPeriod.length === 0 &&
+          ytdActualsContribution(budget, mode, currentYear, currentMonth)
+            .monthsCovered.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
               No entries for this period yet.
             </div>
@@ -307,6 +324,7 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
               year={currentYear}
               month={currentMonth}
               entriesInPeriod={entriesInPeriod}
+              budget={budget}
               monthlyGoals={budgetView?.months ?? null}
               monthShares={monthShares}
               kpiGoals={kpiGoals}

@@ -22,6 +22,7 @@
 
 import type { KpiDef } from './kpis'
 import type {
+  Budget,
   CapacityGroup,
   CustomKpi,
   WeeklyEntry,
@@ -100,23 +101,23 @@ export function entryInPeriod(
   return true
 }
 
-/** Human label for the active period. "April MTD", "Q2 QTD", "2026 YTD". */
+/** Human label for the active period. The mode pill already tells the
+ *  user which view they're in, so the label just identifies the period:
+ *  "April" / "Q2" / "2026". */
 export function periodLabel(
   mode: Exclude<Mode, 'weekly'>,
   year: number,
   month: number
 ): string {
   if (mode === 'mtd') {
-    const name = new Date(year, month, 1).toLocaleDateString('en-US', {
+    return new Date(year, month, 1).toLocaleDateString('en-US', {
       month: 'long',
     })
-    return `${name} MTD`
   }
   if (mode === 'qtd') {
-    const q = quarterFromMonth(month) + 1
-    return `Q${q} QTD`
+    return `Q${quarterFromMonth(month) + 1}`
   }
-  return `${year} YTD`
+  return `${year}`
 }
 
 // =============================================================================
@@ -125,8 +126,18 @@ export function periodLabel(
 
 /** Sum a raw input KPI across the supplied entries. Treats missing /
  *  non-numeric values as 0 but only returns null when NO entry had a
- *  value — distinguishes "summed to zero" from "no data at all." */
-function sumRaw(id: string, entries: WeeklyEntry[]): number | null {
+ *  value — distinguishes "summed to zero" from "no data at all."
+ *
+ *  `extraTotals` is the YTD-actuals contribution (pre-coaching monthly
+ *  totals from the budget row that fold into YTD/QTD rollups per doc-08).
+ *  When a contribution exists for this KPI, it's added to the sum and
+ *  also counts toward "had a value" so the tile shows the integrated
+ *  number rather than null. */
+function sumRaw(
+  id: string,
+  entries: WeeklyEntry[],
+  extraTotals?: Record<string, number>
+): number | null {
   let total = 0
   let any = false
   for (const e of entries) {
@@ -136,15 +147,25 @@ function sumRaw(id: string, entries: WeeklyEntry[]): number | null {
       any = true
     }
   }
+  const extra = extraTotals?.[id]
+  if (typeof extra === 'number' && Number.isFinite(extra)) {
+    total += extra
+    any = true
+  }
   return any ? total : null
 }
 
 /** Aggregate a derived KPI by first aggregating its raw inputs, then
  *  computing the derived value once. Returns null when inputs are missing
- *  or when the formula would divide by zero. */
+ *  or when the formula would divide by zero.
+ *
+ *  `extra` carries any YTD-actuals contribution to fold into the relevant
+ *  raw inputs (revenue / cogs / expenses) so derived Financials reflect
+ *  pre-coaching months too. */
 function aggregateDerived(
   kpiId: string,
-  entries: WeeklyEntry[]
+  entries: WeeklyEntry[],
+  extra?: Record<string, number>
 ): number | null {
   const safeDiv = (num: number | null, den: number | null): number | null => {
     if (num == null || den == null || den === 0) return null
@@ -153,28 +174,28 @@ function aggregateDerived(
 
   switch (kpiId) {
     case 'grossProfit': {
-      const r = sumRaw('revenue', entries)
-      const c = sumRaw('cogs', entries)
+      const r = sumRaw('revenue', entries, extra)
+      const c = sumRaw('cogs', entries, extra)
       if (r == null || c == null) return null
       return r - c
     }
     case 'grossMargin': {
-      const r = sumRaw('revenue', entries)
-      const c = sumRaw('cogs', entries)
+      const r = sumRaw('revenue', entries, extra)
+      const c = sumRaw('cogs', entries, extra)
       const gp = safeDiv(r != null && c != null ? r - c : null, r)
       return gp == null ? null : gp * 100
     }
     case 'netProfit': {
-      const r = sumRaw('revenue', entries)
-      const c = sumRaw('cogs', entries)
-      const e = sumRaw('expenses', entries)
+      const r = sumRaw('revenue', entries, extra)
+      const c = sumRaw('cogs', entries, extra)
+      const e = sumRaw('expenses', entries, extra)
       if (r == null || c == null || e == null) return null
       return r - c - e
     }
     case 'netProfitMargin': {
-      const r = sumRaw('revenue', entries)
-      const c = sumRaw('cogs', entries) ?? 0
-      const e = sumRaw('expenses', entries) ?? 0
+      const r = sumRaw('revenue', entries, extra)
+      const c = sumRaw('cogs', entries, extra) ?? 0
+      const e = sumRaw('expenses', entries, extra) ?? 0
       if (r == null || r === 0) return null
       return ((r - c - e) / r) * 100
     }
@@ -217,12 +238,12 @@ function aggregateDerived(
     }
     case 'avgTransactionValue':
       return safeDiv(
-        sumRaw('revenue', entries),
+        sumRaw('revenue', entries, extra),
         sumRaw('transactions', entries)
       )
     case 'avgRepairOrder':
       return safeDiv(
-        sumRaw('revenue', entries),
+        sumRaw('revenue', entries, extra),
         sumRaw('jobsCompleted', entries)
       )
     default:
@@ -231,15 +252,20 @@ function aggregateDerived(
 }
 
 /** Aggregate a standard KPI over the supplied entries.
- *  Capacity-group rollups are handled separately (see aggregateCapacityValue). */
+ *  Capacity-group rollups are handled separately (see aggregateCapacityValue).
+ *
+ *  `ytdExtra` (when provided) adds YTD-actuals contributions to revenue /
+ *  cogs / expenses sums — used in YTD and overlapping-QTD modes to fold
+ *  in pre-coaching months captured on the budget row. */
 export function aggregateKpi(
   kpi: KpiDef,
-  entries: WeeklyEntry[]
+  entries: WeeklyEntry[],
+  ytdExtra?: Record<string, number>
 ): number | null {
-  if (entries.length === 0) return null
+  if (entries.length === 0 && !ytdExtra) return null
 
   if (kpi.aggregation === 'derived') {
-    return aggregateDerived(kpi.id, entries)
+    return aggregateDerived(kpi.id, entries, ytdExtra)
   }
 
   if (kpi.aggregation === 'sum') {
@@ -248,10 +274,10 @@ export function aggregateKpi(
     // saved only the raw inputs (revenue / cogs / expenses) without the
     // derived field. Fall back to recomputing from those inputs so the
     // tile still shows a value.
-    const direct = sumRaw(kpi.id, entries)
+    const direct = sumRaw(kpi.id, entries, ytdExtra)
     if (direct != null) return direct
     if (kpi.id === 'grossProfit' || kpi.id === 'netProfit') {
-      return aggregateDerived(kpi.id, entries)
+      return aggregateDerived(kpi.id, entries, ytdExtra)
     }
     return null
   }
@@ -279,6 +305,93 @@ export function aggregateKpi(
   }
 
   return null
+}
+
+// =============================================================================
+// YTD-actuals integration
+// =============================================================================
+
+/** Result of folding pre-coaching YTD actuals into the active period. */
+export type YtdContribution = {
+  /** Per-KPI additive contribution. Only populated for revenue / cogs /
+   *  expenses — the budget engine doesn't capture other KPIs by month. */
+  contribution: Record<string, number>
+  /** Fractional weeks covered by the folded months. Added to currentWeeks
+   *  when computing paceFrac so pace reflects "actuals + entries." */
+  weeksCovered: number
+  /** Month indices (0-11) that were folded in. Drives the "incl. actuals
+   *  thru April" pill on the period label in YTD mode. */
+  monthsCovered: number[]
+}
+
+const EMPTY_YTD: YtdContribution = {
+  contribution: {},
+  weeksCovered: 0,
+  monthsCovered: [],
+}
+
+/** Compute the YTD-actuals contribution to the active period.
+ *
+ *  Rules (doc-08):
+ *  - YTD: every month 0..ytd_thru_month folds in.
+ *  - QTD: only the months in 0..ytd_thru_month that ALSO fall in the
+ *         current quarter — AND current month must be strictly past
+ *         ytd_thru_month (otherwise we'd double-count the current month).
+ *  - MTD: never (actuals are monthly grain, not within-month).
+ *
+ *  Returns EMPTY_YTD when no fold applies (wrong year, no ytd_thru_month,
+ *  no overlap, MTD mode). */
+export function ytdActualsContribution(
+  budget: Budget | null,
+  mode: Exclude<Mode, 'weekly'>,
+  year: number,
+  month: number
+): YtdContribution {
+  if (!budget) return EMPTY_YTD
+  if (budget.year !== year) return EMPTY_YTD
+  const thru = budget.ytd_thru_month
+  if (thru == null || thru < 0 || thru > 11) return EMPTY_YTD
+  if (mode === 'mtd') return EMPTY_YTD
+
+  let monthsToFold: number[]
+  if (mode === 'ytd') {
+    monthsToFold = []
+    for (let i = 0; i <= thru; i++) monthsToFold.push(i)
+  } else {
+    // QTD — fold months that fall in the current quarter AND are <=
+    // ytd_thru AND are strictly before the current month.
+    const q = quarterFromMonth(month)
+    monthsToFold = []
+    for (let i = q * 3; i < q * 3 + 3 && i <= thru && i < month; i++) {
+      monthsToFold.push(i)
+    }
+  }
+  if (monthsToFold.length === 0) return EMPTY_YTD
+
+  const rev = (budget.ytd_revenue_by_month as (number | null)[] | null) ?? []
+  const cogs = (budget.ytd_cogs_by_month as (number | null)[] | null) ?? []
+  const exp = (budget.ytd_expenses_by_month as (number | null)[] | null) ?? []
+
+  let revTotal = 0
+  let cogsTotal = 0
+  let expTotal = 0
+  let weeksCovered = 0
+  for (const i of monthsToFold) {
+    revTotal += Number(rev[i] ?? 0)
+    cogsTotal += Number(cogs[i] ?? 0)
+    expTotal += Number(exp[i] ?? 0)
+    weeksCovered += daysInMonth(year, i) / 7
+  }
+
+  return {
+    contribution: {
+      revenue: revTotal,
+      cogs: cogsTotal,
+      expenses: expTotal,
+    },
+    weeksCovered,
+    monthsCovered: monthsToFold,
+  }
 }
 
 /** Aggregate a custom KPI: sum when format is # or $, average when %. */

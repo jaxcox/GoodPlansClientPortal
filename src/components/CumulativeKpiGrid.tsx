@@ -11,6 +11,7 @@
 
 import { findKpi } from '../lib/kpis'
 import type {
+  Budget,
   CapacityGroup,
   CapacityGroupGoal,
   Client,
@@ -25,6 +26,7 @@ import {
   getPeriodGoalFull,
   paceFrac,
   totalWeeksInPeriod,
+  ytdActualsContribution,
   type Mode,
 } from '../lib/cumulative'
 import type { MonthlyGoal } from '../lib/budget'
@@ -44,6 +46,8 @@ type Props = {
   month: number
   /** Entries already filtered down to this period. */
   entriesInPeriod: WeeklyEntry[]
+  /** Full budget row — needed to resolve YTD-actuals contributions. */
+  budget: Budget | null
   /** Per-month financial goals from the budget engine. Null when no
    *  budget exists yet. */
   monthlyGoals: MonthlyGoal[] | null
@@ -66,6 +70,7 @@ export function CumulativeKpiGrid({
   year,
   month,
   entriesInPeriod,
+  budget,
   monthlyGoals,
   monthShares,
   kpiGoals,
@@ -75,8 +80,14 @@ export function CumulativeKpiGrid({
 }: Props) {
   void capacityGroupGoals // wired up at step 6 (per-capacity-group rollups)
 
+  // Pre-coaching YTD actuals fold into Revenue/COGS/Expenses (and the
+  // derived GP/NP) for YTD mode and any QTD month that comes after
+  // ytd_thru_month. weeksCovered bumps currentWeeks so pace accounts
+  // for the months we already have actuals for.
+  const ytd = ytdActualsContribution(budget, mode, year, month)
+
   const weeksInPeriod = totalWeeksInPeriod(mode, year, month)
-  const currentWeeks = entriesInPeriod.length
+  const currentWeeks = entriesInPeriod.length + ytd.weeksCovered
   const pace = paceFrac(currentWeeks, weeksInPeriod)
 
   const visible = visibleTileKpis(client)
@@ -94,6 +105,7 @@ export function CumulativeKpiGrid({
           month={month}
           entries={entriesInPeriod}
           pace={pace}
+          ytdExtra={ytd.contribution}
           monthlyGoals={monthlyGoals}
           monthShares={monthShares}
           kpiGoals={kpiGoals}
@@ -117,6 +129,7 @@ function CategorySection({
   month,
   entries,
   pace,
+  ytdExtra,
   monthlyGoals,
   monthShares,
   kpiGoals,
@@ -130,6 +143,7 @@ function CategorySection({
   month: number
   entries: WeeklyEntry[]
   pace: number
+  ytdExtra: Record<string, number>
   monthlyGoals: MonthlyGoal[] | null
   monthShares: number[]
   kpiGoals: Record<string, number>
@@ -177,6 +191,7 @@ function CategorySection({
       month={month}
       entries={entries}
       pace={pace}
+      ytdExtra={ytdExtra}
       monthlyGoals={monthlyGoals}
       monthShares={monthShares}
       kpiGoals={kpiGoals}
@@ -204,6 +219,7 @@ function CategorySection({
                 mode={mode}
                 month={month}
                 entries={entries}
+                ytdExtra={ytdExtra}
                 monthlyGoals={monthlyGoals}
                 monthShares={monthShares}
                 kpiGoals={kpiGoals}
@@ -261,6 +277,7 @@ function CumulativeStandardTile({
   month,
   entries,
   pace,
+  ytdExtra,
   monthlyGoals,
   monthShares,
   kpiGoals,
@@ -273,6 +290,7 @@ function CumulativeStandardTile({
   month: number
   entries: WeeklyEntry[]
   pace: number
+  ytdExtra: Record<string, number>
   monthlyGoals: MonthlyGoal[] | null
   monthShares: number[]
   kpiGoals: Record<string, number>
@@ -280,7 +298,7 @@ function CumulativeStandardTile({
   annualRevenue: number | undefined
   tall?: boolean
 }) {
-  const value = aggregateKpi(kpi, entries)
+  const value = aggregateKpi(kpi, entries, ytdExtra)
   const fullGoal = getPeriodGoalFull({
     kpi,
     mode,
@@ -401,6 +419,7 @@ function GapToGoalTile({
   mode,
   month,
   entries,
+  ytdExtra,
   monthlyGoals,
   monthShares,
   kpiGoals,
@@ -410,6 +429,7 @@ function GapToGoalTile({
   mode: Exclude<Mode, 'weekly'>
   month: number
   entries: WeeklyEntry[]
+  ytdExtra: Record<string, number>
   monthlyGoals: MonthlyGoal[] | null
   monthShares: number[]
   kpiGoals: Record<string, number>
@@ -419,7 +439,7 @@ function GapToGoalTile({
   const gpKpi = findKpi('grossProfit')
   if (!gpKpi) return null
 
-  const gpActual = aggregateKpi(gpKpi, entries)
+  const gpActual = aggregateKpi(gpKpi, entries, ytdExtra)
   const gpGoal = getPeriodGoalFull({
     kpi: gpKpi,
     mode,
