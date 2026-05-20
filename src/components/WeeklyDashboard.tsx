@@ -31,9 +31,11 @@ import {
   formatValue as formatKpiValue,
   formatDelta as formatKpiDelta,
 } from './KpiTile'
-import { computeRingStatus } from './ProgressRing'
+import { computeRingStatus, computeBand } from './ProgressRing'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
+import { CumulativeKpiGrid } from './CumulativeKpiGrid'
+import { entryInPeriod, periodLabel } from '../lib/cumulative'
 
 /** Per-tile description for each Utilization card on the dashboard.
  *  Method-neutral — works for hours, time slots, dollars, headcount, etc.
@@ -202,6 +204,24 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
     return out
   }, [client])
 
+  // Cumulative-mode period anchor. Always today (cumulative dashboards
+  // always read "from period start through today"); the mode pill picks
+  // which period. Memo so it's stable per render — the dashboard isn't
+  // expected to roll over the day boundary mid-session, but recomputing
+  // these on every render would also be cheap.
+  const today = useMemo(() => new Date(), [])
+  const currentYear = today.getFullYear()
+  const currentMonth = today.getMonth()
+
+  // In-period entries — filtered subset for the active cumulative mode.
+  // Empty when mode === 'weekly' (the weekly grid uses a single entry).
+  const entriesInPeriod = useMemo(() => {
+    if (mode === 'weekly') return []
+    return entries.filter((e) =>
+      entryInPeriod(e, mode, currentYear, currentMonth, today)
+    )
+  }, [entries, mode, currentYear, currentMonth, today])
+
   // ---- Render --------------------------------------------------------------
 
   if (loading)
@@ -225,12 +245,6 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         mostRecentDateIso={mostRecentDateIso}
       />
 
-      {/* No-entry overdue banner — slim red strip when the current week
-          has no entry but older entries exist. */}
-      {!isCurrentWeek && displayedEntry && (
-        <OverdueBanner mostRecentDateIso={mostRecentDateIso!} />
-      )}
-
       {/* Coach Note block at the top — coach edits, client reads. Empty
           on client view if no note exists. Constrained to the width of one
           KPI tile so it doesn't dominate the dashboard. */}
@@ -252,8 +266,9 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         </div>
       )}
 
-      {/* KPI grid */}
-      {displayedEntry && (
+      {/* KPI grid — weekly view uses the displayed entry; cumulative
+          views aggregate all in-period entries. */}
+      {mode === 'weekly' && displayedEntry && (
         <KpiGrid
           client={client}
           entry={displayedEntry}
@@ -276,9 +291,46 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         />
       )}
 
+      {mode !== 'weekly' && (
+        <>
+          <div className="text-base font-bold text-black">
+            {periodLabel(mode, currentYear, currentMonth)}
+          </div>
+          {entriesInPeriod.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
+              No entries for this period yet.
+            </div>
+          ) : (
+            <CumulativeKpiGrid
+              client={client}
+              mode={mode}
+              year={currentYear}
+              month={currentMonth}
+              entriesInPeriod={entriesInPeriod}
+              monthlyGoals={budgetView?.months ?? null}
+              monthShares={monthShares}
+              kpiGoals={kpiGoals}
+              enabledIds={enabledIds}
+              annualRevenue={
+                budget?.annual_revenue != null
+                  ? Number(budget.annual_revenue)
+                  : undefined
+              }
+              capacityGroupGoals={
+                (budget?.capacity_group_goals ?? {}) as Record<
+                  string,
+                  CapacityGroupGoal
+                >
+              }
+            />
+          )}
+        </>
+      )}
+
       {/* Notes block for the displayed entry (different from coach notes:
-          this is the per-week note typed on Weekly Entry) */}
-      {displayedEntry?.notes && (
+          this is the per-week note typed on Weekly Entry). Weekly mode
+          only — cumulative views span multiple weeks. */}
+      {mode === 'weekly' && displayedEntry?.notes && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-xs font-bold uppercase tracking-wider text-black mb-1">
             Notes for {formatWeekShort(dateFromIso(displayedEntry.week_start_date))}
@@ -329,8 +381,8 @@ function Header({
           </span>
         ) : (
           <span className="bg-bad text-white px-3 py-1 rounded font-semibold">
-            ⚠ Entry overdue · last entry{' '}
-            {formatWeekShort(dateFromIso(mostRecentDateIso!))}
+            Last entry {formatWeekShort(dateFromIso(mostRecentDateIso!))} —
+            log this week to update your dashboard
           </span>
         )}
       </div>
@@ -350,7 +402,6 @@ function ModePills({
       key={m}
       type="button"
       onClick={() => onMode(m)}
-      title={m === 'weekly' ? undefined : 'Cumulative views coming soon'}
       className={`px-3 py-1.5 rounded text-xs font-bold border ${
         mode === m
           ? 'bg-ink text-accent border-line'
@@ -366,18 +417,6 @@ function ModePills({
       {pill('mtd', 'MTD')}
       {pill('qtd', 'QTD')}
       {pill('ytd', 'YTD')}
-    </div>
-  )
-}
-
-function OverdueBanner({ mostRecentDateIso }: { mostRecentDateIso: string }) {
-  return (
-    <div className="bg-bad text-white text-sm rounded-lg p-3 flex flex-wrap justify-between items-center gap-2">
-      <span>
-        <strong>Weekly entry overdue.</strong> Last entry{' '}
-        {formatWeekShort(dateFromIso(mostRecentDateIso))} — your dashboard
-        can't reflect this week until you log it.
-      </span>
     </div>
   )
 }
@@ -407,13 +446,7 @@ function KpiGrid({
   annualRevenue: number | undefined
   capacityGroupGoals: Record<string, CapacityGroupGoal>
 }) {
-  // Expenses is tracked weekly (for entry + cumulative rollups) but only
-  // surfaced on MTD/QTD/YTD dashboards — a single week's expense number
-  // isn't actionable on its own. Hide it from the weekly tile grid.
-  const WEEKLY_HIDDEN_IDS = new Set<string>(['expenses'])
-  const visible = visibleTileKpis(client).filter(
-    (k) => !WEEKLY_HIDDEN_IDS.has(k.id)
-  )
+  const visible = visibleTileKpis(client)
   const customKpis = (client.custom_kpis ?? []).filter(
     (c) => c.active !== false
   )
@@ -895,6 +928,13 @@ function StandardTile({
     annualRevenue,
   })
 
+  // Expenses on the weekly dashboard is "awareness only" — show the
+  // value + prior-week delta with no goal line. Coaches set an annual
+  // expense target on Budget & Goals but the weekly slice isn't
+  // actionable on its own; cumulative views (MTD/QTD/YTD) carry the
+  // pace tracking instead.
+  const isAwarenessOnly = kpi.id === 'expenses'
+
   return (
     <KpiTile
       label={kpi.label}
@@ -902,9 +942,10 @@ function StandardTile({
       format={kpi.format}
       direction={kpi.direction ?? 'hi'}
       value={value}
-      goal={goal}
+      goal={isAwarenessOnly ? null : goal}
       delta={delta}
       range={kpi.range}
+      hideGoal={isAwarenessOnly}
       view="number"
     />
   )
@@ -962,29 +1003,36 @@ function LaborHoursTile({
     | { producedHours?: number }
     | undefined
   const produced = cv?.producedHours ?? 0
-  const onTrack =
-    goal && goal > 0 ? Math.abs(produced - goal) / goal <= 0.1 : null
-  const footerColor =
-    onTrack == null ? 'text-black' : onTrack ? 'text-good' : 'text-bad'
+  const value = produced > 0 ? produced : null
+  const band = computeBand({
+    value,
+    goal: goal && goal > 0 ? goal : null,
+    direction: 'hi',
+    range: true,
+  })
+  const valueColor =
+    band === 'green'
+      ? 'text-good'
+      : band === 'yellow'
+        ? 'text-accent'
+        : band === 'red'
+          ? 'text-bad'
+          : 'text-white'
   return (
-    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative">
-      {onTrack === true && (
-        <div className="absolute top-1 right-2 text-[10px] font-bold text-good">
-          Achieved!
-        </div>
-      )}
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
       <div className="flex items-center gap-0.5">
         <div className="text-xs font-semibold uppercase tracking-wider text-white">
           Labor Hours Produced
         </div>
         <InfoIcon text="Productive labor hours generated by this team this week." />
       </div>
-      <div className="text-lg font-bold text-white mt-2">
-        {produced > 0 ? `${produced} hrs` : '—'}
-      </div>
-      <div className="flex-1" />
-      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
-        {goal && goal > 0 ? `Goal: ${goal} hrs ±10%` : 'No goal set'}
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className={`text-lg font-bold leading-none ${valueColor}`}>
+          {value != null ? `${value} hrs` : '—'}
+        </div>
+        <div className="text-sm text-white mt-1">
+          {goal && goal > 0 ? `Goal: ${goal} hrs (±10%)` : 'No goal set'}
+        </div>
       </div>
     </div>
   )
@@ -1008,34 +1056,40 @@ function LaborEfficiencyTile({
   const produced = cv?.producedHours ?? 0
   const working = groupWorkingHours(group)
   const pct = working > 0 ? (produced / working) * 100 : null
-  const onTrack =
-    goal && goal > 0 && pct != null ? Math.abs(pct - goal) <= 10 : null
-  const footerColor =
-    onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
+  const band = computeBand({
+    value: pct,
+    goal: goal && goal > 0 ? goal : null,
+    direction: 'hi',
+    range: true,
+  })
+  const valueColor =
+    band === 'green'
+      ? 'text-good'
+      : band === 'yellow'
+        ? 'text-accent'
+        : band === 'red'
+          ? 'text-bad'
+          : 'text-white'
   return (
-    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative">
-      {onTrack === true && (
-        <div className="absolute top-1 right-2 text-[10px] font-bold text-good">
-          Achieved!
-        </div>
-      )}
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
       <div className="flex items-center gap-0.5">
         <div className="text-xs font-semibold uppercase tracking-wider text-white">
           Labor Efficiency
         </div>
         <InfoIcon text="How productively the team used their scheduled time this week." />
       </div>
-      <div className="text-lg font-bold text-white mt-2">
-        {pct != null ? `${pct.toFixed(1)}%` : '—'}
-      </div>
-      {pct != null && (
-        <div className="text-xs text-white mt-1">
-          {produced} / {working} hrs
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className={`text-lg font-bold leading-none ${valueColor}`}>
+          {pct != null ? `${pct.toFixed(1)}%` : '—'}
         </div>
-      )}
-      <div className="flex-1" />
-      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
-        {goal && goal > 0 ? `Goal: ${goal}% ±10%` : 'No goal set'}
+        {pct != null && (
+          <div className="text-xs text-white mt-1">
+            {produced} / {working} hrs
+          </div>
+        )}
+        <div className="text-sm text-white mt-1">
+          {goal && goal > 0 ? `Goal: ${goal}% (±10%)` : 'No goal set'}
+        </div>
       </div>
     </div>
   )
@@ -1106,56 +1160,61 @@ function CapacityTile({
     subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
   }
 
-  // Goal label + comparison: ±10% band coloring on the footer text.
+  // Goal label + band coloring. All capacity goals are range-style
+  // (on-target within ±10% of goal). For revenue / $ goals the band is
+  // computed against actualDollars, otherwise against actualPct.
   let goalLabel = 'No goal set'
-  let onTrack: boolean | null = null
+  let bandValue: number | null = null
+  let bandGoal: number | null = null
   if (goal) {
     if (group.method === 'revenue') {
       const revCap = groupMaxCapacity(group)
       const targetDollars =
         goal.format === '$' ? goal.target : (revCap * goal.target) / 100
-      goalLabel = `Goal: $${Math.round(targetDollars).toLocaleString()} ±10%`
-      if (actualDollars != null && targetDollars > 0) {
-        onTrack =
-          Math.abs(actualDollars - targetDollars) / targetDollars <= 0.1
-      }
+      goalLabel = `Goal: $${Math.round(targetDollars).toLocaleString()} (±10%)`
+      bandValue = actualDollars
+      bandGoal = targetDollars > 0 ? targetDollars : null
     } else if (goal.format === '$') {
-      goalLabel = `Goal: $${goal.target.toLocaleString()} ±10%`
-      if (actualDollars != null && goal.target > 0) {
-        onTrack = Math.abs(actualDollars - goal.target) / goal.target <= 0.1
-      }
+      goalLabel = `Goal: $${goal.target.toLocaleString()} (±10%)`
+      bandValue = actualDollars
+      bandGoal = goal.target > 0 ? goal.target : null
     } else {
-      goalLabel = `Goal: ${goal.target}% ±10%`
-      if (actualPct != null) {
-        onTrack = Math.abs(actualPct - goal.target) <= 10
-      }
+      goalLabel = `Goal: ${goal.target}% (±10%)`
+      bandValue = actualPct
+      bandGoal = goal.target > 0 ? goal.target : null
     }
   }
-  const footerColor =
-    onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
+  const band = computeBand({
+    value: bandValue,
+    goal: bandGoal,
+    direction: 'hi',
+    range: true,
+  })
+  const valueColor =
+    band === 'green'
+      ? 'text-good'
+      : band === 'yellow'
+        ? 'text-accent'
+        : band === 'red'
+          ? 'text-bad'
+          : 'text-white'
 
   return (
-    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative">
-      {onTrack === true && (
-        <div className="absolute top-1 right-2 text-[10px] font-bold text-good">
-          Achieved!
-        </div>
-      )}
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
       <div className="flex items-center gap-0.5">
         <div className="text-xs font-semibold uppercase tracking-wider text-white">
           Capacity Utilization
         </div>
         <InfoIcon text={TEAM_CAPACITY_DESC} />
       </div>
-      <div className="text-lg font-bold text-white mt-2">{valueText}</div>
-      {subLabel && (
-        <div className="text-xs text-white mt-1">{subLabel}</div>
-      )}
-
-      <div className="flex-1" />
-
-      <div className={`border-t border-line pt-2 mt-2 text-xs ${footerColor}`}>
-        <span>{goalLabel}</span>
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className={`text-lg font-bold leading-none ${valueColor}`}>
+          {valueText}
+        </div>
+        {subLabel && (
+          <div className="text-xs text-white mt-1">{subLabel}</div>
+        )}
+        <div className="text-sm text-white mt-1">{goalLabel}</div>
       </div>
     </div>
   )

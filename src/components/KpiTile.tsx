@@ -21,6 +21,10 @@ type Props = {
    *  goal row). Used for custom KPIs where the % comparison reads
    *  weirdly (e.g. "Goal: 4.8 reviews · 98%"). */
   hideGoalPct?: boolean
+  /** Suppress the goal line entirely — title + value + (optional delta)
+   *  only. Used for "awareness-only" tiles like Weekly Expenses where
+   *  the coach doesn't want to set a per-week target. */
+  hideGoal?: boolean
   /** Tile visualization: 'number' (default) shows the big number inline;
    *  'ring' wraps the number in a circular progress ring that fills from
    *  red → yellow → green based on actual/goal. Used on Financials
@@ -90,6 +94,7 @@ export function KpiTile({
   delta,
   range = false,
   hideGoalPct = false,
+  hideGoal = false,
   view = 'number',
 }: Props) {
   const effectiveGoal = goal
@@ -208,17 +213,19 @@ export function KpiTile({
             {formatDelta(delta, format)}
           </div>
         )}
-        <div className="text-sm text-white mt-1">
-          {effectiveGoal == null ? (
-            <span>No goal set</span>
-          ) : range ? (
-            <span>Goal: {formatValue(effectiveGoal, format)} (±10%)</span>
-          ) : format === '%' ? (
-            <span>Goal: {effectiveGoal.toFixed(1)}%</span>
-          ) : (
-            <span>Goal: {formatValue(effectiveGoal, format)}</span>
-          )}
-        </div>
+        {!hideGoal && (
+          <div className="text-sm text-white mt-1">
+            {effectiveGoal == null ? (
+              <span>No goal set</span>
+            ) : range ? (
+              <span>Goal: {formatValue(effectiveGoal, format)} (±10%)</span>
+            ) : format === '%' ? (
+              <span>Goal: {effectiveGoal.toFixed(1)}%</span>
+            ) : (
+              <span>Goal: {formatValue(effectiveGoal, format)}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
