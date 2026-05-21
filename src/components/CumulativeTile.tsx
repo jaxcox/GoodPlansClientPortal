@@ -48,6 +48,20 @@ type Props = {
    *  FinancialsRowTile primary tile sizing (220px min, larger value).
    *  Coaches read the output KPIs of each department at a glance. */
   tall?: boolean
+  /** Pre-formatted value string. When supplied, overrides the
+   *  auto-formatted output of formatValue() — used by capacity tiles
+   *  whose values carry custom units ("1,800 hrs", "12 slots"). The
+   *  numeric `value` is still used for color/pace math. */
+  valueText?: string
+  /** Pre-formatted pace + full-goal strings. Optional — falls back to
+   *  formatValue() when not supplied. Used by capacity tiles so the
+   *  pace/goal line uses the same custom units as the value. */
+  paceText?: string
+  goalText?: string
+  /** Optional small sub-label rendered between the value and the
+   *  footer. Used on capacity tiles to surface the derived
+   *  utilization %, e.g. "75% utilization". */
+  subLabel?: string
 }
 
 type PaceColor = 'green' | 'red' | null
@@ -96,6 +110,10 @@ export function CumulativeTile({
   range = false,
   hideAchieved = false,
   tall = false,
+  valueText,
+  paceText,
+  goalText,
+  subLabel,
 }: Props) {
   const minH = tall ? 'min-h-[220px]' : 'min-h-[110px]'
   const valueTextSize = tall
@@ -106,8 +124,6 @@ export function CumulativeTile({
     color === 'green' ? 'text-good' : color === 'red' ? 'text-bad' : 'text-white'
   const barColor =
     color === 'green' ? 'bg-good' : color === 'red' ? 'bg-bad' : 'bg-white/30'
-  const paceTextColor =
-    color === 'green' ? 'text-good' : color === 'red' ? 'text-bad' : 'text-white'
   const achieved =
     !hideAchieved && isAchieved(value, fullGoal, direction, range)
 
@@ -120,23 +136,10 @@ export function CumulativeTile({
     progressPct = Math.min((value / paceGoal) * 100, 100)
   }
 
-  // Per doc-08, only percent and range KPIs get the simpler "+X vs goal"
-  // line. Direction='lo' sum KPIs (Expenses) still get the progress bar
-  // — they accumulate $ over the period just like Revenue, just colored
-  // inverse.
+  // Only percent and range KPIs skip the progress bar. Direction='lo'
+  // sum KPIs (Expenses) still get the bar — they accumulate over the
+  // period like Revenue, just colored inverse.
   const isRatio = format === '%' || range
-
-  // Delta line for ratio / range tiles ("+1.9% vs 50.0% goal" style).
-  let deltaText: string | null = null
-  if (isRatio && value != null && fullGoal != null) {
-    const diff = value - fullGoal
-    const sign = diff >= 0 ? '+' : '−'
-    const absStr =
-      format === '%'
-        ? `${Math.abs(diff).toFixed(1)}%`
-        : formatValue(Math.abs(diff), format)
-    deltaText = `${sign}${absStr} vs ${formatValue(fullGoal, format)} goal`
-  }
 
   return (
     <div className={`bg-ink rounded-lg p-3 ${minH} flex flex-col relative`}>
@@ -154,18 +157,28 @@ export function CumulativeTile({
 
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`${valueTextSize} ${valueColor}`}>
-          {formatValue(value, format)}
+          {valueText ?? formatValue(value, format)}
         </div>
+        {subLabel && (
+          <div className="text-xs text-white mt-1">{subLabel}</div>
+        )}
+        {/* Ratio / range tiles: goal caption sits centered under the
+            value, same placement as Weekly — no progress bar context to
+            anchor to. */}
+        {isRatio && (
+          <div className="text-sm text-white mt-1">
+            {fullGoal == null
+              ? 'No goal set'
+              : range
+                ? `Goal: ${goalText ?? formatValue(fullGoal, format)} (±10%)`
+                : `Goal: ${goalText ?? formatValue(fullGoal, format)}`}
+          </div>
+        )}
       </div>
 
-      {/* Footer: progress bar + pace/goal split for sum KPIs, simple
-          delta line for %/range KPIs. Stays at the bottom regardless of
-          which variant is rendered. */}
-      {isRatio ? (
-        <div className={`text-xs ${paceTextColor}`}>
-          {deltaText ?? (fullGoal == null ? 'No goal set' : '—')}
-        </div>
-      ) : (
+      {/* Sum tiles get the progress bar with Pace + Goal split below.
+          Same text size and white color as the Weekly tile's goal line. */}
+      {!isRatio && (
         <div>
           <div className="h-[3px] bg-line rounded-full overflow-hidden mb-1">
             <div
@@ -173,14 +186,16 @@ export function CumulativeTile({
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs">
-            <span className={paceTextColor}>
+          <div className="flex justify-between text-sm text-white">
+            <span>
               {paceGoal == null
                 ? 'No goal set'
-                : `Pace: ${formatValue(paceGoal, format)}`}
+                : `Pace: ${paceText ?? formatValue(paceGoal, format)}`}
             </span>
-            <span className="text-mute">
-              {fullGoal == null ? '' : `Goal: ${formatValue(fullGoal, format)}`}
+            <span>
+              {fullGoal == null
+                ? ''
+                : `Goal: ${goalText ?? formatValue(fullGoal, format)}`}
             </span>
           </div>
         </div>

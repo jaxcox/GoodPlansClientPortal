@@ -21,6 +21,7 @@ import type {
 import type { KpiDef, KpiCategory } from '../lib/kpis'
 import { CATEGORIES } from '../lib/kpis'
 import {
+  aggregateCapacityValue,
   aggregateCustomKpi,
   aggregateKpi,
   getPeriodGoalFull,
@@ -31,6 +32,7 @@ import {
 } from '../lib/cumulative'
 import type { MonthlyGoal } from '../lib/budget'
 import { visibleTileKpis } from '../lib/dashboardGoals'
+import { groupMaxCapacity, groupWorkingHours } from '../lib/capacity'
 import { CumulativeTile } from './CumulativeTile'
 import { InfoIcon } from './InfoIcon'
 import { formatValue } from './KpiTile'
@@ -78,8 +80,6 @@ export function CumulativeKpiGrid({
   annualRevenue,
   capacityGroupGoals,
 }: Props) {
-  void capacityGroupGoals // wired up at step 6 (per-capacity-group rollups)
-
   // Pre-coaching YTD actuals fold into Revenue/COGS/Expenses (and the
   // derived GP/NP) for YTD mode and any QTD month that comes after
   // ytd_thru_month. weeksCovered bumps currentWeeks so pace accounts
@@ -94,6 +94,10 @@ export function CumulativeKpiGrid({
   const customKpis = (client.custom_kpis ?? []).filter(
     (c) => c.active !== false
   )
+  const capacityGroups =
+    Number(client.kpis?.capacityUtilization) === 1
+      ? client.capacity_groups ?? []
+      : []
 
   return (
     <div className="space-y-5">
@@ -113,6 +117,9 @@ export function CumulativeKpiGrid({
           annualRevenue={annualRevenue}
           standardKpis={visible.filter((k) => k.category === cat)}
           customKpis={customKpis.filter((c) => c.category === cat)}
+          capacityGroups={cat === 'Team' ? capacityGroups : []}
+          capacityGroupGoals={capacityGroupGoals}
+          weeksInPeriod={weeksInPeriod}
         />
       ))}
     </div>
@@ -137,6 +144,9 @@ function CategorySection({
   annualRevenue,
   standardKpis,
   customKpis,
+  capacityGroups,
+  capacityGroupGoals,
+  weeksInPeriod,
 }: {
   category: KpiCategory
   mode: Exclude<Mode, 'weekly'>
@@ -151,8 +161,16 @@ function CategorySection({
   annualRevenue: number | undefined
   standardKpis: KpiDef[]
   customKpis: CustomKpi[]
+  capacityGroups: CapacityGroup[]
+  capacityGroupGoals: Record<string, CapacityGroupGoal>
+  weeksInPeriod: number
 }) {
-  if (standardKpis.length === 0 && customKpis.length === 0) return null
+  if (
+    standardKpis.length === 0 &&
+    customKpis.length === 0 &&
+    capacityGroups.length === 0
+  )
+    return null
 
   // Same Sales split as the weekly grid: Pipeline KPIs render as their
   // own sub-section under the Sales card.
@@ -255,6 +273,52 @@ function CategorySection({
           <TileGrid>{pipelineKpis.map((kpi) => renderStandardTile(kpi))}</TileGrid>
         </div>
       )}
+      {/* Capacity group subsections — one per group, with tiles for
+          Utilization (always), Labor Hours Produced + Labor Efficiency
+          (labor method only). Doc-08: raw values sum across entries;
+          full goals scale by weeksInPeriod; color is pace-based. */}
+      {capacityGroups.map((g, i) => (
+        <div
+          key={g.id}
+          className={
+            i > 0 || standardKpis.length > 0 || customKpis.length > 0
+              ? 'mt-4'
+              : ''
+          }
+        >
+          <div className="text-xs font-bold text-ink uppercase tracking-wider pb-1 mb-2 border-b border-line">
+            {g.name || 'Untitled group'}
+          </div>
+          <TileGrid>
+            <CumulativeCapacityTile
+              group={g}
+              entries={entries}
+              goal={capacityGroupGoals[g.id]}
+              pace={pace}
+              weeksInPeriod={weeksInPeriod}
+            />
+            {g.method === 'labor' && (
+              <>
+                <CumulativeLaborHoursTile
+                  group={g}
+                  entries={entries}
+                  goal={capacityGroupGoals[g.id]?.laborHoursGoal}
+                  pace={pace}
+                  weeksInPeriod={weeksInPeriod}
+                />
+                {!g.hideLaborEfficiency && (
+                  <CumulativeLaborEfficiencyTile
+                    group={g}
+                    entries={entries}
+                    goal={capacityGroupGoals[g.id]?.laborEfficiencyGoal}
+                    weeksInPeriod={weeksInPeriod}
+                  />
+                )}
+              </>
+            )}
+          </TileGrid>
+        </div>
+      ))}
     </div>
   )
 }
@@ -486,5 +550,230 @@ function GapToGoalTile({
         <div className="text-sm text-white mt-1">To hit GP goal</div>
       </div>
     </div>
+  )
+}
+
+// =============================================================================
+// Capacity-group cumulative tiles
+// =============================================================================
+//
+// Doc-08: per-group tiles in Team. Raw values sum across in-period entries
+// regardless of method (working hours, labor hours, revenue $). The full
+// goal scales by weeksInPeriod (capacity × weeks-in-period); pace goal =
+// full × paceFrac. Utilization KPIs (% goals) don't scale — a 75% target
+// is 75% whether MTD or YTD.
+
+const TEAM_CAPACITY_DESC =
+  'Capacity is the maximum the team can produce in a week without overworking or working overtime.'
+
+function CumulativeCapacityTile({
+  group,
+  entries,
+  goal,
+  pace,
+  weeksInPeriod,
+}: {
+  group: CapacityGroup
+  entries: WeeklyEntry[]
+  goal: CapacityGroupGoal | undefined
+  pace: number
+  weeksInPeriod: number
+}) {
+  const value = aggregateCapacityValue(group, entries)
+  const cap = groupMaxCapacity(group)
+  const cumCap = cap * weeksInPeriod
+  const utilPct =
+    cumCap > 0 && value != null ? (value / cumCap) * 100 : null
+
+  // The raw value carries the group's unit. Manual is the exception —
+  // the input IS already a % so there's no separate raw count, and the
+  // tile just shows that %.
+  let valueText = '—'
+  if (value != null) {
+    if (group.method === 'manual') {
+      valueText = utilPct != null ? `${utilPct.toFixed(1)}%` : '—'
+    } else if (group.method === 'slots') {
+      valueText = `${Math.round(value).toLocaleString()} slots`
+    } else if (group.method === 'labor' || group.method === 'headcount') {
+      valueText = `${Math.round(value).toLocaleString()} hrs`
+    } else if (group.method === 'revenue') {
+      valueText = `$${Math.round(value).toLocaleString()}`
+    }
+  }
+  const subLabel =
+    group.method !== 'manual' && utilPct != null
+      ? `${utilPct.toFixed(1)}% utilization`
+      : undefined
+
+  // Resolve goal + comparison anchor. For % utilization goals the
+  // comparison is the cumulative util %; for $ goals on revenue groups
+  // it's the cumulative dollars (and goal scales by weeksInPeriod).
+  let bandValue: number | null = null
+  let bandFullGoal: number | null = null
+  let bandPaceGoal: number | null = null
+  let goalText: string | undefined
+  let paceText: string | undefined
+  if (goal) {
+    if (group.method === 'revenue' && goal.format === '$') {
+      const target = goal.target * weeksInPeriod
+      bandValue = value
+      bandFullGoal = target
+      bandPaceGoal = target * pace
+      goalText = `$${Math.round(target).toLocaleString()}`
+      paceText =
+        bandPaceGoal != null
+          ? `$${Math.round(bandPaceGoal).toLocaleString()}`
+          : undefined
+    } else if (group.method === 'revenue' && goal.format === '%') {
+      // % of capacity goal on a revenue group — convert to $.
+      const target = (cumCap * goal.target) / 100
+      bandValue = value
+      bandFullGoal = target
+      bandPaceGoal = target * pace
+      goalText = `$${Math.round(target).toLocaleString()}`
+      paceText =
+        bandPaceGoal != null
+          ? `$${Math.round(bandPaceGoal).toLocaleString()}`
+          : undefined
+    } else if (goal.format === '$') {
+      const target = goal.target * weeksInPeriod
+      bandValue = value
+      bandFullGoal = target
+      bandPaceGoal = target * pace
+      goalText = `$${Math.round(target).toLocaleString()}`
+      paceText =
+        bandPaceGoal != null
+          ? `$${Math.round(bandPaceGoal).toLocaleString()}`
+          : undefined
+    } else {
+      // % utilization goal — doesn't scale. Compare cumulative util %.
+      bandValue = utilPct
+      bandFullGoal = goal.target
+      bandPaceGoal = goal.target
+    }
+  }
+
+  return (
+    <CumulativeTile
+      label="Capacity Utilization"
+      desc={TEAM_CAPACITY_DESC}
+      format={goal?.format === '$' || group.method === 'revenue' ? '$' : '%'}
+      direction="hi"
+      value={bandValue}
+      fullGoal={bandFullGoal}
+      paceGoal={bandPaceGoal}
+      valueText={valueText}
+      subLabel={subLabel}
+      goalText={goalText}
+      paceText={paceText}
+    />
+  )
+}
+
+function CumulativeLaborHoursTile({
+  group,
+  entries,
+  goal,
+  pace,
+  weeksInPeriod,
+}: {
+  group: CapacityGroup
+  entries: WeeklyEntry[]
+  goal: number | undefined
+  pace: number
+  weeksInPeriod: number
+}) {
+  // Sum producedHours across in-period entries.
+  let total = 0
+  let any = false
+  for (const e of entries) {
+    const cv = (e.capacity_values ?? {})[group.id] as
+      | { producedHours?: number }
+      | undefined
+    if (
+      cv &&
+      typeof cv.producedHours === 'number' &&
+      Number.isFinite(cv.producedHours)
+    ) {
+      total += cv.producedHours
+      any = true
+    }
+  }
+  const value = any ? total : null
+  const fullGoal = goal && goal > 0 ? goal * weeksInPeriod : null
+  const paceGoal = fullGoal != null ? fullGoal * pace : null
+
+  return (
+    <CumulativeTile
+      label="Labor Hours Produced"
+      desc="Productive labor hours generated by this team in the period."
+      format="#"
+      direction="hi"
+      value={value}
+      fullGoal={fullGoal}
+      paceGoal={paceGoal}
+      valueText={value != null ? `${Math.round(value).toLocaleString()} hrs` : '—'}
+      goalText={
+        fullGoal != null
+          ? `${Math.round(fullGoal).toLocaleString()} hrs`
+          : undefined
+      }
+      paceText={
+        paceGoal != null
+          ? `${Math.round(paceGoal).toLocaleString()} hrs`
+          : undefined
+      }
+    />
+  )
+}
+
+function CumulativeLaborEfficiencyTile({
+  group,
+  entries,
+  goal,
+  weeksInPeriod,
+}: {
+  group: CapacityGroup
+  entries: WeeklyEntry[]
+  goal: number | undefined
+  weeksInPeriod: number
+}) {
+  // Efficiency = sum(producedHours) / (workingHours × weeksInPeriod) × 100.
+  let total = 0
+  let any = false
+  for (const e of entries) {
+    const cv = (e.capacity_values ?? {})[group.id] as
+      | { producedHours?: number }
+      | undefined
+    if (
+      cv &&
+      typeof cv.producedHours === 'number' &&
+      Number.isFinite(cv.producedHours)
+    ) {
+      total += cv.producedHours
+      any = true
+    }
+  }
+  const working = groupWorkingHours(group)
+  const cumWorking = working * weeksInPeriod
+  const pct = any && cumWorking > 0 ? (total / cumWorking) * 100 : null
+
+  return (
+    <CumulativeTile
+      label="Labor Efficiency"
+      desc="How productively the team used their scheduled time across this period."
+      format="%"
+      direction="hi"
+      value={pct}
+      fullGoal={goal && goal > 0 ? goal : null}
+      paceGoal={goal && goal > 0 ? goal : null}
+      subLabel={
+        any && cumWorking > 0
+          ? `${Math.round(total).toLocaleString()} / ${Math.round(
+              cumWorking
+            ).toLocaleString()} hrs`
+          : undefined
+      }
+    />
   )
 }
