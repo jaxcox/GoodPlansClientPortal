@@ -566,6 +566,25 @@ function GapToGoalTile({
 const TEAM_CAPACITY_DESC =
   'Capacity is the maximum the team can produce in a week without overworking or working overtime.'
 
+/** Manual method: the weekly value IS a utilization %, so cumulative is
+ *  the average across in-period entries — summing percents is
+ *  meaningless. Returns null when no entry has a recorded value. */
+function avgUtilizationPctForManual(
+  group: CapacityGroup,
+  entries: WeeklyEntry[]
+): number | null {
+  const vals: number[] = []
+  for (const e of entries) {
+    const cv = (e.capacity_values ?? {})[group.id] as
+      | { utilizationPct?: number }
+      | undefined
+    const v = cv?.utilizationPct
+    if (typeof v === 'number' && Number.isFinite(v)) vals.push(v)
+  }
+  if (vals.length === 0) return null
+  return vals.reduce((s, v) => s + v, 0) / vals.length
+}
+
 function CumulativeCapacityTile({
   group,
   entries,
@@ -579,15 +598,23 @@ function CumulativeCapacityTile({
   pace: number
   weeksInPeriod: number
 }) {
-  const value = aggregateCapacityValue(group, entries)
+  // Manual method: the input IS already a utilization %, so the
+  // cumulative reading is the AVERAGE of per-entry %s, not a sum.
+  // Every other method carries a raw count we sum, then derive
+  // utilization from cumulative capacity.
+  const value =
+    group.method === 'manual'
+      ? avgUtilizationPctForManual(group, entries)
+      : aggregateCapacityValue(group, entries)
   const cap = groupMaxCapacity(group)
   const cumCap = cap * weeksInPeriod
   const utilPct =
-    cumCap > 0 && value != null ? (value / cumCap) * 100 : null
+    group.method === 'manual'
+      ? value
+      : cumCap > 0 && value != null
+        ? (value / cumCap) * 100
+        : null
 
-  // The raw value carries the group's unit. Manual is the exception —
-  // the input IS already a % so there's no separate raw count, and the
-  // tile just shows that %.
   let valueText = '—'
   if (value != null) {
     if (group.method === 'manual') {

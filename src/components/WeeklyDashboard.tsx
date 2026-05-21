@@ -387,23 +387,28 @@ function Header({
         <ModePills mode={mode} onMode={onMode} />
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap text-base">
-        {!displayedEntry ? (
-          <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
-            No entries yet
-          </span>
-        ) : isCurrentWeek ? (
-          <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
-            Week of{' '}
-            {formatWeekShort(dateFromIso(displayedEntry.week_start_date))}
-          </span>
-        ) : (
-          <span className="bg-bad text-white px-3 py-1 rounded font-semibold">
-            Last entry {formatWeekShort(dateFromIso(mostRecentDateIso!))} —
-            log this week to update your dashboard
-          </span>
-        )}
-      </div>
+      {/* "Week of …" / overdue pill only makes sense in Weekly mode —
+          cumulative views span multiple weeks and have their own period
+          label below the mode pills. */}
+      {mode === 'weekly' && (
+        <div className="flex items-center gap-2 flex-wrap text-base">
+          {!displayedEntry ? (
+            <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
+              No entries yet
+            </span>
+          ) : isCurrentWeek ? (
+            <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
+              Week of{' '}
+              {formatWeekShort(dateFromIso(displayedEntry.week_start_date))}
+            </span>
+          ) : (
+            <span className="bg-bad text-white px-3 py-1 rounded font-semibold">
+              Last entry {formatWeekShort(dateFromIso(mostRecentDateIso!))} —
+              log this week to update your dashboard
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -269,17 +269,19 @@ export function aggregateKpi(
   }
 
   if (kpi.aggregation === 'sum') {
-    // For Financials computed sums (grossProfit, netProfit), the value
-    // is stored per-entry under its own key but older entries may have
-    // saved only the raw inputs (revenue / cogs / expenses) without the
-    // derived field. Fall back to recomputing from those inputs so the
-    // tile still shows a value.
-    const direct = sumRaw(kpi.id, entries, ytdExtra)
-    if (direct != null) return direct
+    // grossProfit / netProfit are "sum"-aggregated in the registry but
+    // composed of revenue / cogs / expenses. The YTD-actuals fold only
+    // carries those inputs (not stored GP / NP), so we PREFER the
+    // derived computation whenever it can run — that way the pre-
+    // coaching months are included. Fall back to the stored field only
+    // when the inputs aren't available (legacy entries missing rev /
+    // cogs).
     if (kpi.id === 'grossProfit' || kpi.id === 'netProfit') {
-      return aggregateDerived(kpi.id, entries, ytdExtra)
+      const fromInputs = aggregateDerived(kpi.id, entries, ytdExtra)
+      if (fromInputs != null) return fromInputs
+      return sumRaw(kpi.id, entries)
     }
-    return null
+    return sumRaw(kpi.id, entries, ytdExtra)
   }
 
   if (kpi.aggregation === 'avg') {
@@ -429,7 +431,12 @@ export function aggregateCapacityValue(
     else if ('slotsFilled' in cv) n = cv.slotsFilled
     else if ('producedHours' in cv) n = cv.producedHours
     else if ('revenueProduced' in cv) n = cv.revenueProduced
-    else if ('departments' in cv) {
+    // Headcount has two shapes in the wild: the newer single-field
+    // `hoursWorked` and the legacy per-department breakdown. Read the
+    // newer shape first; fall back to summing departments.
+    else if ('hoursWorked' in cv) {
+      n = (cv as { hoursWorked?: number }).hoursWorked ?? null
+    } else if ('departments' in cv) {
       n = Object.values(cv.departments ?? {}).reduce(
         (s, d) => s + (d?.hoursWorked ?? 0),
         0
