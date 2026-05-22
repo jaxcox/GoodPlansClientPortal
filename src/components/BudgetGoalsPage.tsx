@@ -8,11 +8,8 @@ import {
   annualNetProfitPct,
   computeBudgetView,
   costOfGoodsPct,
-  distributeAcrossMonths,
   emptyMonthArray,
   evenSeasonPct,
-  looksAutoDistributed,
-  sumMonthsThru,
 } from '../lib/budget'
 import type {
   Budget,
@@ -55,22 +52,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [seasonType, setSeasonType] = useState<SeasonType>('even')
   const [seasonPct, setSeasonPct] = useState<number[]>(evenSeasonPct())
 
-  // YTD actuals — Doc 08 PC: stored month-by-month, but the default UI is
-  // single totals + a thru-month picker; coach can expand the per-month grid.
-  const [ytdThruMonth, setYtdThruMonth] = useState<number | null>(null)
-  const [ytdRevenueByMonth, setYtdRevenueByMonth] = useState<
-    (number | null)[]
-  >(emptyMonthArray())
-  const [ytdCogsByMonth, setYtdCogsByMonth] = useState<(number | null)[]>(
-    emptyMonthArray()
-  )
-  const [ytdExpensesByMonth, setYtdExpensesByMonth] = useState<
-    (number | null)[]
-  >(emptyMonthArray())
-  // YTD entry method — explicit choice instead of a hybrid "single total +
-  // expand for overrides" UI. Defaults from the data: months that look
-  // auto-distributed → bulk; mixed values → monthly.
-  const [ytdEntryMode, setYtdEntryMode] = useState<'bulk' | 'monthly'>('bulk')
+  // YTD actuals data lives on the budget row and is edited on Settings
+  // (moved 2026-05-22). B&G still reads it to compute the Monthly
+  // Financial Goals view (the per-month catch-up math depends on YTD),
+  // but no longer holds local YTD state.
 
   // Per-KPI goal numbers, keyed by KPI id (or custom KPI id)
   const [kpiGoals, setKpiGoals] = useState<Record<string, number>>({})
@@ -103,28 +88,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
         ? b.season_pct
         : evenSeasonPct()
     )
-    setYtdThruMonth(b?.ytd_thru_month ?? null)
-    const seededRevenue =
-      b?.ytd_revenue_by_month && b.ytd_revenue_by_month.length === 12
-        ? b.ytd_revenue_by_month
-        : emptyMonthArray()
-    const seededCogs =
-      b?.ytd_cogs_by_month && b.ytd_cogs_by_month.length === 12
-        ? b.ytd_cogs_by_month
-        : emptyMonthArray()
-    setYtdRevenueByMonth(seededRevenue)
-    setYtdCogsByMonth(seededCogs)
-    const seededExpenses =
-      b?.ytd_expenses_by_month && b.ytd_expenses_by_month.length === 12
-        ? b.ytd_expenses_by_month
-        : emptyMonthArray()
-    setYtdExpensesByMonth(seededExpenses)
-    // If either array shows manual overrides, default to monthly entry so the
-    // coach can see what's actually stored. Otherwise prefer bulk.
-    const looksBulk =
-      looksAutoDistributed(seededRevenue, b?.ytd_thru_month ?? null) &&
-      looksAutoDistributed(seededCogs, b?.ytd_thru_month ?? null)
-    setYtdEntryMode(looksBulk ? 'bulk' : 'monthly')
     setKpiGoals(b?.goals ?? {})
     setCapacityGroupGoals(b?.capacity_group_goals ?? {})
     setSavedAt(null)
@@ -173,19 +136,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     grossProfitPct === undefined ? null : 100 - grossProfitPct
 
   const isDirty = useMemo(() => {
-    const savedRevByMonth =
-      budget?.ytd_revenue_by_month && budget.ytd_revenue_by_month.length === 12
-        ? budget.ytd_revenue_by_month
-        : emptyMonthArray()
-    const savedCogsByMonth =
-      budget?.ytd_cogs_by_month && budget.ytd_cogs_by_month.length === 12
-        ? budget.ytd_cogs_by_month
-        : emptyMonthArray()
-    const savedExpensesByMonth =
-      budget?.ytd_expenses_by_month &&
-      budget.ytd_expenses_by_month.length === 12
-        ? budget.ytd_expenses_by_month
-        : emptyMonthArray()
     return (
       (annualRevenue ?? null) !== (budget?.annual_revenue ?? null) ||
       draftCogsPct !== (budget?.cogs_target_pct ?? null) ||
@@ -198,11 +148,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       (seasonType === 'seasonal' &&
         JSON.stringify(seasonPct) !==
           JSON.stringify(budget?.season_pct ?? evenSeasonPct())) ||
-      ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
-      JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRevByMonth) ||
-      JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogsByMonth) ||
-      JSON.stringify(ytdExpensesByMonth) !==
-        JSON.stringify(savedExpensesByMonth) ||
       JSON.stringify(kpiGoals) !== JSON.stringify(budget?.goals ?? {}) ||
       JSON.stringify(capacityGroupGoals) !==
         JSON.stringify(budget?.capacity_group_goals ?? {})
@@ -215,10 +160,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     annualExpenses,
     seasonType,
     seasonPct,
-    ytdThruMonth,
-    ytdRevenueByMonth,
-    ytdCogsByMonth,
-    ytdExpensesByMonth,
     kpiGoals,
     capacityGroupGoals,
   ])
@@ -250,22 +191,24 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const npPct = annualNetProfitPct(npDollars, annualRevenue ?? null)
   const seasonalSum = seasonPct.reduce((a, b) => a + (b || 0), 0)
 
+  // YTD inputs come from the budget row directly — they're edited on
+  // Settings now, not here. We still need them to compute the Monthly
+  // Financial Goals view (catch-up math reads YTD totals).
   const view = computeBudgetView({
     annualRevenue: annualRevenue ?? null,
     grossProfitPct: grossProfitPct ?? null,
     annualExpenses: annualExpenses ?? null,
     seasonType,
     seasonPct,
-    ytdThruMonth,
-    ytdRevenueByMonth,
-    ytdCogsByMonth,
-    ytdExpensesByMonth,
+    ytdThruMonth: budget?.ytd_thru_month ?? null,
+    ytdRevenueByMonth:
+      (budget?.ytd_revenue_by_month as (number | null)[] | null) ?? null,
+    ytdCogsByMonth:
+      (budget?.ytd_cogs_by_month as (number | null)[] | null) ?? null,
+    ytdExpensesByMonth:
+      (budget?.ytd_expenses_by_month as (number | null)[] | null) ??
+      emptyMonthArray(),
   })
-  const hasYtdActuals =
-    ytdThruMonth !== null &&
-    (ytdRevenueByMonth.some((v) => Number(v) > 0) ||
-      ytdCogsByMonth.some((v) => Number(v) > 0) ||
-      ytdExpensesByMonth.some((v) => Number(v) > 0))
 
   // ---- Handlers ----------------------------------------------------------
   const onSeasonTypeChange = (next: SeasonType) => {
@@ -312,40 +255,9 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       return
     }
 
-    // YTD overlap notification — if this save sets / extends ytd_thru_month
-    // to cover weeks that already have weekly_entries rows, the cumulative
-    // dashboard will double-count income. Surface it before committing.
-    if (ytdThruMonth != null) {
-      const monthEndIso = (() => {
-        const d = new Date(year, ytdThruMonth + 1, 0)
-        const m = String(d.getMonth() + 1).padStart(2, '0')
-        const day = String(d.getDate()).padStart(2, '0')
-        return `${d.getFullYear()}-${m}-${day}`
-      })()
-      const yearStartIso = `${year}-01-01`
-      const { data: overlapping } = await supabase
-        .from('weekly_entries')
-        .select('week_start_date')
-        .eq('client_id', client.id)
-        .gte('week_start_date', yearStartIso)
-        .lte('week_start_date', monthEndIso)
-      const overlapCount = overlapping?.length ?? 0
-      if (overlapCount > 0) {
-        const monthName = new Date(year, ytdThruMonth, 1).toLocaleDateString(
-          'en-US',
-          { month: 'long' }
-        )
-        if (
-          !confirm(
-            `Heads up — ${overlapCount} weekly entr${overlapCount === 1 ? 'y' : 'ies'} fall within the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count income. Save this budget anyway?`
-          )
-        ) {
-          return
-        }
-      }
-    }
-
     setSaving(true)
+    // YTD fields aren't included — those are owned by Settings now.
+    // B&G writes annual targets, season config, KPI + capacity goals.
     const payload = {
       client_id: client.id,
       coach_id: client.coach_id,
@@ -355,12 +267,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       season_type: seasonType,
       season_pct: seasonType === 'seasonal' ? seasonPct : [],
       annual_expenses: annualExpenses ?? null,
-      ytd_thru_month: ytdThruMonth,
-      ytd_revenue_by_month:
-        ytdThruMonth === null ? null : ytdRevenueByMonth,
-      ytd_cogs_by_month: ytdThruMonth === null ? null : ytdCogsByMonth,
-      ytd_expenses_by_month:
-        ytdThruMonth === null ? null : ytdExpensesByMonth,
       goals: kpiGoals,
       capacity_group_goals: capacityGroupGoals,
     }
@@ -591,26 +497,10 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
             )}
           </Card>
 
-          {client.tracks_ytd_actuals && (
-            <Card title="YTD Actuals">
-              <YtdActualsBody
-                ytdThruMonth={ytdThruMonth}
-                setYtdThruMonth={setYtdThruMonth}
-                revenueByMonth={ytdRevenueByMonth}
-                setRevenueByMonth={setYtdRevenueByMonth}
-                cogsByMonth={ytdCogsByMonth}
-                setCogsByMonth={setYtdCogsByMonth}
-                expensesByMonth={ytdExpensesByMonth}
-                setExpensesByMonth={setYtdExpensesByMonth}
-                entryMode={ytdEntryMode}
-                setEntryMode={setYtdEntryMode}
-                seasonType={seasonType}
-                seasonPct={seasonPct}
-                view={view}
-                hasYtdActuals={hasYtdActuals}
-              />
-            </Card>
-          )}
+          {/* YTD Actuals moved to Settings 2026-05-22 — the section was
+              one-time-per-year setup data, not a working surface, and
+              was bogging down the B&G screen. Coach edits in Settings;
+              client sees the read-only summary there too. */}
         </div>
 
         <div className="space-y-4">
@@ -694,311 +584,6 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
 // Helpers
 // =============================================================================
 
-function YtdActualsBody({
-  ytdThruMonth,
-  setYtdThruMonth,
-  revenueByMonth,
-  setRevenueByMonth,
-  cogsByMonth,
-  setCogsByMonth,
-  expensesByMonth,
-  setExpensesByMonth,
-  entryMode,
-  setEntryMode,
-  seasonType,
-  seasonPct,
-  view,
-  hasYtdActuals,
-}: {
-  ytdThruMonth: number | null
-  setYtdThruMonth: (n: number | null) => void
-  revenueByMonth: (number | null)[]
-  setRevenueByMonth: (arr: (number | null)[]) => void
-  cogsByMonth: (number | null)[]
-  setCogsByMonth: (arr: (number | null)[]) => void
-  expensesByMonth: (number | null)[]
-  setExpensesByMonth: (arr: (number | null)[]) => void
-  entryMode: 'bulk' | 'monthly'
-  setEntryMode: (m: 'bulk' | 'monthly') => void
-  seasonType: SeasonType
-  seasonPct: number[]
-  view: ReturnType<typeof computeBudgetView> | null
-  hasYtdActuals: boolean
-}) {
-  const enabled = ytdThruMonth !== null
-  const revenueTotal = sumMonthsThru(revenueByMonth, ytdThruMonth)
-  const cogsTotal = sumMonthsThru(cogsByMonth, ytdThruMonth)
-  const expensesTotal = sumMonthsThru(expensesByMonth, ytdThruMonth)
-
-  const onThruMonthChange = (raw: string) => {
-    if (raw === '' || raw === 'none') {
-      setYtdThruMonth(null)
-      setRevenueByMonth(emptyMonthArray())
-      setCogsByMonth(emptyMonthArray())
-      setExpensesByMonth(emptyMonthArray())
-      return
-    }
-    const next = Number(raw)
-    setYtdThruMonth(next)
-    if (revenueByMonth.some((v, i) => i > next && v != null)) {
-      const trimmed = revenueByMonth.map((v, i) => (i > next ? null : v))
-      setRevenueByMonth(trimmed)
-    }
-    if (cogsByMonth.some((v, i) => i > next && v != null)) {
-      const trimmed = cogsByMonth.map((v, i) => (i > next ? null : v))
-      setCogsByMonth(trimmed)
-    }
-    if (expensesByMonth.some((v, i) => i > next && v != null)) {
-      const trimmed = expensesByMonth.map((v, i) => (i > next ? null : v))
-      setExpensesByMonth(trimmed)
-    }
-  }
-
-  // Bulk mode handlers — typing a total replaces all months with the
-  // auto-distribute. No confirm: bulk is an explicit mode, the coach asked
-  // for this behavior by picking it.
-  const setBulkRevenue = (n: number | undefined) => {
-    if (ytdThruMonth === null) return
-    if (n === undefined) {
-      setRevenueByMonth(emptyMonthArray())
-      return
-    }
-    setRevenueByMonth(
-      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
-    )
-  }
-  const setBulkCogs = (n: number | undefined) => {
-    if (ytdThruMonth === null) return
-    if (n === undefined) {
-      setCogsByMonth(emptyMonthArray())
-      return
-    }
-    setCogsByMonth(
-      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
-    )
-  }
-  const setBulkExpenses = (n: number | undefined) => {
-    if (ytdThruMonth === null) return
-    if (n === undefined) {
-      setExpensesByMonth(emptyMonthArray())
-      return
-    }
-    setExpensesByMonth(
-      distributeAcrossMonths(n, ytdThruMonth, seasonType, seasonPct)
-    )
-  }
-
-  const setMonthValue = (
-    which: 'revenue' | 'cogs' | 'expenses',
-    idx: number,
-    value: number | undefined
-  ) => {
-    const arr =
-      which === 'revenue'
-        ? revenueByMonth
-        : which === 'cogs'
-          ? cogsByMonth
-          : expensesByMonth
-    const next = [...arr]
-    next[idx] = value ?? null
-    if (which === 'revenue') setRevenueByMonth(next)
-    else if (which === 'cogs') setCogsByMonth(next)
-    else setExpensesByMonth(next)
-  }
-
-  return (
-    <div className="space-y-4">
-      <Labeled label="Most Recent Closed Month">
-        <select
-          value={ytdThruMonth ?? 'none'}
-          onChange={(e) => onThruMonthChange(e.target.value)}
-          className="select-yellow w-48 bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent"
-        >
-          <option value="none">— Pick one —</option>
-          {MONTH_LABELS.map((m, i) => (
-            <option key={m} value={i}>
-              {m}
-            </option>
-          ))}
-        </select>
-      </Labeled>
-
-      {enabled && (
-        <>
-          <Labeled label="Enter Actuals">
-            <div className="inline-flex border border-line rounded overflow-hidden">
-              <ModeButton
-                active={entryMode === 'bulk'}
-                onClick={() => setEntryMode('bulk')}
-              >
-                Single total
-              </ModeButton>
-              <ModeButton
-                active={entryMode === 'monthly'}
-                onClick={() => setEntryMode('monthly')}
-              >
-                Month-by-month
-              </ModeButton>
-            </div>
-          </Labeled>
-
-          {entryMode === 'bulk' ? (
-            <div className="space-y-4">
-              {/* Row 1: Income */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Income">
-                  <NumberField tone="light"
-                    value={revenueTotal === 0 ? undefined : revenueTotal}
-                    onChange={setBulkRevenue}
-                    format="dollars"
-                    max={null}
-                    ariaLabel="YTD income total"
-                  />
-                  {view && hasYtdActuals && (
-                    <StatusLine
-                      behind={view.revenueGap < -0.5}
-                      gap={view.revenueGap}
-                    />
-                  )}
-                </Labeled>
-              </div>
-
-              {/* Row 2: Gross Profit (both derived) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Gross Profit $">
-                  <DerivedBox
-                    value={formatDollars(revenueTotal - cogsTotal)}
-                  />
-                  {view && hasYtdActuals && (
-                    <>
-                      <StatusLine
-                        behind={view.gpGap < -0.5}
-                        gap={view.gpGap}
-                      />
-                      {view.gpGap < -0.5 && (
-                        <div className="text-xs text-white italic mt-1">
-                          Remaining monthly goals adjusted to close this GP
-                          gap.
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Labeled>
-                <Labeled label="Gross Profit %">
-                  <DerivedBox
-                    value={
-                      revenueTotal > 0
-                        ? `${(((revenueTotal - cogsTotal) / revenueTotal) * 100).toFixed(1)}%`
-                        : '—'
-                    }
-                  />
-                </Labeled>
-              </div>
-
-              {/* Row 3: Cost of Goods Sold (input + derived %) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Cost of Goods Sold">
-                  <NumberField tone="light"
-                    value={cogsTotal === 0 ? undefined : cogsTotal}
-                    onChange={setBulkCogs}
-                    format="dollars"
-                    max={null}
-                    ariaLabel="YTD cost of goods sold total"
-                  />
-                </Labeled>
-                <Labeled label="Cost of Goods Sold %">
-                  <DerivedBox
-                    value={
-                      revenueTotal > 0
-                        ? `${((cogsTotal / revenueTotal) * 100).toFixed(1)}%`
-                        : '—'
-                    }
-                  />
-                </Labeled>
-              </div>
-
-              {/* Row 4: Expenses */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Expenses">
-                  <NumberField tone="light"
-                    value={expensesTotal === 0 ? undefined : expensesTotal}
-                    onChange={setBulkExpenses}
-                    format="dollars"
-                    max={null}
-                    ariaLabel="YTD expenses total"
-                  />
-                </Labeled>
-              </div>
-
-              {/* Row 5: Net Profit (both derived) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Labeled label="Net Profit $">
-                  <DerivedBox
-                    value={formatDollars(
-                      revenueTotal - cogsTotal - expensesTotal
-                    )}
-                  />
-                </Labeled>
-                <Labeled label="Net Profit %">
-                  <DerivedBox
-                    value={
-                      revenueTotal > 0
-                        ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
-                        : '—'
-                    }
-                  />
-                </Labeled>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-[#0a0a0a] border border-line rounded p-3 overflow-x-auto">
-              <div className="grid grid-cols-[0.6fr_1.1fr_1.1fr_1.1fr_1.1fr_1fr_0.6fr] gap-x-3 gap-y-1.5 items-center min-w-[640px]">
-                <HeaderCell>Month</HeaderCell>
-                <HeaderCell>Income</HeaderCell>
-                <HeaderCell>Cost of Goods Sold</HeaderCell>
-                <HeaderCell>Gross Profit</HeaderCell>
-                <HeaderCell>Expenses</HeaderCell>
-                <HeaderCell>Net Profit</HeaderCell>
-                <HeaderCell>NP %</HeaderCell>
-                {MONTH_LABELS.slice(0, ytdThruMonth + 1).map((m, i) => (
-                  <FragmentRow
-                    key={m}
-                    month={m}
-                    revenue={revenueByMonth[i] ?? undefined}
-                    cogs={cogsByMonth[i] ?? undefined}
-                    expenses={expensesByMonth[i] ?? undefined}
-                    onRevenueChange={(n) => setMonthValue('revenue', i, n)}
-                    onCogsChange={(n) => setMonthValue('cogs', i, n)}
-                    onExpensesChange={(n) => setMonthValue('expenses', i, n)}
-                  />
-                ))}
-                {/* Totals row — every cell outlined to match the per-row
-                    DerivedCell styling for visual consistency. */}
-                <DerivedTotal>Total</DerivedTotal>
-                <DerivedTotal>{formatDollars(revenueTotal)}</DerivedTotal>
-                <DerivedTotal>{formatDollars(cogsTotal)}</DerivedTotal>
-                <DerivedTotal>
-                  {formatDollars(revenueTotal - cogsTotal)}
-                </DerivedTotal>
-                <DerivedTotal>{formatDollars(expensesTotal)}</DerivedTotal>
-                <DerivedTotal>
-                  {formatDollars(revenueTotal - cogsTotal - expensesTotal)}
-                </DerivedTotal>
-                <DerivedTotal>
-                  {revenueTotal > 0
-                    ? `${(((revenueTotal - cogsTotal - expensesTotal) / revenueTotal) * 100).toFixed(1)}%`
-                    : '—'}
-                </DerivedTotal>
-              </div>
-            </div>
-          )}
-
-          <RoundingNote />
-        </>
-      )}
-    </div>
-  )
-}
 
 /** Read-only display box that mirrors the input field's dimensions but uses
  *  a gray (line) border instead of the yellow (accent) ring on fillable
@@ -1014,64 +599,12 @@ function DerivedBox({ value }: { value: string }) {
   )
 }
 
-function HeaderCell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-xs font-semibold uppercase tracking-wider text-white">
-      {children}
-    </div>
-  )
-}
-
-/** Per-cell derived display (Gross Profit, Net Profit, NP %) — same dark
- *  surface + 0.5px yellow outline as the standalone DerivedBox so it lines
- *  up visually with the input cells in the row. */
-function DerivedCell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm px-3 py-1.5">
-      {children}
-    </div>
-  )
-}
-
-/** Totals-row variant — same outline as DerivedCell but bold. */
-function DerivedTotal({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-surface-2 border-[0.5px] border-accent rounded text-white text-sm font-semibold px-3 py-1.5 mt-2">
-      {children}
-    </div>
-  )
-}
-
 function RoundingNote() {
   return (
     <div className="text-xs text-white italic pt-2">
       Numbers are rounded to whole dollars; per-month figures may differ from
       totals by a dollar or two.
     </div>
-  )
-}
-
-function ModeButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-4 py-1.5 text-xs font-semibold ${
-        active
-          ? 'bg-accent text-black'
-          : 'bg-transparent text-white hover:bg-white/10'
-      }`}
-    >
-      {children}
-    </button>
   )
 }
 
@@ -1097,82 +630,7 @@ function BudgetTabButton({
       {children}
     </button>
   )
-}
 
-function FragmentRow({
-  month,
-  revenue,
-  cogs,
-  expenses,
-  onRevenueChange,
-  onCogsChange,
-  onExpensesChange,
-}: {
-  month: string
-  revenue: number | undefined
-  cogs: number | undefined
-  expenses: number | undefined
-  onRevenueChange: (n: number | undefined) => void
-  onCogsChange: (n: number | undefined) => void
-  onExpensesChange: (n: number | undefined) => void
-}) {
-  const hasAny =
-    revenue !== undefined || cogs !== undefined || expenses !== undefined
-  const gpDollars = hasAny ? (revenue ?? 0) - (cogs ?? 0) : null
-  const npDollars =
-    gpDollars === null ? null : gpDollars - (expenses ?? 0)
-  const npPct =
-    revenue !== undefined && revenue > 0 && npDollars !== null
-      ? (npDollars / revenue) * 100
-      : null
-  return (
-    <>
-      <div className="text-white text-sm font-semibold">{month}</div>
-      <NumberField tone="light"
-        value={revenue}
-        onChange={onRevenueChange}
-        format="dollars"
-        max={null}
-        ariaLabel={`${month} income`}
-      />
-      <NumberField tone="light"
-        value={cogs}
-        onChange={onCogsChange}
-        format="dollars"
-        max={null}
-        ariaLabel={`${month} cost of goods sold`}
-      />
-      <DerivedCell>
-        {gpDollars === null ? '—' : formatDollars(gpDollars)}
-      </DerivedCell>
-      <NumberField tone="light"
-        value={expenses}
-        onChange={onExpensesChange}
-        format="dollars"
-        max={null}
-        ariaLabel={`${month} expenses`}
-      />
-      <DerivedCell>
-        {npDollars === null ? '—' : formatDollars(npDollars)}
-      </DerivedCell>
-      <DerivedCell>
-        {npPct === null ? '—' : `${npPct.toFixed(1)}%`}
-      </DerivedCell>
-    </>
-  )
-}
-
-/** Inline status under the Income / Gross Profit boxes on YTD Actuals.
- *  Plain white text — status is conveyed by the words themselves. */
-function StatusLine({ behind, gap }: { behind: boolean; gap: number }) {
-  return (
-    <div className="mt-1 text-xs text-white">
-      <strong>{behind ? 'Behind Budget' : 'On Track'}</strong>{' '}
-      {gap >= 0 ? '+' : ''}
-      {formatDollars(gap)}
-    </div>
-  )
-}
 
 function Labeled({
   label,

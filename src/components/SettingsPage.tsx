@@ -4,11 +4,17 @@ import { KPIS, emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
 import { InfoIcon } from './InfoIcon'
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type {
+  Budget,
   CapacityGroup,
   Client,
   CustomKpi,
   Industry,
 } from '../lib/types'
+import {
+  computeBudgetView,
+  emptyMonthArray,
+  type BudgetView,
+} from '../lib/budget'
 import { Toggle } from './Toggle'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { formatPhone } from '../lib/phone'
@@ -23,6 +29,7 @@ import { Card } from './Card'
 import { CapacityGroupsCard } from './CapacityGroupsCard'
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { DarkField } from './DarkField'
+import { YtdActualsCard } from './YtdActualsCard'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -59,6 +66,23 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   // committed via the page-level Save bar. Mirrors capacityGroups.
   const [customKpis, setCustomKpis] = useState<CustomKpi[]>([])
 
+  // ---- YTD Actuals state -------------------------------------------------
+  // YTD actuals live on the budgets row, not the clients row. Settings is
+  // where the coach enters them (was on Budget & Goals; moved here on
+  // 2026-05-22 so B&G stays focused on targets + monthly goals). The
+  // client view is read-only.
+  const [budget, setBudget] = useState<Budget | null>(null)
+  const [ytdThruMonth, setYtdThruMonth] = useState<number | null>(null)
+  const [ytdRevenueByMonth, setYtdRevenueByMonth] = useState<
+    (number | null)[]
+  >(emptyMonthArray())
+  const [ytdCogsByMonth, setYtdCogsByMonth] = useState<(number | null)[]>(
+    emptyMonthArray()
+  )
+  const [ytdExpensesByMonth, setYtdExpensesByMonth] = useState<
+    (number | null)[]
+  >(emptyMonthArray())
+
   // ---- Save state --------------------------------------------------------
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -79,12 +103,36 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     setCustomKpis(c.custom_kpis ?? [])
   }
 
+  const seedYtdFromBudget = (b: Budget | null) => {
+    setYtdThruMonth(b?.ytd_thru_month ?? null)
+    setYtdRevenueByMonth(
+      (b?.ytd_revenue_by_month as (number | null)[] | null) ??
+        emptyMonthArray()
+    )
+    setYtdCogsByMonth(
+      (b?.ytd_cogs_by_month as (number | null)[] | null) ??
+        emptyMonthArray()
+    )
+    setYtdExpensesByMonth(
+      (b?.ytd_expenses_by_month as (number | null)[] | null) ??
+        emptyMonthArray()
+    )
+  }
+
+  const ytdYear = useMemo(() => new Date().getFullYear(), [])
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [clientRes, indRes] = await Promise.all([
+      const [clientRes, indRes, budgetRes] = await Promise.all([
         supabase.from('clients').select('*').eq('id', clientId).maybeSingle(),
         supabase.from('industries').select('*').order('name'),
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('client_id', clientId)
+          .eq('year', ytdYear)
+          .maybeSingle(),
       ])
       if (cancelled) return
       if (clientRes.error || !clientRes.data) {
@@ -93,6 +141,9 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       }
       setClient(clientRes.data as Client)
       seedDraft(clientRes.data as Client)
+      const b = (budgetRes.data as Budget | null) ?? null
+      setBudget(b)
+      seedYtdFromBudget(b)
       setSavedAt(null)
       setSaveError(null)
       setIndustries((indRes.data ?? []) as Industry[])
@@ -100,7 +151,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     return () => {
       cancelled = true
     }
-  }, [clientId])
+  }, [clientId, ytdYear])
 
   // ---- Editability rules per Doc 04 PC #7 --------------------------------
   // Client view: only Company Name + Contact Name are editable. Everything
@@ -111,7 +162,67 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const emailEditable = coachView && !client?.activated
   const emailLocked = !coachView || (coachView && Boolean(client?.activated))
 
+  // ---- Budget engine view ------------------------------------------------
+  // Recomputes live as the coach types YTD numbers so the "Behind Budget /
+  // On Track" status lines under Income / GP stay current. null when no
+  // budget exists yet (first-time setup).
+  const budgetView: BudgetView | null = useMemo(() => {
+    if (!budget) return null
+    const cogsPct =
+      budget.cogs_target_pct != null ? Number(budget.cogs_target_pct) : null
+    const gpPct = cogsPct != null ? 100 - cogsPct : null
+    return computeBudgetView({
+      annualRevenue:
+        budget.annual_revenue != null ? Number(budget.annual_revenue) : null,
+      grossProfitPct: gpPct,
+      annualExpenses:
+        budget.annual_expenses != null ? Number(budget.annual_expenses) : null,
+      seasonType: budget.season_type,
+      seasonPct: budget.season_pct ?? [],
+      ytdThruMonth,
+      ytdRevenueByMonth,
+      ytdCogsByMonth,
+      ytdExpensesByMonth,
+    })
+  }, [
+    budget,
+    ytdThruMonth,
+    ytdRevenueByMonth,
+    ytdCogsByMonth,
+    ytdExpensesByMonth,
+  ])
+
+  const hasYtdActuals =
+    ytdThruMonth !== null &&
+    (ytdRevenueByMonth.some((v) => Number(v) > 0) ||
+      ytdCogsByMonth.some((v) => Number(v) > 0) ||
+      ytdExpensesByMonth.some((v) => Number(v) > 0))
+
   // ---- Dirty tracking ----------------------------------------------------
+  const ytdDirty = useMemo(() => {
+    const savedRev =
+      (budget?.ytd_revenue_by_month as (number | null)[] | null) ??
+      emptyMonthArray()
+    const savedCogs =
+      (budget?.ytd_cogs_by_month as (number | null)[] | null) ??
+      emptyMonthArray()
+    const savedExp =
+      (budget?.ytd_expenses_by_month as (number | null)[] | null) ??
+      emptyMonthArray()
+    return (
+      ytdThruMonth !== (budget?.ytd_thru_month ?? null) ||
+      JSON.stringify(ytdRevenueByMonth) !== JSON.stringify(savedRev) ||
+      JSON.stringify(ytdCogsByMonth) !== JSON.stringify(savedCogs) ||
+      JSON.stringify(ytdExpensesByMonth) !== JSON.stringify(savedExp)
+    )
+  }, [
+    budget,
+    ytdThruMonth,
+    ytdRevenueByMonth,
+    ytdCogsByMonth,
+    ytdExpensesByMonth,
+  ])
+
   const isDirty = useMemo(() => {
     if (!client) return false
     return (
@@ -129,10 +240,11 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         JSON.stringify(client.capacity_groups ?? []) ||
       JSON.stringify(customKpis) !==
         JSON.stringify(client.custom_kpis ?? []) ||
-      false
+      ytdDirty
     )
   }, [
     client,
+    ytdDirty,
     companyName,
     contactName,
     email,
@@ -227,6 +339,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     }
     if (client) {
       seedDraft(client)
+      seedYtdFromBudget(budget)
       setSavedAt(null)
       setSaveError(null)
     }
@@ -297,11 +410,78 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       .select()
       .single()
 
-    setSaving(false)
     if (error) {
+      setSaving(false)
       setSaveError(error.message)
       return
     }
+
+    // YTD actuals write to the budgets row — coach-only, and only when
+    // the YTD section is dirty. Upserts so a coach setting up YTD before
+    // creating a real budget gets the row created with just YTD fields
+    // (B&G fills in annual targets later).
+    if (canEditAll && ytdDirty) {
+      // YTD overlap notification — if this save sets or extends
+      // ytd_thru_month to cover weeks that already have weekly_entries
+      // rows, cumulative dashboards may double-count. Surface before
+      // committing so the coach can bail.
+      if (ytdThruMonth != null) {
+        const monthEndIso = (() => {
+          const d = new Date(ytdYear, ytdThruMonth + 1, 0)
+          const m = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          return `${d.getFullYear()}-${m}-${day}`
+        })()
+        const yearStartIso = `${ytdYear}-01-01`
+        const { data: overlapping } = await supabase
+          .from('weekly_entries')
+          .select('week_start_date')
+          .eq('client_id', client.id)
+          .gte('week_start_date', yearStartIso)
+          .lte('week_start_date', monthEndIso)
+        const overlapCount = overlapping?.length ?? 0
+        if (overlapCount > 0) {
+          const monthName = new Date(
+            ytdYear,
+            ytdThruMonth,
+            1
+          ).toLocaleDateString('en-US', { month: 'long' })
+          if (
+            !confirm(
+              `Heads up — ${overlapCount} weekly entr${overlapCount === 1 ? 'y' : 'ies'} fall within the YTD Actuals window (Jan–${monthName}). The cumulative dashboard may double-count income. Save anyway?`
+            )
+          ) {
+            setSaving(false)
+            return
+          }
+        }
+      }
+
+      const ytdPayload = {
+        client_id: client.id,
+        coach_id: client.coach_id,
+        year: ytdYear,
+        ytd_thru_month: ytdThruMonth,
+        ytd_revenue_by_month:
+          ytdThruMonth === null ? null : ytdRevenueByMonth,
+        ytd_cogs_by_month: ytdThruMonth === null ? null : ytdCogsByMonth,
+        ytd_expenses_by_month:
+          ytdThruMonth === null ? null : ytdExpensesByMonth,
+      }
+      const ytdOp = budget
+        ? supabase.from('budgets').update(ytdPayload).eq('id', budget.id)
+        : supabase.from('budgets').insert(ytdPayload)
+      const { data: bRow, error: bErr } = await ytdOp.select().single()
+      if (bErr) {
+        setSaving(false)
+        setSaveError(bErr.message)
+        return
+      }
+      setBudget(bRow as Budget)
+      seedYtdFromBudget(bRow as Budget)
+    }
+
+    setSaving(false)
     setClient(data as Client)
     seedDraft(data as Client)
     setSaveError(null)
@@ -507,6 +687,23 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             groups={capacityGroups}
             onChange={setCapacityGroups}
             coachView
+          />
+        )}
+        {tracksYtd && (
+          <YtdActualsCard
+            ytdThruMonth={ytdThruMonth}
+            setYtdThruMonth={setYtdThruMonth}
+            revenueByMonth={ytdRevenueByMonth}
+            setRevenueByMonth={setYtdRevenueByMonth}
+            cogsByMonth={ytdCogsByMonth}
+            setCogsByMonth={setYtdCogsByMonth}
+            expensesByMonth={ytdExpensesByMonth}
+            setExpensesByMonth={setYtdExpensesByMonth}
+            seasonType={budget?.season_type ?? 'even'}
+            seasonPct={budget?.season_pct ?? []}
+            view={budgetView}
+            hasYtdActuals={hasYtdActuals}
+            readOnly={!coachView}
           />
         )}
         </div>
