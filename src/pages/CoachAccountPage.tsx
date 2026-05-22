@@ -56,13 +56,14 @@ export function CoachAccountPage({ onLeave }: Props) {
     [profile, coach]
   )
 
-  const isDirty =
-    displayName !== initial.displayName ||
+  const profileDirty = displayName !== initial.displayName
+  const coachDirty =
     brandName !== initial.brandName ||
     brandFooter !== initial.brandFooter ||
     brandColor !== initial.brandColor ||
     supportEmail !== initial.supportEmail ||
     fromEmail !== initial.fromEmail
+  const isDirty = profileDirty || coachDirty
 
   const setGuardDirty = useDirtyGuard(isDirty)
 
@@ -71,28 +72,48 @@ export function CoachAccountPage({ onLeave }: Props) {
     setSaving(true)
     setSaveError(null)
 
-    const profileUpdate = supabase
-      .from('profiles')
-      .update({ display_name: displayName.trim() || null })
-      .eq('id', profile.id)
-
-    const coachUpdate = supabase
-      .from('coaches')
-      .update({
-        brand_name: brandName.trim(),
-        brand_footer_text: brandFooter.trim() || null,
-        brand_primary_color: brandColor.trim() || null,
-        support_email: supportEmail.trim() || null,
-        from_email: fromEmail.trim() || null,
-      })
-      .eq('id', coach.id)
-
-    const [pRes, cRes] = await Promise.all([profileUpdate, coachUpdate])
-    setSaving(false)
-    if (pRes.error || cRes.error) {
-      setSaveError((pRes.error ?? cRes.error)?.message ?? 'Save failed.')
-      return
+    // Sequential — profile first, then coach. Only update the dirty
+    // half so we don't write fields the user didn't touch. If profile
+    // fails we bail before touching coaches; if coaches fails after a
+    // successful profile write, the page reports which half committed
+    // so the user knows what to retry.
+    if (profileDirty) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName.trim() || null })
+        .eq('id', profile.id)
+      if (error) {
+        setSaving(false)
+        setSaveError(`Profile: ${error.message}`)
+        return
+      }
     }
+
+    if (coachDirty) {
+      const { error } = await supabase
+        .from('coaches')
+        .update({
+          brand_name: brandName.trim(),
+          brand_footer_text: brandFooter.trim() || null,
+          brand_primary_color: brandColor.trim() || null,
+          support_email: supportEmail.trim() || null,
+          from_email: fromEmail.trim() || null,
+        })
+        .eq('id', coach.id)
+      if (error) {
+        setSaving(false)
+        // Profile already committed at this point if it was dirty —
+        // tell the user explicitly so the retry is clean.
+        const prefix = profileDirty
+          ? 'Profile saved, but brand: '
+          : 'Brand: '
+        setSaveError(prefix + error.message)
+        await refreshProfile()
+        return
+      }
+    }
+
+    setSaving(false)
     setSavedAt(Date.now())
     setGuardDirty(false)
     await refreshProfile()
