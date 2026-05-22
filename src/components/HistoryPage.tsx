@@ -740,9 +740,23 @@ function computeCell({
   if (row.kind === 'custom') {
     const raw = (entry.kpi_values ?? {})[row.custom.id]
     const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+    // Same goal-periodicity as standard sum/$ KPIs: $/# goals are
+    // stored ANNUAL on budget.goals and pro-rated to this entry's week
+    // by month_share × (7 / days in month). % goals are flat rates.
     const goalRaw = kpiGoals[row.custom.id]
-    const goal =
-      typeof goalRaw === 'number' && goalRaw !== 0 ? goalRaw : null
+    let goal: number | null = null
+    if (typeof goalRaw === 'number' && goalRaw !== 0) {
+      if (row.custom.format === '%') {
+        goal = goalRaw
+      } else {
+        const start = dateFromIso(entry.week_start_date)
+        const m = start.getMonth()
+        const y = start.getFullYear()
+        const share = monthShares[m] ?? 1 / 12
+        const frac = 7 / new Date(y, m + 1, 0).getDate()
+        goal = goalRaw * share * frac
+      }
+    }
     return {
       value,
       goal,

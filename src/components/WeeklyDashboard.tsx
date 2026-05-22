@@ -263,8 +263,10 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         />
       </div>
 
-      {/* Empty state — no entries at all */}
-      {entries.length === 0 && (
+      {/* Empty state — no entries at all. Only shown on Weekly mode;
+          MTD/QTD/YTD have their own period-scoped empty state that
+          better fits the cumulative context. */}
+      {mode === 'weekly' && entries.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
           No entries yet. Go to <strong>Weekly Entry</strong> to log your
           first week.
