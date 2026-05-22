@@ -609,7 +609,6 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             <CapacityGroupsCard
               groups={capacityGroups}
               onChange={setCapacityGroups}
-              coachView
             />
           )}
           {!coachView && (

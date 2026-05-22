@@ -182,7 +182,6 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
         ) : tab === 'budget' ? (
           <BudgetGoalsPage
             clientId={clientId}
-            coachView={coachView}
             onLeave={() => {
               if (coachView && onBack) {
                 onBack()
@@ -194,7 +193,6 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
         ) : tab === 'entry' ? (
           <WeeklyEntryPage
             clientId={clientId}
-            coachView={coachView}
             onLeave={() => {
               if (coachView && onBack) {
                 onBack()
@@ -206,7 +204,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
         ) : tab === 'dashboard' ? (
           <WeeklyDashboard clientId={clientId} coachView={coachView} />
         ) : tab === 'history' ? (
-          <HistoryPage clientId={clientId} coachView={coachView} />
+          <HistoryPage clientId={clientId} />
         ) : (
           <Body tab={tab} />
         )}

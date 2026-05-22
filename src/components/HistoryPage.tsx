@@ -25,8 +25,6 @@ import writeXlsxFile from 'write-excel-file/browser'
 
 type Props = {
   clientId: string
-  /** True when a coach is operating on this client's behalf via View Portal. */
-  coachView: boolean
 }
 
 /** One row in the History table — a KPI or a capacity-group derived row. */
@@ -51,7 +49,7 @@ type Row =
       subKind: 'utilization' | 'laborHours' | 'laborEfficiency'
     }
 
-export function HistoryPage({ clientId, coachView: _coachView }: Props) {
+export function HistoryPage({ clientId }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [entries, setEntries] = useState<WeeklyEntry[]>([])

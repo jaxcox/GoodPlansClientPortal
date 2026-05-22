@@ -27,8 +27,6 @@ import { Card } from './Card'
 
 type Props = {
   clientId: string
-  /** True when a coach is operating on this client's behalf via View Portal. */
-  coachView: boolean
   onLeave: () => void
 }
 
@@ -630,7 +628,7 @@ function BudgetTabButton({
       {children}
     </button>
   )
-
+}
 
 function Labeled({
   label,

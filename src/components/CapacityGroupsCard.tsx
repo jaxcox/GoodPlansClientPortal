@@ -2,8 +2,6 @@ import {
   CAPACITY_METHODS,
   methodMeta,
   newCapacityGroup,
-  groupMaxCapacity,
-  groupWorkingHours,
 } from '../lib/capacity'
 import type {
   CapacityGroup,
@@ -18,34 +16,12 @@ import { Card } from './Card'
 type Props = {
   groups: CapacityGroup[]
   onChange: (next: CapacityGroup[]) => void
-  coachView: boolean
 }
 
 export function CapacityGroupsCard({
   groups,
   onChange,
-  coachView,
 }: Props) {
-  // Read-only client view ----------------------------------------------------
-  if (!coachView) {
-    return (
-      <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization" fit>
-        {groups.length === 0 ? (
-          <div className="text-white text-xs">
-            No capacity tracking set up yet.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {groups.map((g) => (
-              <ReadOnlyGroup key={g.id} group={g} />
-            ))}
-          </div>
-        )}
-      </Card>
-    )
-  }
-
-  // ----- Coach edit view ----------------------------------------------------
   /** Replace one field on one group. */
   const updateGroup = (id: string, patch: Partial<CapacityGroup>) => {
     onChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)))
@@ -383,95 +359,6 @@ function ManualConfig({
 // Read-only display for client view
 // =============================================================================
 
-function ReadOnlyGroup({ group }: { group: CapacityGroup }) {
-  const meta = methodMeta(group.method)
-  const titleFallback = meta?.label ? `Untitled (${meta.label})` : 'Untitled'
-  return (
-    <div className="bg-surface-2 border-[0.5px] border-accent rounded p-3">
-      <div className="flex justify-between items-baseline mb-1.5">
-        <div className="text-white text-sm font-semibold">
-          {group.name || titleFallback}
-        </div>
-        {meta && (
-          <div className="text-xs text-white font-bold uppercase tracking-wider">
-            {meta.short}
-          </div>
-        )}
-      </div>
-      {meta ? (
-        <ReadOnlySummary group={group} meta={meta} />
-      ) : (
-        <div className="text-white text-xs italic">
-          Tracking method not yet picked.
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ReadOnlySummary({
-  group,
-  meta,
-}: {
-  group: CapacityGroup
-  meta: { value: CapacityMethod }
-}) {
-  if (meta.value === 'manual') {
-    return (
-      <div className="text-white text-xs">
-        Static utilization:{' '}
-        <strong className="text-white">{group.staticUtilPct ?? '—'}%</strong>
-      </div>
-    )
-  }
-  const max = groupMaxCapacity(group)
-  if (meta.value === 'slots') {
-    return (
-      <div className="text-white text-xs">
-        Max capacity:{' '}
-        <strong className="text-white">{max} slots/wk</strong>
-        {group.slotDurationMinutes && (
-          <>
-            {' · '}
-            <strong className="text-white">
-              {group.slotDurationMinutes} min
-            </strong>{' '}
-            per slot
-          </>
-        )}
-      </div>
-    )
-  }
-  if (meta.value === 'labor') {
-    const working = groupWorkingHours(group)
-    return (
-      <div className="text-white text-xs">
-        Max capacity: <strong className="text-white">{max} hrs/wk</strong>
-        {working > 0 && (
-          <>
-            {' · '}Working hours:{' '}
-            <strong className="text-white">{working} hrs/wk</strong>
-          </>
-        )}
-      </div>
-    )
-  }
-  if (meta.value === 'revenue') {
-    return (
-      <div className="text-white text-xs">
-        Max capacity:{' '}
-        <strong className="text-white">{formatDollars(max)}/wk</strong>
-      </div>
-    )
-  }
-  // headcount
-  return (
-    <div className="text-white text-xs">
-      Max capacity: <strong className="text-white">{max} hrs/wk</strong>
-    </div>
-  )
-}
-
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -493,10 +380,3 @@ function FieldGroup({
   )
 }
 
-function formatDollars(n: number): string {
-  return n.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  })
-}

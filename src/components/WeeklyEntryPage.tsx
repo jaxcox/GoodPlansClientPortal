@@ -36,8 +36,6 @@ import { InfoIcon } from './InfoIcon'
 
 type Props = {
   clientId: string
-  /** True when a coach is viewing on behalf of the client. */
-  coachView: boolean
   onLeave: () => void
 }
 
