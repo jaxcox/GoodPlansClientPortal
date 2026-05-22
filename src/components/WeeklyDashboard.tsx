@@ -14,6 +14,7 @@ import { computeBudgetView, emptyMonthArray } from '../lib/budget'
 import type { MonthlyGoal } from '../lib/budget'
 import {
   actualValue,
+  daysInMonth,
   monthShareFractions,
   visibleTileKpis,
   weeklyGoal,
@@ -627,6 +628,7 @@ function CategorySection({
                     entry={entry}
                     priorEntry={priorEntry}
                     goal={kpiGoals[c.id]}
+                    monthShares={monthShares}
                   />
                 ))}
               </TileGrid>
@@ -969,11 +971,13 @@ function CustomTile({
   entry,
   priorEntry,
   goal,
+  monthShares,
 }: {
   custom: CustomKpi
   entry: WeeklyEntry
   priorEntry: WeeklyEntry | null
   goal: number | undefined
+  monthShares: number[]
 }) {
   const value = (entry.kpi_values ?? {})[custom.id] ?? null
   const prior = priorEntry
@@ -982,10 +986,23 @@ function CustomTile({
   const delta =
     value != null && prior != null ? Number(value) - Number(prior) : null
 
-  // Custom KPI goals are STATIC — whatever the coach enters in Budget &
-  // Goals is the per-period goal as-is. No annual-to-weekly pro-rating
-  // (unlike standard sum/$ KPIs).
-  const weeklyG = goal != null && goal !== 0 ? goal : null
+  // Custom KPI goals follow the same convention as standard sum/$ KPIs:
+  // $/# goals are stored as ANNUAL amounts and pro-rated by month
+  // share × (7 / days in month). % goals are flat rates and stay
+  // as-is across periods.
+  let weeklyG: number | null = null
+  if (goal != null && goal !== 0) {
+    if (custom.format === '%') {
+      weeklyG = goal
+    } else {
+      const start = dateFromIso(entry.week_start_date)
+      const month = start.getMonth()
+      const year = start.getFullYear()
+      const share = monthShares[month] ?? 1 / 12
+      const frac = 7 / daysInMonth(year, month)
+      weeklyG = goal * share * frac
+    }
+  }
 
   return (
     <KpiTile
