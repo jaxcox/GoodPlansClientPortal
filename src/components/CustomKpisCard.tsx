@@ -49,7 +49,7 @@ export function CustomKpisListSection({
             {readOnly ? (
               <>
                 <span className="text-accent font-bold">✓</span>
-                <span className="text-white text-xs">{k.name}</span>
+                <span className="text-white text-sm">{k.name}</span>
               </>
             ) : (
               <Toggle

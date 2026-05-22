@@ -842,10 +842,10 @@ function FinancialsSection({
 function AlwaysOnItem({ label, tooltip }: { label: string; tooltip?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="inline-flex justify-center w-7 text-accent text-xs font-bold">
+      <span className="inline-flex justify-center w-7 text-accent text-sm font-bold">
         ✓
       </span>
-      <span className="text-white text-xs">{label}</span>
+      <span className="text-white text-sm">{label}</span>
       {tooltip && <InfoIcon text={tooltip} />}
     </div>
   )
@@ -973,7 +973,7 @@ function FinancialsReadOnly({ kpis }: { kpis: Record<string, number> }) {
       <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
         Financials
       </div>
-      <ul className="text-xs text-white space-y-1">
+      <ul className="text-sm text-white space-y-1">
         <ReadOnlyItem label="Income" tooltip={kpiDesc('revenue')} />
         <ReadOnlyItem label="COGS" tooltip={kpiDesc('cogs')} />
         <ReadOnlyItem label="Gross Profit" tooltip={kpiDesc('grossProfit')} />
@@ -1016,7 +1016,7 @@ function KpiTogglesReadOnly({
             <div className="text-xs font-bold text-white uppercase tracking-wider pb-1 mb-2 border-b border-line">
               {g.category}
             </div>
-            <ul className="text-xs text-white space-y-1">
+            <ul className="text-sm text-white space-y-1">
               {active.map((k) => (
                 <li key={k.id} className="flex items-center gap-2">
                   <span className="text-accent font-bold">✓</span>

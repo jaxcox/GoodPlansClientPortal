@@ -130,7 +130,7 @@ export function KpiTile({
             Achieved!
           </div>
         )}
-        <div className="text-xs font-semibold uppercase tracking-wider text-black mb-2 flex items-center justify-center gap-1.5">
+        <div className="text-sm font-semibold uppercase tracking-wider text-black mb-2 flex items-center justify-center gap-1.5">
           <span>{label}</span>
           {desc && <InfoIcon text={desc} />}
         </div>
@@ -144,7 +144,7 @@ export function KpiTile({
             <div className="text-3xl font-bold text-black leading-none">
               {formatValue(value, format)}
             </div>
-            <div className="text-xs text-black mt-1">
+            <div className="text-sm text-black mt-1">
               {effectiveGoal == null ? (
                 <span>No goal set</span>
               ) : range ? (
@@ -194,17 +194,17 @@ export function KpiTile({
   return (
     <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
       <div className="flex items-center gap-0.5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+        <div className="text-sm font-semibold uppercase tracking-wider text-white">
           {label}
         </div>
         {desc && <InfoIcon text={desc} />}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center text-center">
-        <div className={`text-lg font-bold leading-none ${valueColor}`}>
+        <div className={`text-xl font-bold leading-none ${valueColor}`}>
           {formatValue(value, format)}
         </div>
         {!hideGoal && (
-          <div className="text-sm text-white mt-1">
+          <div className="text-base text-white mt-1">
             {effectiveGoal == null ? (
               <span>No goal set</span>
             ) : range ? (

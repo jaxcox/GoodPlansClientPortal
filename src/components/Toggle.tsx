@@ -28,7 +28,7 @@ export function Toggle({ checked, onChange, label, disabled }: Props) {
           }`}
         />
       </button>
-      <span className="text-white text-xs">{label}</span>
+      <span className="text-white text-sm">{label}</span>
     </label>
   )
 }

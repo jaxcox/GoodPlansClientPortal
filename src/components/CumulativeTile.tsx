@@ -118,7 +118,7 @@ export function CumulativeTile({
   const minH = tall ? 'min-h-[220px]' : 'min-h-[110px]'
   const valueTextSize = tall
     ? 'text-3xl font-semibold leading-none'
-    : 'text-lg font-bold leading-none'
+    : 'text-xl font-bold leading-none'
   const color = paceColor(value, paceGoal, fullGoal, direction, range)
   const valueColor =
     color === 'green' ? 'text-good' : color === 'red' ? 'text-bad' : 'text-white'
@@ -149,7 +149,7 @@ export function CumulativeTile({
         </div>
       )}
       <div className="flex items-center gap-0.5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+        <div className="text-sm font-semibold uppercase tracking-wider text-white">
           {label}
         </div>
         {desc && <InfoIcon text={desc} />}
@@ -160,13 +160,13 @@ export function CumulativeTile({
           {valueText ?? formatValue(value, format)}
         </div>
         {subLabel && (
-          <div className="text-xs text-white mt-1">{subLabel}</div>
+          <div className="text-sm text-white mt-1">{subLabel}</div>
         )}
         {/* Ratio / range tiles: goal caption sits centered under the
             value, same placement as Weekly — no progress bar context to
             anchor to. */}
         {isRatio && (
-          <div className="text-sm text-white mt-1">
+          <div className="text-base text-white mt-1">
             {fullGoal == null
               ? 'No goal set'
               : range
@@ -186,7 +186,7 @@ export function CumulativeTile({
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-sm text-white">
+          <div className="flex justify-between text-base text-white">
             <span>
               {paceGoal == null
                 ? 'No goal set'

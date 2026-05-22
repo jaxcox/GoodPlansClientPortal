@@ -118,7 +118,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-sm sm:text-xs flex-wrap">
+        <div className="flex items-center gap-1 text-base sm:text-sm flex-wrap">
           {!(client.must_change_password && !coachView) && (
             <>
               <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
@@ -139,7 +139,10 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               Shared Drive ↗
             </a>
           )}
-          {coachView ? (
+          {/* Coach view gets Back (to the Clients list) AND Logout —
+              the coach should be able to sign out from anywhere, not
+              just after backing all the way out to Coach Admin. */}
+          {coachView && (
             <button
               type="button"
               onClick={guardedBack}
@@ -147,15 +150,14 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             >
               Back
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={guardedSignOut}
-              className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
-            >
-              Logout
-            </button>
           )}
+          <button
+            type="button"
+            onClick={guardedSignOut}
+            className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -234,11 +236,14 @@ function NavLink({
     <button
       type="button"
       onClick={onClick}
-      className={`px-2 py-2 sm:py-1 ${
-        active ? 'font-bold text-ink border-b-2 border-accent' : 'text-black'
-      }`}
+      className={`px-2 py-2 sm:py-1 ${active ? 'font-bold text-ink' : 'text-black'}`}
     >
-      {children}
+      {/* Underline lives on an inner span so the yellow rule hugs the
+          word instead of sitting at the bottom of the button's tap-
+          target padding. */}
+      <span className={active ? 'border-b-2 border-accent pb-0.5' : ''}>
+        {children}
+      </span>
     </button>
   )
 }

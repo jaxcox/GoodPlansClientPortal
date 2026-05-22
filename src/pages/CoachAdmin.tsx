@@ -93,9 +93,13 @@ export function CoachAdmin({ onViewPortal }: Props) {
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
         <div>
           <span className="font-brand text-lg font-bold text-ink">{brandName}</span>
-          <span className="text-xs text-black ml-3">Admin Panel</span>
+          <span className="text-sm text-black ml-3">Admin Panel</span>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        {/* ml-auto keeps the name + Logout pinned to the right even
+            when the header wraps to a second line on narrow phones —
+            otherwise a wrapped flex line left-aligns and the Logout
+            button drifts to the wrong side. */}
+        <div className="flex items-center gap-3 text-sm ml-auto">
           <span className="text-black">
             {profile?.display_name ?? 'Coach'}
           </span>
@@ -155,13 +159,15 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`text-sm sm:text-xs py-3 sm:py-2.5 ${
-        active
-          ? 'font-bold text-ink border-b-2 border-accent -mb-px'
-          : 'text-black'
+      className={`text-base sm:text-sm py-3 sm:py-2.5 ${
+        active ? 'font-bold text-ink' : 'text-black'
       }`}
     >
-      {children}
+      {/* Underline on an inner span so the yellow rule hugs the word,
+          not the bottom of the tap-target padding. */}
+      <span className={active ? 'border-b-2 border-accent pb-0.5' : ''}>
+        {children}
+      </span>
     </button>
   )
 }

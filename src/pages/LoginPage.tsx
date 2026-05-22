@@ -16,7 +16,9 @@ export function LoginPage() {
           <div className="font-brand text-2xl font-bold text-ink">
             The Good Plans Co
           </div>
-          <div className="text-sm text-white mt-1">Client Performance Portal</div>
+          <div className="text-base font-bold text-ink mt-1">
+            Client Performance Portal
+          </div>
         </div>
 
         <div className="bg-ink rounded-xl p-6 shadow-xl">

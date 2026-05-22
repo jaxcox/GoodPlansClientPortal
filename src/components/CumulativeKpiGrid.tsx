@@ -530,7 +530,7 @@ function GapToGoalTile({
   return (
     <div className="bg-ink rounded-lg p-3 min-h-[220px] flex flex-col">
       <div className="flex items-center gap-0.5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-white">
+        <div className="text-sm font-semibold uppercase tracking-wider text-white">
           Revenue Needed This {unit}
         </div>
         <InfoIcon
@@ -547,7 +547,7 @@ function GapToGoalTile({
             {formatValue(revenueNeeded, '$')}
           </div>
         )}
-        <div className="text-sm text-white mt-1">To hit GP goal</div>
+        <div className="text-base text-white mt-1">To hit GP goal</div>
       </div>
     </div>
   )

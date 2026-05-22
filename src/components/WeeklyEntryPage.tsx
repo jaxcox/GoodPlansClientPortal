@@ -868,7 +868,9 @@ function SlotsBlock({
     (values as { slotsFilled?: number; totalSlots?: number } | undefined) ??
     {}
   const m = group.measurable?.trim()
-  const filledLabel = m ? `${m} Filled` : 'Slots Filled'
+  // No measurable → no label. Better blank than a generic
+  // "Slots Filled" that misrepresents what the coach is tracking.
+  const filledLabel = m ? `${m} Filled` : ''
   return (
     <Labeled label={filledLabel}>
       <NumberField
@@ -903,9 +905,9 @@ function LaborBlock({
 }) {
   const v = (values as { producedHours?: number } | undefined) ?? {}
   const cap = groupMaxCapacity(group)
-  const m = group.measurable?.trim()
-  // Use the measurable verbatim, no "Completed" suffix.
-  const label = m || 'Labor Hours Completed'
+  // No measurable → no label. Empty is better than a generic
+  // "Labor Hours Completed" fallback.
+  const label = group.measurable?.trim() ?? ''
   return (
     <div className="space-y-2">
       <Labeled label={label}>
@@ -936,9 +938,10 @@ function RevenueBlock({
 }) {
   const v = (values as { revenueProduced?: number } | undefined) ?? {}
   const cap = groupMaxCapacity(group)
-  // Use the measurable verbatim — the "$" prefix comes from the
-  // NumberField input itself, no need to append "($)" to the label.
-  const label = group.measurable?.trim() || 'Dollars Earned'
+  // No measurable → no label. The "$" prefix from NumberField already
+  // signals dollars; the generic fallback ("Dollars Earned") wasn't
+  // adding clarity.
+  const label = group.measurable?.trim() ?? ''
   return (
     <div className="space-y-2">
       <Labeled label={label}>
@@ -983,7 +986,9 @@ function HeadcountBlock({
   )
   const current = v.hoursWorked ?? (totalFromLegacy || undefined)
   const cap = groupMaxCapacity(group)
-  const label = group.measurable?.trim() || 'Hours Worked'
+  // No measurable → no label. Empty is preferable to a generic
+  // "Hours Worked" fallback.
+  const label = group.measurable?.trim() ?? ''
   return (
     <div className="space-y-2">
       <Labeled label={label}>
@@ -1010,11 +1015,17 @@ function Labeled({
   label: string
   children: React.ReactNode
 }) {
+  // Empty label = render just the input with no label row. Used on
+  // capacity blocks when the coach hasn't filled in "What's Being
+  // Measured" — we'd rather show nothing than a generic placeholder
+  // that misrepresents what the field is for.
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
-        {label}
-      </div>
+      {label && (
+        <div className="text-xs font-semibold uppercase tracking-wider text-white mb-1">
+          {label}
+        </div>
+      )}
       {children}
     </div>
   )

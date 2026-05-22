@@ -30,6 +30,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* iOS Safari auto-zooms the viewport whenever a focused input has a
+ * font-size below 16px — and never zooms back out, so the whole app
+ * stays magnified after you tab through, say, the login form. Forcing
+ * form controls to 16px on small screens kills that zoom. Desktop
+ * keeps the tighter 14px sizing from the component classes. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Selects: appearance-none strips the native chrome that was clipping the
  * inset black ring on inputs of the same className. We re-add a black
  * chevron via background-image so the dropdown still reads as a select. */
