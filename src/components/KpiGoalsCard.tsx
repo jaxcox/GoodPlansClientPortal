@@ -1,6 +1,7 @@
 import { CATEGORIES, KPIS, findKpi } from '../lib/kpis'
 import type { KpiCategory, KpiFormat } from '../lib/kpis'
 import type { Client } from '../lib/types'
+import { DERIVABLE_GOAL_IDS, deriveAnnualGoal } from '../lib/dashboardGoals'
 import { NumberField } from './NumberField'
 import { InfoIcon } from './InfoIcon'
 import { Card } from './Card'
@@ -13,7 +14,7 @@ type Props = {
   client: Client
   goals: Record<string, number>
   /** Annual income target — needed to derive goals for KPIs whose formula
-   *  uses revenue (e.g. Avg Transaction Value, Avg Repair Order). */
+   *  uses revenue (e.g. Transactions, Jobs Completed via $/avg). */
   annualRevenue: number | undefined
   onChange: (next: Record<string, number>) => void
 }
@@ -32,84 +33,6 @@ const numberFieldFormat: Record<KpiFormat, 'dollars' | 'percent' | 'count'> =
     '%': 'percent',
     '#': 'count',
   }
-
-/** KPIs whose goal can be auto-derived from other KPI goals (or annual
- *  revenue). Marking a KPI here makes its row render as a derived box on
- *  Budget & Goals → KPI Goals; everything else gets a fillable NumberField.
- *
- *  Note: `efficiency` (Labor Efficiency) is `auto` in the KPI registry but
- *  is NOT in this set — its formula (produced ÷ working hours) can't be
- *  computed from other KPI goals, so the coach types a target percent
- *  manually. */
-const DERIVABLE_GOAL_IDS = new Set<string>([
-  'conversionRate', // newClients / leads
-  'avgEstimateValue', // proposalsDollars / estimatesWritten
-  'avgEstimateWon', // estimatesWonDollars / estimatesWonCount
-  'avgContractWon', // contractsWonDollars / contractsWonCount
-  'avgPipelineDeal', // pipelineValue / pipelineDeals
-  'closeRate', // contractsWonDollars / proposalsDollars
-  'avgTransactionValue', // annualRevenue / transactions
-  'avgRepairOrder', // annualRevenue / jobsCompleted
-])
-
-function safeDivide(
-  num: number | undefined,
-  den: number | undefined
-): number | null {
-  if (!num || !den) return null
-  return num / den
-}
-
-/** Pick whichever of `contractsWonDollars` / `estimatesWonDollars` is the
- *  currently-active won-dollars KPI for this client, and return its goal.
- *  Goals for the inactive sibling are ignored so stale values from a
- *  previous toggle state don't leak into derived calculations. */
-function wonDollarsGoal(
-  goals: Record<string, number>,
-  visibleStandardIds: Set<string>
-): number | undefined {
-  if (visibleStandardIds.has('contractsWonDollars'))
-    return goals['contractsWonDollars']
-  if (visibleStandardIds.has('estimatesWonDollars'))
-    return goals['estimatesWonDollars']
-  return undefined
-}
-
-function deriveGoal(
-  kpiId: string,
-  goals: Record<string, number>,
-  annualRevenue: number | undefined,
-  visibleStandardIds: Set<string>
-): number | null {
-  const g = (id: string) => goals[id]
-  switch (kpiId) {
-    case 'conversionRate': {
-      const r = safeDivide(g('newClients'), g('leads'))
-      return r === null ? null : r * 100
-    }
-    case 'avgEstimateValue':
-      return safeDivide(g('proposalsDollars'), g('estimatesWritten'))
-    case 'avgEstimateWon':
-      return safeDivide(g('estimatesWonDollars'), g('estimatesWonCount'))
-    case 'avgContractWon':
-      return safeDivide(g('contractsWonDollars'), g('contractsWonCount'))
-    case 'avgPipelineDeal':
-      return safeDivide(g('pipelineValue'), g('pipelineDeals'))
-    case 'closeRate': {
-      const r = safeDivide(
-        wonDollarsGoal(goals, visibleStandardIds),
-        g('proposalsDollars')
-      )
-      return r === null ? null : r * 100
-    }
-    case 'avgTransactionValue':
-      return safeDivide(annualRevenue, g('transactions'))
-    case 'avgRepairOrder':
-      return safeDivide(annualRevenue, g('jobsCompleted'))
-    default:
-      return null
-  }
-}
 
 function formatDerived(value: number | null, format: KpiFormat): string {
   if (value === null) return '—'
@@ -278,7 +201,7 @@ export function KpiGoalsCard({
                   {row.derived ? (
                     <DerivedKpiBox
                       value={formatDerived(
-                        deriveGoal(
+                        deriveAnnualGoal(
                           row.id,
                           goals,
                           annualRevenue,

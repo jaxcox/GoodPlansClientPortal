@@ -144,11 +144,6 @@ export function KpiTile({
             <div className="text-3xl font-bold text-black leading-none">
               {formatValue(value, format)}
             </div>
-            {delta != null && delta !== 0 && (
-              <div className={`text-xs mt-1 ${deltaColor}`}>
-                {formatDelta(delta, format)}
-              </div>
-            )}
             <div className="text-xs text-black mt-1">
               {effectiveGoal == null ? (
                 <span>No goal set</span>
@@ -208,11 +203,6 @@ export function KpiTile({
         <div className={`text-lg font-bold leading-none ${valueColor}`}>
           {formatValue(value, format)}
         </div>
-        {delta != null && delta !== 0 && (
-          <div className={`text-xs mt-1 ${deltaColor}`}>
-            {formatDelta(delta, format)}
-          </div>
-        )}
         {!hideGoal && (
           <div className="text-sm text-white mt-1">
             {effectiveGoal == null ? (

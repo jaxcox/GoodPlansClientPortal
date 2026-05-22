@@ -866,11 +866,6 @@ function FinancialsRowTile({
           <div className={`${valueText} ${resultColor}`}>
             {formatKpiValue(value, kpi.format)}
           </div>
-          {delta != null && delta !== 0 && (
-            <div className={`text-xs mt-1 ${deltaColor}`}>
-              {formatKpiDelta(delta, kpi.format)}
-            </div>
-          )}
           <div className={`text-base mt-1 ${goalText}`}>
             Goal: {formatKpiValue(goal, kpi.format)}
           </div>
@@ -898,11 +893,6 @@ function FinancialsRowTile({
           <div className={`${valueText} ${resultColor}`}>
             {formatKpiValue(value, kpi.format)}
           </div>
-          {delta != null && delta !== 0 && (
-            <div className={`text-xs mt-1 ${deltaColor}`}>
-              {formatKpiDelta(delta, kpi.format)}
-            </div>
-          )}
           <div className={`text-base mt-1 ${goalText}`}>
             Goal: {formatKpiValue(goal, kpi.format)}
           </div>

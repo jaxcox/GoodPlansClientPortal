@@ -183,6 +183,8 @@ export const KPIS: KpiDef[] = [
     category: 'Sales',
     format: '#',
     aggregation: 'sum',
+    // Goal is derived from Estimates Written ($) ÷ Avg Estimate Value.
+    dependsOn: ['proposalsDollars', 'avgEstimateValue'],
   },
   {
     id: 'avgEstimateValue',
@@ -192,6 +194,9 @@ export const KPIS: KpiDef[] = [
     format: '$',
     aggregation: 'derived',
     auto: true,
+    // Mutual dependency with the count side: the avg goal is direct,
+    // but its actual still derives from these. Listing them keeps the
+    // toggle cascade symmetric in both directions.
     dependsOn: ['proposalsDollars', 'estimatesWritten'],
   },
   {
@@ -211,6 +216,8 @@ export const KPIS: KpiDef[] = [
     format: '#',
     aggregation: 'sum',
     excludes: ['contractsWonCount'],
+    // Goal is derived from Estimates Won ($) ÷ Avg Estimate Won.
+    dependsOn: ['estimatesWonDollars', 'avgEstimateWon'],
   },
   {
     id: 'avgEstimateWon',
@@ -239,6 +246,8 @@ export const KPIS: KpiDef[] = [
     format: '#',
     aggregation: 'sum',
     excludes: ['estimatesWonCount'],
+    // Goal is derived from Contracts Won ($) ÷ Avg Contract Won.
+    dependsOn: ['contractsWonDollars', 'avgContractWon'],
   },
   {
     id: 'avgContractWon',
@@ -258,7 +267,16 @@ export const KPIS: KpiDef[] = [
     format: '%',
     aggregation: 'derived',
     auto: true,
-    dependsOn: ['contractsWonDollars', 'proposalsDollars'],
+    // Either mutex partner satisfies the "wins" half of the formula —
+    // listing both keeps the toggle cascade aware of either path. The
+    // cascade-on path uses mutex-skip to enable only the relevant
+    // partner; cascade-off correctly orphans closeRate when both
+    // partners are off.
+    dependsOn: [
+      'contractsWonDollars',
+      'estimatesWonDollars',
+      'proposalsDollars',
+    ],
   },
   {
     id: 'pipelineValue',
@@ -293,6 +311,8 @@ export const KPIS: KpiDef[] = [
     category: 'Sales',
     format: '#',
     aggregation: 'sum',
+    // Goal is derived from Income ÷ Avg Transaction Value.
+    dependsOn: ['avgTransactionValue'],
   },
   {
     id: 'avgTransactionValue',
@@ -313,6 +333,8 @@ export const KPIS: KpiDef[] = [
     category: 'Operations',
     format: '#',
     aggregation: 'sum',
+    // Goal is derived from Income ÷ Average per Job.
+    dependsOn: ['avgRepairOrder'],
   },
   {
     id: 'onTimeDelivery',
@@ -419,10 +441,16 @@ export function emptyKpiDefaults(): Record<string, number> {
   return out
 }
 
-/** All auto-KPIs that depend on `inputId` (excluding always-on KPIs). */
+/** All KPIs that depend on `inputId` (excluding always-on KPIs).
+ *  Used for the disable-cascade: if a coach turns off a KPI that
+ *  others derive their goal from, those dependents are at risk of
+ *  orphaning. The `auto` flag isn't part of the filter — after the
+ *  avg-as-goal-input flip, some dependents (the flipped counts) are
+ *  client-entered KPIs whose GOAL is derived but whose actual value
+ *  isn't. */
 function dependentsOf(inputId: string): KpiDef[] {
   return KPIS.filter(
-    (k) => !k.always && k.auto && (k.dependsOn ?? []).includes(inputId)
+    (k) => !k.always && (k.dependsOn ?? []).includes(inputId)
   )
 }
 
@@ -487,7 +515,12 @@ export function applyKpiToggle(
     }
 
     const autoEnabled: string[] = []
-    if (kpi.auto && kpi.dependsOn) {
+    // Cascade-on: any KPI with a dependsOn list pulls in those inputs
+    // so its goal-derivation works. Not gated on `auto` because the
+    // post-flip count KPIs (jobsCompleted etc.) depend on their avg /
+    // $ counterparts for goal derivation but aren't auto-computed at
+    // entry time.
+    if (kpi.dependsOn) {
       for (const depId of kpi.dependsOn) {
         const dep = findKpi(depId)
         if (!dep || dep.always) continue
@@ -506,16 +539,11 @@ export function applyKpiToggle(
   }
 
   // ----- Turning OFF -----
-  // Auto-KPIs: just off, no cascade (inputs are independent KPIs).
-  if (kpi.auto) {
-    return {
-      kind: 'applied',
-      defaults: { ...defaults, [kpiId]: 0 },
-      autoEnabled: [],
-      autoDisabled: [],
-    }
-  }
-  // Input KPI: check for active dependents.
+  // Any KPI with active dependents triggers a confirm-cascade. This
+  // used to special-case `auto` KPIs to skip the cascade, but after
+  // the avg-as-goal-input flip avgs and counts depend on each other
+  // (avg's actual needs the count; count's goal needs the avg), so
+  // turning either off may orphan the other.
   const activeDeps = dependentsOf(kpiId).filter(
     (d) => Number(defaults[d.id]) === 1
   )

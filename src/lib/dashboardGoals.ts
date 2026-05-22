@@ -70,6 +70,26 @@ function wonDollarsGoal(
   return undefined
 }
 
+/** KPI ids whose goals are computed from other goals, not stored
+ *  directly on `budget.goals`. The dashboard and B&G KPI Goals card
+ *  both consult this set when resolving the goal value.
+ *
+ *  Throughput pairs (e.g. Jobs Completed × Avg Repair Order = Revenue)
+ *  are flipped so the COUNT is derived from a coach-entered AVERAGE
+ *  target — coaches think in $/unit, and averages are period-coverage
+ *  independent which keeps mid-year onboarding math clean. */
+export const DERIVABLE_GOAL_IDS = new Set<string>([
+  'conversionRate', // newClients / leads
+  'avgPipelineDeal', // pipelineValue / pipelineDeals  (snapshot — not flipped)
+  'closeRate', // wonDollars / proposalsDollars
+  // Counts derived from $-target / avg-per-unit:
+  'estimatesWritten', // proposalsDollars / avgEstimateValue
+  'estimatesWonCount', // estimatesWonDollars / avgEstimateWon
+  'contractsWonCount', // contractsWonDollars / avgContractWon
+  'transactions', // annualRevenue / avgTransactionValue
+  'jobsCompleted', // annualRevenue / avgRepairOrder
+])
+
 export function deriveAnnualGoal(
   kpiId: string,
   goals: Record<string, number>,
@@ -82,12 +102,6 @@ export function deriveAnnualGoal(
       const r = safeDivide(g('newClients'), g('leads'))
       return r === null ? null : r * 100
     }
-    case 'avgEstimateValue':
-      return safeDivide(g('proposalsDollars'), g('estimatesWritten'))
-    case 'avgEstimateWon':
-      return safeDivide(g('estimatesWonDollars'), g('estimatesWonCount'))
-    case 'avgContractWon':
-      return safeDivide(g('contractsWonDollars'), g('contractsWonCount'))
     case 'avgPipelineDeal':
       return safeDivide(g('pipelineValue'), g('pipelineDeals'))
     case 'closeRate': {
@@ -97,10 +111,19 @@ export function deriveAnnualGoal(
       )
       return r === null ? null : r * 100
     }
-    case 'avgTransactionValue':
-      return safeDivide(annualRevenue, g('transactions'))
-    case 'avgRepairOrder':
-      return safeDivide(annualRevenue, g('jobsCompleted'))
+    // Counts derived from $-target ÷ avg-per-unit. Coaches enter the
+    // average ($/job, $/transaction, etc.); the implied annual count
+    // is what the dashboard renders.
+    case 'estimatesWritten':
+      return safeDivide(g('proposalsDollars'), g('avgEstimateValue'))
+    case 'estimatesWonCount':
+      return safeDivide(g('estimatesWonDollars'), g('avgEstimateWon'))
+    case 'contractsWonCount':
+      return safeDivide(g('contractsWonDollars'), g('avgContractWon'))
+    case 'transactions':
+      return safeDivide(annualRevenue, g('avgTransactionValue'))
+    case 'jobsCompleted':
+      return safeDivide(annualRevenue, g('avgRepairOrder'))
     default:
       return null
   }
@@ -191,22 +214,39 @@ export function weeklyGoal({
     return monthlyGoal.netProfitPct
   }
 
-  // Derived KPIs: their "goal" is composed from related KPI goals (e.g.
-  // closeRate = wonDollars goal ÷ proposalsDollars goal × 100). Same logic
-  // the KPI Goals card uses to render the derived box. Result is a per-unit
-  // value (ratio or per-period $) — no pro-rating needed.
-  if (kpi.aggregation === 'derived') {
-    return deriveAnnualGoal(kpi.id, kpiGoals, annualRevenue, enabledIds)
+  // KPIs whose goal is composed from other KPI goals (counts derived
+  // from $/avg, ratios derived from inputs) route through
+  // deriveAnnualGoal. For sum/# derived counts (jobsCompleted etc.),
+  // pro-rate the annual derived count just like a stored sum KPI;
+  // for ratio derivations (closeRate, conversionRate, avgPipelineDeal)
+  // the result is a per-unit value with no pro-rate.
+  if (DERIVABLE_GOAL_IDS.has(kpi.id)) {
+    const annual = deriveAnnualGoal(
+      kpi.id,
+      kpiGoals,
+      annualRevenue,
+      enabledIds
+    )
+    if (annual == null) return null
+    // Per-unit ratios (% / derived avgs) stay flat across periods.
+    if (kpi.format === '%') return annual
+    if (kpi.aggregation === 'last' || kpi.aggregation === 'avg') return annual
+    if (kpi.aggregation === 'derived') return annual
+    // Derived sum/# count: pro-rate same as a stored sum KPI.
+    const share = monthShares[month] ?? 1 / 12
+    return annual * share * frac
   }
 
-  // All other KPIs: read goal from kpiGoals (annual for sum/$, raw for
-  // %/avg/last). Sum/$ get pro-rated by month share + day fraction; others
-  // use the raw goal.
+  // All other KPIs: read goal from kpiGoals.
   const annual = kpiGoals[kpi.id]
   if (annual == null || annual === 0) return null
 
   if (kpi.format === '%') return annual // ratio target, applies any period
   if (kpi.aggregation === 'last' || kpi.aggregation === 'avg') return annual
+  // Avg KPIs now carry their goal directly (the flipped pairs). Their
+  // aggregation in the registry is 'derived' (actual is rev/count) but
+  // the goal is just a $/unit number — don't pro-rate.
+  if (kpi.aggregation === 'derived') return annual
 
   // sum/$ KPI: annual × month_share_fraction × (entry.days / daysInMonth)
   // monthShares sum to 1.0 (e.g. 0.0833 for even months) — same math the

@@ -28,7 +28,11 @@ import type {
   WeeklyEntry,
 } from './types'
 import { dateFromIso } from './week'
-import { daysInMonth } from './dashboardGoals'
+import {
+  DERIVABLE_GOAL_IDS,
+  daysInMonth,
+  deriveAnnualGoal,
+} from './dashboardGoals'
 import type { MonthlyGoal } from './budget'
 
 export type Mode = 'weekly' | 'mtd' | 'qtd' | 'ytd'
@@ -557,64 +561,18 @@ export function getPeriodGoalFull({
     return monthlyGoals?.[month]?.netProfitPct ?? null
   }
 
-  // Derived KPIs (non-financial): per-unit value, no scaling. Pull from
-  // the same deriveAnnualGoal that the KPI Goals card uses, since it
-  // already produces a per-unit ratio / average.
-  if (kpi.aggregation === 'derived') {
-    return deriveDerivedGoal(kpi.id, kpiGoals, enabledIds, annualRevenue)
-  }
-
-  // %/avg/last KPIs: no scaling.
-  if (kpi.format === '%') return kpiGoals[kpi.id] ?? null
-  if (kpi.aggregation === 'avg' || kpi.aggregation === 'last') {
-    return kpiGoals[kpi.id] ?? null
-  }
-
-  // Sum KPI ($ / #): annual × period share.
-  const annual = kpiGoals[kpi.id]
+  // Resolve the annual goal value — derived for KPIs in
+  // DERIVABLE_GOAL_IDS, direct lookup on budget.goals otherwise.
+  const annual = DERIVABLE_GOAL_IDS.has(kpi.id)
+    ? deriveAnnualGoal(kpi.id, kpiGoals, annualRevenue, enabledIds)
+    : kpiGoals[kpi.id] ?? null
   if (annual == null || annual === 0) return null
-  return annual * periodShare(mode, month, monthShares)
-}
 
-/** Mirror of dashboardGoals.deriveAnnualGoal — kept local so changing one
- *  doesn't quietly drift the other. Same formulas; per-unit value. */
-function deriveDerivedGoal(
-  kpiId: string,
-  goals: Record<string, number>,
-  enabledIds: Set<string>,
-  annualRevenue: number | undefined
-): number | null {
-  const g = (id: string) => goals[id]
-  const safe = (n: number | undefined, d: number | undefined): number | null => {
-    if (n == null || d == null || d === 0) return null
-    return n / d
-  }
-  switch (kpiId) {
-    case 'conversionRate': {
-      const r = safe(g('newClients'), g('leads'))
-      return r === null ? null : r * 100
-    }
-    case 'avgEstimateValue':
-      return safe(g('proposalsDollars'), g('estimatesWritten'))
-    case 'avgEstimateWon':
-      return safe(g('estimatesWonDollars'), g('estimatesWonCount'))
-    case 'avgContractWon':
-      return safe(g('contractsWonDollars'), g('contractsWonCount'))
-    case 'avgPipelineDeal':
-      return safe(g('pipelineValue'), g('pipelineDeals'))
-    case 'closeRate': {
-      const wins = enabledIds.has('contractsWonDollars')
-        ? g('contractsWonDollars')
-        : g('estimatesWonDollars')
-      const r = safe(wins, g('proposalsDollars'))
-      return r === null ? null : r * 100
-    }
-    case 'avgTransactionValue':
-      return safe(annualRevenue, g('transactions'))
-    case 'avgRepairOrder':
-      return safe(annualRevenue, g('jobsCompleted'))
-    default:
-      return null
-  }
+  // Scaling: only sum #/$ KPIs scale by period share. Ratios (%) and
+  // per-unit derived values (avgs, last, avg-aggregation) stay flat —
+  // a $1,200/job target is $1,200/job whether MTD or YTD.
+  const scales =
+    kpi.aggregation === 'sum' && kpi.format !== '%'
+  return scales ? annual * periodShare(mode, month, monthShares) : annual
 }
 
