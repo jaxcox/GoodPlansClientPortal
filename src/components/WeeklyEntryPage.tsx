@@ -14,10 +14,9 @@ import type {
   WeeklyEntry,
 } from '../lib/types'
 import {
-  dateFromIso,
   formatWeekShort,
   isoDate,
-  lastCompletedSaturday,
+  missedWeeksBetween,
   mostRecentCompletedWeekStart,
   weekStartSunday,
 } from '../lib/week'
@@ -26,6 +25,7 @@ import { NumberField } from './NumberField'
 import { SaveBar } from './SaveBar'
 import { Card } from './Card'
 import { InfoIcon } from './InfoIcon'
+import { MissedWeeksPill, WeekOfCalendarPill } from './HeaderPills'
 
 // =============================================================================
 // Phase 5 — Weekly Entry
@@ -37,6 +37,12 @@ import { InfoIcon } from './InfoIcon'
 type Props = {
   clientId: string
   onLeave: () => void
+  /** When set, the entry form opens to this week instead of the default
+   *  (most recent completed week). Used by the dashboard's missed-weeks
+   *  dropdown to deep-link a specific gap week. ClientPortal clears this
+   *  back to null when the tab changes away from Weekly Entry, so a
+   *  subsequent natural visit lands on the default. */
+  initialWeekStart?: Date | null
 }
 
 type EntryRow = {
@@ -176,7 +182,7 @@ function formatDerivedWeekly(
   return Math.round(value).toLocaleString('en-US')
 }
 
-export function WeeklyEntryPage({ clientId, onLeave }: Props) {
+export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [capacityValues, setCapacityValues] = useState<
     Record<string, WeeklyCapacityActual>
@@ -193,10 +199,19 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
 
   // Default to the most recent COMPLETED week — i.e. last week. The
   // in-progress current week is intentionally NOT selectable; users only
-  // enter actuals for weeks that have finished.
-  const [weekStart, setWeekStart] = useState<Date>(() =>
-    mostRecentCompletedWeekStart()
+  // enter actuals for weeks that have finished. When the caller passed
+  // initialWeekStart (deep-link from the dashboard's missed-weeks pill),
+  // honor that instead.
+  const [weekStart, setWeekStart] = useState<Date>(
+    () => initialWeekStart ?? mostRecentCompletedWeekStart()
   )
+
+  // If a deep-link week arrives while this component is already mounted
+  // (rare but possible if dashboard → entry happens without an unmount),
+  // sync to it. The mount-time initial value above handles the common case.
+  useEffect(() => {
+    if (initialWeekStart) setWeekStart(initialWeekStart)
+  }, [initialWeekStart])
   const [kpiValues, setKpiValues] = useState<Record<string, number>>({})
   const [notes, setNotes] = useState('')
 
@@ -475,15 +490,7 @@ export function WeeklyEntryPage({ clientId, onLeave }: Props) {
   // weeks only), so it doesn't appear here even if "missed".
   const missedWeeks = useMemo(() => {
     if (!client) return []
-    const start = weekStartSunday(new Date(client.created_at))
-    const current = weekStartSunday(new Date())
-    const out: Date[] = []
-    const cur = new Date(start)
-    while (cur < current) {
-      if (!savedWeekDates.has(isoDate(cur))) out.push(new Date(cur))
-      cur.setDate(cur.getDate() + 7)
-    }
-    return out.reverse() // most-recent missed week first
+    return missedWeeksBetween(new Date(client.created_at), savedWeekDates)
   }, [client, savedWeekDates])
 
   // ---- Render ------------------------------------------------------------
@@ -689,58 +696,25 @@ function WeekPicker({
   onChange: (next: Date) => void
   missedWeeks: Date[]
 }) {
-  // Calendar max: the Saturday of the most recent completed week. Past
-  // dates only — the in-progress week and anything beyond is not pickable.
-  const maxIso = isoDate(lastCompletedSaturday())
-  const selectedIso = isoDate(weekStart)
-
-  const onPickDate = (iso: string) => {
-    if (!iso) return
-    onChange(weekStartSunday(dateFromIso(iso)))
-  }
+  // Both pills resolve any picked date to its Sunday-start week.
+  const pickWeekFromDate = (d: Date) => onChange(weekStartSunday(d))
 
   return (
     <div className="flex flex-wrap items-center gap-3 text-base">
-      {/* Calendar (date picker, capped at last completed Saturday — no
-          current-or-future weeks). */}
-      <label className="flex items-center gap-2">
-        <span className="text-black font-semibold">Pick a date:</span>
-        <input
-          type="date"
-          value={selectedIso}
-          max={maxIso}
-          onChange={(e) => onPickDate(e.target.value)}
-          className="bg-white border border-gray-300 rounded text-black text-base px-2 py-1 focus:outline-none focus:border-gray-400"
-        />
-      </label>
+      {/* Combined "Week of [date] 📅" pill — tap to open the OS-native
+          date picker, capped at the most recent completed Saturday so
+          users can only enter completed weeks. Same component as the
+          dashboard's header so the two screens read identically. */}
+      <WeekOfCalendarPill weekStart={weekStart} onPick={pickWeekFromDate} />
 
-      {/* Resolved week range. */}
-      <span className="text-black font-semibold whitespace-nowrap">
-        {formatWeekShort(weekStart)}
-      </span>
-
-      {/* Missed-weeks dropdown — only weeks that have no saved entry yet,
-          most recent first. Hidden when there are no gaps.
-          Red font: missed-action / overdue states use red per the
-          feedback_overdue_red.md project rule. */}
+      {/* Red "Missed weeks (N)" dropdown — only when there are gaps,
+          most recent first. Picking jumps the entry page to that week
+          (same handler as the calendar pill). */}
       {missedWeeks.length > 0 && (
-        <select
-          value=""
-          onChange={(e) => {
-            if (e.target.value) onPickDate(e.target.value)
-          }}
-          aria-label="Jump to a missed week"
-          className="select-yellow bg-white border border-gray-300 rounded text-bad font-bold text-xs px-3 py-1 focus:outline-none focus:border-gray-400"
-        >
-          <option value="">
-            Missed weeks ({missedWeeks.length})
-          </option>
-          {missedWeeks.map((d) => (
-            <option key={isoDate(d)} value={isoDate(d)}>
-              {formatWeekShort(d)}
-            </option>
-          ))}
-        </select>
+        <MissedWeeksPill
+          missedWeeks={missedWeeks}
+          onPick={pickWeekFromDate}
+        />
       )}
     </div>
   )

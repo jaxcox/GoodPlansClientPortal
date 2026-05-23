@@ -24,8 +24,11 @@ import {
   dateFromIso,
   formatWeekShort,
   isoDate,
+  lastCompletedSaturday,
+  missedWeeksBetween,
   mostRecentCompletedWeekStart,
   shiftWeek,
+  weekStartSunday,
 } from '../lib/week'
 import {
   KpiTile,
@@ -36,9 +39,11 @@ import { computeRingStatus, computeBand } from './ProgressRing'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
 import { CumulativeKpiGrid } from './CumulativeKpiGrid'
+import { MissedWeeksPill, WeekOfCalendarPill } from './HeaderPills'
 import {
   entryInPeriod,
   periodLabel,
+  quarterFromMonth,
   ytdActualsContribution,
 } from '../lib/cumulative'
 
@@ -73,23 +78,50 @@ export const UTILIZATION_DESC =
 type Props = {
   clientId: string
   coachView: boolean
+  /** Called when the client taps a missed week in the status pill. The
+   *  parent (ClientPortal) switches to the Weekly Entry tab and deep-
+   *  links the entry form to that week. Optional — coach view may pass
+   *  it through, client view always does. */
+  onGoToMissedWeek?: (weekStart: Date) => void
 }
 
 type Mode = 'weekly' | 'mtd' | 'qtd' | 'ytd'
 
-export function WeeklyDashboard({ clientId, coachView }: Props) {
+export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [entries, setEntries] = useState<WeeklyEntry[]>([])
+  /** ISO YYYY-MM-DD for every saved entry across the client's history —
+   *  used to compute the missed-weeks set for the status pill. Separate
+   *  from `entries` (which caps at 60 for tile rendering) so the gap
+   *  calculation stays correct past one year of weekly data. */
+  const [savedWeekDates, setSavedWeekDates] = useState<Set<string>>(
+    () => new Set()
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('weekly')
+  /** User-picked week from the dashboard's calendar pill. Null means
+   *  "use the smart default" (current week if entered, else most-recent
+   *  saved entry). Once the user picks, that selection sticks across
+   *  re-fetches until they pick another date. */
+  const [pickedWeekStart, setPickedWeekStart] = useState<Date | null>(null)
+  /** User-picked period anchor for the cumulative modes (MTD/QTD). The
+   *  value is a 0-indexed month inside the current year — for QTD it's
+   *  any month inside the target quarter (the period helpers
+   *  quarter-bucket the value). Null means "use the current period".
+   *  Reset whenever the mode pill changes so switching MTD → QTD starts
+   *  fresh on the current quarter instead of carrying the picked month
+   *  into a different bucket. */
+  const [pickedPeriodMonth, setPickedPeriodMonth] = useState<number | null>(
+    null
+  )
 
   const loadAll = async () => {
     setLoading(true)
     setError(null)
     const year = new Date().getFullYear()
-    const [cRes, bRes, eRes] = await Promise.all([
+    const [cRes, bRes, eRes, allDatesRes] = await Promise.all([
       supabase.from('clients').select('*').eq('id', clientId).maybeSingle(),
       supabase
         .from('budgets')
@@ -103,6 +135,10 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         .eq('client_id', clientId)
         .order('week_start_date', { ascending: false })
         .limit(60),
+      supabase
+        .from('weekly_entries')
+        .select('week_start_date')
+        .eq('client_id', clientId),
     ])
     if (cRes.error) {
       setError(cRes.error.message)
@@ -112,6 +148,13 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
     setClient(cRes.data as Client | null)
     setBudget((bRes.data as Budget | null) ?? null)
     setEntries(((eRes.data as WeeklyEntry[] | null) ?? []) as WeeklyEntry[])
+    setSavedWeekDates(
+      new Set(
+        ((allDatesRes.data ?? []) as { week_start_date: string }[]).map(
+          (r) => r.week_start_date
+        )
+      )
+    )
     setLoading(false)
   }
 
@@ -119,24 +162,38 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
     loadAll()
   }, [clientId])
 
-  // Pick the entry to display: prefer the current Sunday's entry; fall
-  // back to the most recent entry by date.
-  const { displayedEntry, isCurrentWeek, mostRecentDateIso } = useMemo(() => {
-    if (entries.length === 0)
-      return {
-        displayedEntry: null as WeeklyEntry | null,
-        isCurrentWeek: false,
-        mostRecentDateIso: null as string | null,
-      }
-    const currentSunIso = isoDate(mostRecentCompletedWeekStart())
+  // Missed weeks — gaps between the client's onboarding week and the
+  // current in-progress week with no saved entry. Drives the dashboard's
+  // status pill (count + dropdown to deep-link straight into Entry).
+  const missedWeeks = useMemo(() => {
+    if (!client) return []
+    return missedWeeksBetween(new Date(client.created_at), savedWeekDates)
+  }, [client, savedWeekDates])
+
+  // Resolve which week the dashboard is showing. User pick wins;
+  // otherwise default to the most-recent-completed week if entered,
+  // else the latest entry on file, else just the most-recent-completed
+  // Sunday (so the calendar pill still has a value to display).
+  const selectedWeekStart = useMemo<Date>(() => {
+    if (pickedWeekStart) return pickedWeekStart
+    const fallback = mostRecentCompletedWeekStart()
+    if (entries.length === 0) return fallback
+    const currentSunIso = isoDate(fallback)
     const current = entries.find((e) => e.week_start_date === currentSunIso)
-    const mostRecent = entries[0]
-    return {
-      displayedEntry: current ?? mostRecent,
-      isCurrentWeek: !!current,
-      mostRecentDateIso: mostRecent?.week_start_date ?? null,
-    }
-  }, [entries])
+    if (current) return dateFromIso(current.week_start_date)
+    return dateFromIso(entries[0].week_start_date)
+  }, [entries, pickedWeekStart])
+
+  // The entry to render — strictly the row matching selectedWeekStart.
+  // Null when the picked week has no saved entry (handled by the
+  // selected-week empty state below).
+  const displayedEntry = useMemo<WeeklyEntry | null>(() => {
+    if (entries.length === 0) return null
+    return (
+      entries.find((e) => e.week_start_date === isoDate(selectedWeekStart)) ??
+      null
+    )
+  }, [entries, selectedWeekStart])
 
   // Prior-week entry for week-over-week deltas: exactly 7 days before the
   // displayed entry. Null when no such row exists.
@@ -209,23 +266,37 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
     return out
   }, [client])
 
-  // Cumulative-mode period anchor. Always today (cumulative dashboards
-  // always read "from period start through today"); the mode pill picks
-  // which period. Memo so it's stable per render — the dashboard isn't
-  // expected to roll over the day boundary mid-session, but recomputing
-  // these on every render would also be cheap.
+  // Cumulative-mode period anchor. today is stable per render. Period
+  // year stays the current calendar year (per product direction —
+  // prior-year YTD is out of scope for now).
   const today = useMemo(() => new Date(), [])
   const currentYear = today.getFullYear()
   const currentMonth = today.getMonth()
+  // activeMonth drives every period calc (entriesInPeriod, periodLabel,
+  // ytdActualsContribution, CumulativeKpiGrid). When the user hasn't
+  // picked a past period it falls through to currentMonth — i.e. the
+  // dashboard reads "month-to-date through today" exactly as before.
+  const activeMonth = pickedPeriodMonth ?? currentMonth
+  const isPastPeriod = activeMonth !== currentMonth
+
+  // Reset the picked period whenever the mode pill changes so MTD →
+  // QTD lands fresh on the current quarter rather than carrying a
+  // picked month into a different bucket.
+  useEffect(() => {
+    setPickedPeriodMonth(null)
+  }, [mode])
 
   // In-period entries — filtered subset for the active cumulative mode.
   // Empty when mode === 'weekly' (the weekly grid uses a single entry).
+  // When a past period is picked, the same helper does the right thing:
+  // entryInPeriod's "no future" guard becomes inert since the whole
+  // period is already past.
   const entriesInPeriod = useMemo(() => {
     if (mode === 'weekly') return []
     return entries.filter((e) =>
-      entryInPeriod(e, mode, currentYear, currentMonth, today)
+      entryInPeriod(e, mode, currentYear, activeMonth, today)
     )
-  }, [entries, mode, currentYear, currentMonth, today])
+  }, [entries, mode, currentYear, activeMonth, today])
 
   // ---- Render --------------------------------------------------------------
 
@@ -242,12 +313,18 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
   return (
     <section className="space-y-4 font-acumin">
       <Header
-        clientName={client.company_name}
         mode={mode}
         onMode={setMode}
-        displayedEntry={displayedEntry}
-        isCurrentWeek={isCurrentWeek}
-        mostRecentDateIso={mostRecentDateIso}
+        selectedWeekStart={selectedWeekStart}
+        onPickWeek={(d) => setPickedWeekStart(weekStartSunday(d))}
+        missedWeeks={missedWeeks}
+        onGoToMissedWeek={onGoToMissedWeek}
+        currentYear={currentYear}
+        currentMonth={currentMonth}
+        activeMonth={activeMonth}
+        onPickPeriod={(m) =>
+          setPickedPeriodMonth(m === currentMonth ? null : m)
+        }
       />
 
       {/* Coach Note block at the top — coach edits, client reads. Empty
@@ -263,13 +340,25 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
         />
       </div>
 
-      {/* Empty state — no entries at all. Only shown on Weekly mode;
-          MTD/QTD/YTD have their own period-scoped empty state that
-          better fits the cumulative context. */}
-      {mode === 'weekly' && entries.length === 0 && (
+      {/* Empty states — Weekly mode only (MTD/QTD/YTD have their own
+          period-scoped empty state that fits the cumulative context):
+          - No entries on file at all → first-week prompt
+          - Entries exist but the picked week has none → week-specific
+            prompt naming the chosen week so the client knows what's
+            being shown */}
+      {mode === 'weekly' && !displayedEntry && (
         <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
-          No entries yet. Go to <strong>Weekly Entry</strong> to log your
-          first week.
+          {entries.length === 0 ? (
+            <>
+              No entries yet. Go to <strong>Weekly Entry</strong> to log
+              your first week.
+            </>
+          ) : (
+            <>
+              No entry saved for <strong>{formatWeekShort(selectedWeekStart)}</strong>.
+              Go to <strong>Weekly Entry</strong> to add it.
+            </>
+          )}
         </div>
       )}
 
@@ -300,32 +389,32 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
 
       {mode !== 'weekly' && (
         <>
-          <div className="text-base font-bold text-black">
-            {periodLabel(mode, currentYear, currentMonth)}
-          </div>
           {/* QTD onboarding disclaimer — for clients who started mid-
               quarter, the pre-coaching month(s) folded into QTD are
               derived from the YTD actuals, which may have been entered
-              as a single total and spread by the seasonality config. */}
+              as a single total and spread by the seasonality config.
+              The picker that names the period now lives in the header
+              row above (alongside the mode pills). */}
           {mode === 'qtd' &&
-            ytdActualsContribution(budget, mode, currentYear, currentMonth)
+            ytdActualsContribution(budget, mode, currentYear, activeMonth)
               .monthsCovered.length > 0 && (
               <div className="text-xs text-black italic">
                 Earlier months estimated from your YTD actuals.
               </div>
             )}
           {entriesInPeriod.length === 0 &&
-          ytdActualsContribution(budget, mode, currentYear, currentMonth)
+          ytdActualsContribution(budget, mode, currentYear, activeMonth)
             .monthsCovered.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
-              No entries for this period yet.
+              No entries for {periodLabel(mode, currentYear, activeMonth)}
+              {isPastPeriod ? '.' : ' yet.'}
             </div>
           ) : (
             <CumulativeKpiGrid
               client={client}
               mode={mode}
               year={currentYear}
-              month={currentMonth}
+              month={activeMonth}
               entriesInPeriod={entriesInPeriod}
               budget={budget}
               monthlyGoals={budgetView?.months ?? null}
@@ -372,16 +461,25 @@ export function WeeklyDashboard({ clientId, coachView }: Props) {
 function Header({
   mode,
   onMode,
-  displayedEntry,
-  isCurrentWeek,
-  mostRecentDateIso,
+  selectedWeekStart,
+  onPickWeek,
+  missedWeeks,
+  onGoToMissedWeek,
+  currentYear,
+  currentMonth,
+  activeMonth,
+  onPickPeriod,
 }: {
-  clientName: string
   mode: Mode
   onMode: (m: Mode) => void
-  displayedEntry: WeeklyEntry | null
-  isCurrentWeek: boolean
-  mostRecentDateIso: string | null
+  selectedWeekStart: Date
+  onPickWeek: (date: Date) => void
+  missedWeeks: Date[]
+  onGoToMissedWeek?: (weekStart: Date) => void
+  currentYear: number
+  currentMonth: number
+  activeMonth: number
+  onPickPeriod: (month: number) => void
 }) {
   return (
     <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 sm:-mt-8 space-y-3">
@@ -390,29 +488,149 @@ function Header({
         <ModePills mode={mode} onMode={onMode} />
       </div>
 
-      {/* "Week of …" / overdue pill only makes sense in Weekly mode —
-          cumulative views span multiple weeks and have their own period
-          label below the mode pills. */}
-      {mode === 'weekly' && (
-        <div className="flex items-center gap-2 flex-wrap text-base">
-          {!displayedEntry ? (
-            <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
-              No entries yet
-            </span>
-          ) : isCurrentWeek ? (
-            <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
-              Week of{' '}
-              {formatWeekShort(dateFromIso(displayedEntry.week_start_date))}
-            </span>
-          ) : (
-            <span className="bg-bad text-white px-3 py-1 rounded font-semibold">
-              Last entry {formatWeekShort(dateFromIso(mostRecentDateIso!))} —
-              log this week to update your dashboard
-            </span>
-          )}
-        </div>
-      )}
+      {/* Pill row, mode-dependent:
+          - Weekly: gray "Week of … 📅" pill + (when behind) red
+            "Missed weeks (N)" dropdown
+          - MTD/QTD: dark dropdown that doubles as the period label —
+            picks any prior month/quarter in the current year
+          - YTD: static dark year pill (prior years out of scope) */}
+      <div className="flex items-center gap-2 flex-wrap text-base">
+        {mode === 'weekly' && (
+          <>
+            <WeekOfCalendarPill
+              weekStart={selectedWeekStart}
+              onPick={onPickWeek}
+            />
+            {missedWeeks.length > 0 && (
+              <MissedWeeksPill
+                missedWeeks={missedWeeks}
+                onPick={onGoToMissedWeek}
+              />
+            )}
+          </>
+        )}
+        {(mode === 'mtd' || mode === 'qtd') && (
+          <PeriodPicker
+            mode={mode}
+            year={currentYear}
+            currentMonth={currentMonth}
+            activeMonth={activeMonth}
+            onPick={onPickPeriod}
+          />
+        )}
+        {mode === 'ytd' && <YearPill year={currentYear} />}
+      </div>
     </div>
+  )
+}
+
+/** Prior-period selector for cumulative modes. Uses the same
+ *  label-wraps-invisible-select pattern as WeekOfCalendarPill so both
+ *  pill types read identically: dark pill, white text, 📅 emoji on the
+ *  right of the words. The select sits absolute-positioned on top of
+ *  the label so any tap opens the native dropdown.
+ *  - MTD: month dropdown (January … current month)
+ *  - QTD: quarter dropdown (Q1 … current quarter)
+ *  - YTD / weekly: renders nothing (YTD shows a static year pill;
+ *    weekly has its own week-of pill)
+ *  For QTD the picked value is the first month of the quarter — the
+ *  period helpers bucket it back to a quarter via quarterFromMonth.
+ *  Parent maps "picked === current" back to null to resume live
+ *  to-date behavior on the current period. */
+function PeriodPicker({
+  mode,
+  year,
+  currentMonth,
+  activeMonth,
+  onPick,
+}: {
+  mode: Mode
+  year: number
+  currentMonth: number
+  activeMonth: number
+  onPick: (month: number) => void
+}) {
+  if (mode === 'weekly' || mode === 'ytd') return null
+
+  if (mode === 'mtd') {
+    const monthName = (m: number) =>
+      new Date(year, m, 1).toLocaleDateString('en-US', { month: 'long' })
+    const options: number[] = []
+    for (let m = 0; m <= currentMonth; m++) options.push(m)
+    return (
+      <PillSelect
+        label={monthName(activeMonth)}
+        value={activeMonth}
+        onChange={onPick}
+        ariaLabel="Pick a month"
+        options={options.map((m) => ({ value: m, label: monthName(m) }))}
+      />
+    )
+  }
+
+  // QTD — quarters available up through whichever quarter today falls in.
+  const currentQuarter = quarterFromMonth(currentMonth)
+  const activeQuarter = quarterFromMonth(activeMonth)
+  const qLabel = (q: number) => `Q${q + 1}`
+  return (
+    <PillSelect
+      label={qLabel(activeQuarter)}
+      value={activeQuarter * 3}
+      onChange={onPick}
+      ariaLabel="Pick a quarter"
+      options={Array.from({ length: currentQuarter + 1 }, (_, q) => ({
+        value: q * 3,
+        label: qLabel(q),
+      }))}
+    />
+  )
+}
+
+/** Generic dark pill with an emoji-on-the-right calendar icon, an
+ *  invisible native <select> overlaid for the dropdown. Matches the
+ *  WeekOfCalendarPill visual exactly so the whole header reads as one
+ *  family of date controls. */
+function PillSelect({
+  label,
+  value,
+  onChange,
+  ariaLabel,
+  options,
+}: {
+  label: string
+  value: number
+  onChange: (next: number) => void
+  ariaLabel: string
+  options: { value: number; label: string }[]
+}) {
+  return (
+    <label className="bg-ink text-white px-3 py-1 rounded font-semibold inline-flex items-center gap-2 cursor-pointer relative">
+      <span>{label}</span>
+      <span aria-hidden className="text-sm">📅</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={ariaLabel}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full appearance-none"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+/** YTD has no prior-year navigation (out of scope), so it gets a
+ *  non-interactive year label styled to match the other dark pills so
+ *  the cumulative header row reads consistently across modes. */
+function YearPill({ year }: { year: number }) {
+  return (
+    <span className="bg-ink text-white px-3 py-1 rounded font-semibold">
+      {year}
+    </span>
   )
 }
 

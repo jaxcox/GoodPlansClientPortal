@@ -24,6 +24,12 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<NavTab>('dashboard')
+  /** Deep-link target for the Weekly Entry page. Set by the dashboard's
+   *  missed-weeks dropdown so tapping a gap week jumps straight to the
+   *  entry form pre-loaded to that week. Cleared whenever the tab moves
+   *  off Weekly Entry so a subsequent natural visit lands on the default
+   *  (most recent completed week). */
+  const [entryInitialWeek, setEntryInitialWeek] = useState<Date | null>(null)
 
   const reloadClient = async () => {
     const { data, error } = await supabase
@@ -52,6 +58,22 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
     if (!confirmLeave()) return
     signOut()
   }
+  /** Dashboard → Weekly Entry deep-link. Guarded the same way as a tab
+   *  click: if the current page has unsaved edits the leave-prompt fires
+   *  first. Sets the initial-week target before flipping tabs so the
+   *  entry page mounts with the deep-linked week in its initial state. */
+  const goToMissedWeek = (weekStart: Date) => {
+    if (tab !== 'entry' && !confirmLeave()) return
+    setEntryInitialWeek(weekStart)
+    setTab('entry')
+  }
+
+  // Clear the deep-link target whenever the tab moves off Weekly Entry,
+  // so a subsequent natural visit lands on the default week instead of
+  // re-honoring a stale missed-week pick.
+  useEffect(() => {
+    if (tab !== 'entry') setEntryInitialWeek(null)
+  }, [tab])
 
   useEffect(() => {
     let cancelled = false
@@ -195,6 +217,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
         ) : tab === 'entry' ? (
           <WeeklyEntryPage
             clientId={clientId}
+            initialWeekStart={entryInitialWeek}
             onLeave={() => {
               if (coachView && onBack) {
                 onBack()
@@ -204,7 +227,11 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             }}
           />
         ) : tab === 'dashboard' ? (
-          <WeeklyDashboard clientId={clientId} coachView={coachView} />
+          <WeeklyDashboard
+            clientId={clientId}
+            coachView={coachView}
+            onGoToMissedWeek={goToMissedWeek}
+          />
         ) : tab === 'history' ? (
           <HistoryPage clientId={clientId} />
         ) : (

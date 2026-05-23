@@ -60,6 +60,26 @@ export function lastCompletedSaturday(today: Date = new Date()): Date {
   return d
 }
 
+/** Sundays from `fromDate`'s week up to (but not including) the current
+ *  in-progress week, minus any week present in `savedWeekIsos`. Returned
+ *  most-recent-first. Used by Weekly Entry (dropdown of weeks to fill in)
+ *  and the Weekly Dashboard (multi-week-gap status pill). */
+export function missedWeeksBetween(
+  fromDate: Date,
+  savedWeekIsos: Set<string>,
+  today: Date = new Date()
+): Date[] {
+  const start = weekStartSunday(fromDate)
+  const current = weekStartSunday(today)
+  const out: Date[] = []
+  const cur = new Date(start)
+  while (cur < current) {
+    if (!savedWeekIsos.has(isoDate(cur))) out.push(new Date(cur))
+    cur.setDate(cur.getDate() + 7)
+  }
+  return out.reverse()
+}
+
 /** "Week of Sun, May 4 – Sat, May 10, 2026" */
 export function formatWeekRange(weekStart: Date): string {
   const start = weekStartSunday(weekStart)
