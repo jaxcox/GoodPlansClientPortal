@@ -231,6 +231,14 @@ export type WeeklyEntry = {
   /** Per-capacity-group actuals, keyed by capacity group id. */
   capacity_values: Record<string, WeeklyCapacityActual>
   notes: string | null
+  /** True when the business was intentionally closed this week (holiday,
+   *  vacation, scheduled shutdown). kpi_values / capacity_values save
+   *  as {} when closed; the week stays out of the Missed Weeks dropdown
+   *  but counts as a zero-revenue week in cumulative math (intentional —
+   *  the closure shows up as a real dip against unchanged monthly /
+   *  annual goals rather than being excluded). HistoryPage marks the
+   *  date header with a "C" badge. */
+  closed: boolean
   created_at: string
   updated_at: string
 }

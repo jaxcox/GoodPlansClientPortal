@@ -586,7 +586,23 @@ function HistoryTable({
                   key={entry.id}
                   className="sticky top-0 z-20 bg-[#f2f2f2] text-black uppercase tracking-wider text-[10px] font-bold border-r border-b-2 border-gray-400 px-2 py-2 text-right whitespace-nowrap"
                 >
-                  {formatWeekShort(dateFromIso(entry.week_start_date))}
+                  <div className="inline-flex items-center justify-end gap-1.5">
+                    {/* Closed-week marker — small "C" badge tells the
+                        coach scanning the table that this week's zeros
+                        are intentional (business closed), not the
+                        client forgetting to log. */}
+                    {entry.closed && (
+                      <span
+                        title="Closed week — business was not operating"
+                        className="inline-flex items-center justify-center bg-ink text-white text-[10px] font-bold rounded w-4 h-4"
+                      >
+                        C
+                      </span>
+                    )}
+                    <span>
+                      {formatWeekShort(dateFromIso(entry.week_start_date))}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>

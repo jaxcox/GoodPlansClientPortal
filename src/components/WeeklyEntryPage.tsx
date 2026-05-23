@@ -190,6 +190,12 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
   const [entry, setEntry] = useState<WeeklyEntry | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadingEntry, setLoadingEntry] = useState(false)
+  /** True when this week is marked as "closed for business" — the row
+   *  saves with kpi_values / capacity_values cleared to {} and the UI
+   *  hides the KPI input cards. The week stays out of the Missed Weeks
+   *  dropdown but counts as a zero-revenue week in cumulative math
+   *  (per product direction: honest dip vs. unchanged goal). */
+  const [closed, setClosed] = useState(false)
   /** All weeks the client has saved entries for. Used to compute the list
    *  of "missed" weeks (gaps between client.created_at and the current
    *  week that have no entry yet). */
@@ -257,6 +263,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     setKpiValues(e?.kpi_values ?? {})
     setCapacityValues(e?.capacity_values ?? {})
     setNotes(e?.notes ?? '')
+    setClosed(e?.closed ?? false)
   }
   useEffect(() => {
     let cancelled = false
@@ -293,8 +300,33 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     if (JSON.stringify(capacityValues) !== JSON.stringify(savedCap))
       return true
     if (notes !== (entry?.notes ?? '')) return true
+    if (closed !== (entry?.closed ?? false)) return true
     return false
-  }, [kpiValues, capacityValues, notes, entry])
+  }, [kpiValues, capacityValues, notes, closed, entry])
+
+  // Toggling closed ON wipes KPI / capacity inputs to {} so the save
+  // round-trip leaves no stale numbers under the closed row. If the
+  // user has data entered we confirm first — otherwise it's a silent
+  // flip. Toggling OFF preserves the cleared state; the user re-enters
+  // any KPI values they want for the now-open week.
+  const onToggleClosed = (next: boolean) => {
+    if (next === closed) return
+    if (next) {
+      const hasValues =
+        Object.values(kpiValues).some((v) => v !== 0 && v != null) ||
+        Object.keys(capacityValues).length > 0
+      if (
+        hasValues &&
+        !confirm(
+          'Marking this week as closed will clear all KPI values. Continue?'
+        )
+      )
+        return
+      setKpiValues({})
+      setCapacityValues({})
+    }
+    setClosed(next)
+  }
 
   const setGuardDirty = useDirtyGuard(isDirty)
 
@@ -420,9 +452,12 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       client_id: client.id,
       coach_id: client.coach_id,
       week_start_date: isoDate(weekStart),
-      kpi_values: kpiValues,
-      capacity_values: capacityValues,
+      // Closed weeks store {} so dashboards / cumulative math read 0
+      // for every KPI; non-closed weeks save whatever's in the form.
+      kpi_values: closed ? {} : kpiValues,
+      capacity_values: closed ? {} : capacityValues,
       notes: notes.trim() || null,
+      closed,
     }
 
     const op = entry
@@ -534,6 +569,31 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         missedWeeks={missedWeeks}
       />
 
+      {/* Closed-week toggle + banner. When on, the KPI cards below are
+          replaced with a yellow informational banner and only Notes
+          stays editable. Saving sends closed=true + cleared values. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={closed}
+            onChange={(e) => onToggleClosed(e.target.checked)}
+            className="w-4 h-4 accent-accent cursor-pointer"
+          />
+          <span className="text-black text-sm font-semibold">
+            Closed this week (no business)
+          </span>
+        </label>
+      </div>
+
+      {closed && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-black">
+          <strong>Closed week.</strong> All KPI values save as zero. The
+          closure counts as a non-revenue week against your unchanged
+          monthly / annual goals. Use Notes below to document the reason.
+        </div>
+      )}
+
       {saveError && (
         <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3">
           {saveError}
@@ -544,12 +604,30 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         <div className="text-xs text-black italic">Loading week…</div>
       )}
 
+      {/* Closed mode: skip KPI cards entirely, show Notes alone so the
+          client can document the closure. The form still has the toggle
+          and banner above; saving sends closed=true + empty values. */}
+      {closed && (
+        <div className="max-w-2xl">
+          <Card title="Notes">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="What was the reason for the closure? (Optional.)"
+              rows={3}
+              className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black rounded text-black text-sm px-3 py-2 focus:outline-none focus:border-accent resize-y"
+            />
+          </Card>
+        </div>
+      )}
+
       {/* KPI actuals as one Card per category. Within each card, rows
           render in registry order — inputs and derived interleave per the
           KPI registry, distinguished visually by NumberField (editable
           yellow ring) vs DerivedKpiBox (read-only gray border). Cards
-          collapse independently via the Card's +/− button. */}
-      {!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
+          collapse independently via the Card's +/− button. Hidden in
+          closed mode (above). */}
+      {!closed && (!hasAnyRows && (client.capacity_groups?.length ?? 0) === 0 ? (
         <Card title="KPI Actuals">
           <div className="text-white text-xs">
             No active KPIs to enter. Toggle some on under{' '}
@@ -663,7 +741,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
             </div>
           )
         })()
-      )}
+      ))}
 
       {/* Delete this entry — only when a saved entry exists for this week.
           Per Doc 06: small subtle link below the sticky top Save bar, requires confirm. */}
