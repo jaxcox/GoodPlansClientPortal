@@ -3,12 +3,21 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { PasswordField } from '../components/PasswordField'
 
-type TopTab = 'coach' | 'client'
 type ClientSubTab = 'existing' | 'firstTime'
 
-export function LoginPage() {
-  const [tab, setTab] = useState<TopTab>('coach')
+/** Which login surface to render. Driven by the URL path so the
+ *  marketing site can link to /coach (coach login) or /client (client
+ *  login) directly. No in-app cross-link between them — clients never
+ *  see anything coach-related. */
+type LoginMode = 'coach' | 'client'
 
+function loginModeFromPath(): LoginMode {
+  if (typeof window === 'undefined') return 'client'
+  return window.location.pathname.startsWith('/coach') ? 'coach' : 'client'
+}
+
+export function LoginPage() {
+  const mode = loginModeFromPath()
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#dad7c5]">
       <div className="w-full max-w-sm">
@@ -17,48 +26,15 @@ export function LoginPage() {
             The Good Plans Co
           </div>
           <div className="text-base font-bold text-ink mt-1">
-            Client Performance Portal
+            Client Portal
           </div>
         </div>
 
         <div className="bg-ink rounded-xl p-6 shadow-xl">
-          <div className="flex border-b border-line mb-5">
-            <TabHead active={tab === 'coach'} onClick={() => setTab('coach')}>
-              Coach Login
-            </TabHead>
-            <TabHead active={tab === 'client'} onClick={() => setTab('client')}>
-              Client Login
-            </TabHead>
-          </div>
-
-          {tab === 'coach' ? <CoachLoginForm /> : <ClientPanel />}
+          {mode === 'coach' ? <CoachLoginForm /> : <ClientPanel />}
         </div>
       </div>
     </div>
-  )
-}
-
-function TabHead({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 py-2 text-xs font-bold tracking-wide ${
-        active
-          ? 'text-white border-b-2 border-accent -mb-px'
-          : 'text-white'
-      }`}
-    >
-      {children}
-    </button>
   )
 }
 
