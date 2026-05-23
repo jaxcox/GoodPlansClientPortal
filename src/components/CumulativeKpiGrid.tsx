@@ -87,7 +87,14 @@ export function CumulativeKpiGrid({
   const ytd = ytdActualsContribution(budget, mode, year, month)
 
   const weeksInPeriod = totalWeeksInPeriod(mode, year, month)
-  const currentWeeks = entriesInPeriod.length + ytd.weeksCovered
+  // Partial entries (boundary-week splits) cover fewer than 7 days, so
+  // count fractional weeks (days / 7) instead of one-week-per-row.
+  // Falls back to 7 when days is missing on older rows.
+  const weeksFromEntries = entriesInPeriod.reduce(
+    (sum, e) => sum + (e.days ?? 7) / 7,
+    0
+  )
+  const currentWeeks = weeksFromEntries + ytd.weeksCovered
   const pace = paceFrac(currentWeeks, weeksInPeriod)
 
   const visible = visibleTileKpis(client)

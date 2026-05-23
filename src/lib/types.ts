@@ -239,6 +239,16 @@ export type WeeklyEntry = {
    *  annual goals rather than being excluded). HistoryPage marks the
    *  date header with a "C" badge. */
   closed: boolean
+  /** True when this entry covers only part of a Sun-Sat week — used for
+   *  boundary weeks that span two months. A boundary week becomes two
+   *  rows: Partial A (Sunday → end-of-month) and Partial B (first-of-
+   *  next-month → Saturday). Each has its own start date so cumulative
+   *  math attributes each side to the correct month. */
+  is_partial: boolean
+  /** How many calendar days this entry covers, starting from
+   *  week_start_date. Defaults to 7 for normal Sun-Sat weeks. Partials
+   *  carry 1–6 (typically 2–5 for a boundary split). */
+  days: number
   created_at: string
   updated_at: string
 }

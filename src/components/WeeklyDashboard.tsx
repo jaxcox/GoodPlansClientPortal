@@ -94,10 +94,13 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
   /** ISO YYYY-MM-DD for every saved entry across the client's history —
    *  used to compute the missed-weeks set for the status pill. Separate
    *  from `entries` (which caps at 60 for tile rendering) so the gap
-   *  calculation stays correct past one year of weekly data. */
-  const [savedWeekDates, setSavedWeekDates] = useState<Set<string>>(
-    () => new Set()
-  )
+   *  calculation stays correct past one year of weekly data. Each item
+   *  is { startIso, days } so range-aware missed-weeks logic can detect
+   *  partial-week coverage on boundary weeks (e.g. Mar 29 + Apr 1 must
+   *  both exist for that Sun-Sat week to count as covered). */
+  const [savedEntryRanges, setSavedEntryRanges] = useState<
+    { startIso: string; days: number }[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('weekly')
@@ -137,7 +140,7 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
         .limit(60),
       supabase
         .from('weekly_entries')
-        .select('week_start_date')
+        .select('week_start_date, days')
         .eq('client_id', clientId),
     ])
     if (cRes.error) {
@@ -148,12 +151,11 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     setClient(cRes.data as Client | null)
     setBudget((bRes.data as Budget | null) ?? null)
     setEntries(((eRes.data as WeeklyEntry[] | null) ?? []) as WeeklyEntry[])
-    setSavedWeekDates(
-      new Set(
-        ((allDatesRes.data ?? []) as { week_start_date: string }[]).map(
-          (r) => r.week_start_date
-        )
-      )
+    setSavedEntryRanges(
+      ((allDatesRes.data ?? []) as {
+        week_start_date: string
+        days: number
+      }[]).map((r) => ({ startIso: r.week_start_date, days: r.days ?? 7 }))
     )
     setLoading(false)
   }
@@ -167,8 +169,8 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
   // status pill (count + dropdown to deep-link straight into Entry).
   const missedWeeks = useMemo(() => {
     if (!client) return []
-    return missedWeeksBetween(new Date(client.created_at), savedWeekDates)
-  }, [client, savedWeekDates])
+    return missedWeeksBetween(new Date(client.created_at), savedEntryRanges)
+  }, [client, savedEntryRanges])
 
   // Resolve which week the dashboard is showing. User pick wins;
   // otherwise default to the most-recent-completed week if entered,

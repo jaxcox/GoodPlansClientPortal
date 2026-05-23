@@ -14,12 +14,15 @@ import type {
   WeeklyEntry,
 } from '../lib/types'
 import {
+  dateFromIso,
   formatWeekShort,
   isoDate,
   missedWeeksBetween,
+  monthBoundaryInWeek,
   mostRecentCompletedWeekStart,
   weekStartSunday,
 } from '../lib/week'
+import type { PartialSlot } from '../lib/week'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { NumberField } from './NumberField'
 import { SaveBar } from './SaveBar'
@@ -187,21 +190,33 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
   const [capacityValues, setCapacityValues] = useState<
     Record<string, WeeklyCapacityActual>
   >({})
-  const [entry, setEntry] = useState<WeeklyEntry | null>(null)
+  /** Saved entries keyed by side. For non-boundary weeks only `a` is
+   *  populated (or both null if nothing's saved yet). For boundary
+   *  weeks (Sun-Sat spanning two months), both slots load — A is the
+   *  Sunday→end-of-month partial, B is the 1st-of-next-month→Saturday
+   *  partial. The form's local state mirrors whichever side is
+   *  `selectedSide`. */
+  const [entries, setEntries] = useState<{
+    a: WeeklyEntry | null
+    b: WeeklyEntry | null
+  }>({ a: null, b: null })
+  const [selectedSide, setSelectedSide] = useState<'a' | 'b'>('a')
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadingEntry, setLoadingEntry] = useState(false)
   /** True when this week is marked as "closed for business" — the row
    *  saves with kpi_values / capacity_values cleared to {} and the UI
    *  hides the KPI input cards. The week stays out of the Missed Weeks
    *  dropdown but counts as a zero-revenue week in cumulative math
-   *  (per product direction: honest dip vs. unchanged goal). */
+   *  (per product direction: honest dip vs. unchanged goal). In boundary
+   *  mode the flag is per-partial — each side saves its own closed
+   *  state since they're independent rows. */
   const [closed, setClosed] = useState(false)
-  /** All weeks the client has saved entries for. Used to compute the list
-   *  of "missed" weeks (gaps between client.created_at and the current
-   *  week that have no entry yet). */
-  const [savedWeekDates, setSavedWeekDates] = useState<Set<string>>(
-    () => new Set()
-  )
+  /** Every saved entry's covered date range — used by the range-aware
+   *  missedWeeksBetween so a boundary week with only one partial saved
+   *  still shows as missed (the other partial's days aren't covered). */
+  const [savedEntryRanges, setSavedEntryRanges] = useState<
+    { startIso: string; days: number }[]
+  >([])
 
   // Default to the most recent COMPLETED week — i.e. last week. The
   // in-progress current week is intentionally NOT selectable; users only
@@ -221,11 +236,30 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
   const [kpiValues, setKpiValues] = useState<Record<string, number>>({})
   const [notes, setNotes] = useState('')
 
+  /** Boundary detection — null for a normal week, two partial slots
+   *  (A = Sunday→end-of-month, B = 1st-of-next-month→Saturday) when
+   *  the Sun-Sat week crosses a month. */
+  const boundary = useMemo(() => monthBoundaryInWeek(weekStart), [weekStart])
+  /** The slot the form is currently editing — start date, day count,
+   *  partial flag. Drives load filter, save payload, and the "Saved /
+   *  Not entered" status on the side cards. */
+  const activeSlot = useMemo(() => {
+    if (!boundary) {
+      return { startIso: isoDate(weekStart), days: 7, isPartial: false }
+    }
+    const side = boundary[selectedSide]
+    return { startIso: side.startIso, days: side.days, isPartial: true }
+  }, [boundary, selectedSide, weekStart])
+  /** The saved entry for whichever side is selected. The form's dirty
+   *  tracking, cancel-reseed, and save-vs-update branching all key off
+   *  this. */
+  const activeEntry = entries[selectedSide]
+
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
 
-  // ---- Load client + all entry dates (once per client) -------------------
+  // ---- Load client + all entry ranges (once per client) -----------------
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -237,7 +271,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
           .maybeSingle(),
         supabase
           .from('weekly_entries')
-          .select('week_start_date')
+          .select('week_start_date, days')
           .eq('client_id', clientId),
       ])
       if (cancelled) return
@@ -246,12 +280,10 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         return
       }
       setClient(clientRes.data as Client)
-      const dates = new Set<string>(
-        (entriesRes.data ?? []).map(
-          (r) => (r as { week_start_date: string }).week_start_date
-        )
-      )
-      setSavedWeekDates(dates)
+      const ranges = (
+        (entriesRes.data ?? []) as { week_start_date: string; days: number }[]
+      ).map((r) => ({ startIso: r.week_start_date, days: r.days ?? 7 }))
+      setSavedEntryRanges(ranges)
     })()
     return () => {
       cancelled = true
@@ -269,21 +301,54 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     let cancelled = false
     setLoadingEntry(true)
     ;(async () => {
-      const { data, error } = await supabase
-        .from('weekly_entries')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('week_start_date', isoDate(weekStart))
-        .maybeSingle()
-      if (cancelled) return
-      setLoadingEntry(false)
-      if (error) {
-        setLoadError(error.message)
-        return
+      const b = monthBoundaryInWeek(weekStart)
+      if (b) {
+        // Boundary week — fetch both partials in parallel so the side
+        // cards above the form can show saved/not-entered status for
+        // each, and switching sides is a free state swap (no fetch).
+        const [resA, resB] = await Promise.all([
+          supabase
+            .from('weekly_entries')
+            .select('*')
+            .eq('client_id', clientId)
+            .eq('week_start_date', b.a.startIso)
+            .maybeSingle(),
+          supabase
+            .from('weekly_entries')
+            .select('*')
+            .eq('client_id', clientId)
+            .eq('week_start_date', b.b.startIso)
+            .maybeSingle(),
+        ])
+        if (cancelled) return
+        setLoadingEntry(false)
+        if (resA.error || resB.error) {
+          setLoadError(resA.error?.message ?? resB.error?.message ?? 'Load failed')
+          return
+        }
+        const eA = (resA.data as WeeklyEntry | null) ?? null
+        const eB = (resB.data as WeeklyEntry | null) ?? null
+        setEntries({ a: eA, b: eB })
+        setSelectedSide('a')
+        seedFromEntry(eA)
+      } else {
+        const { data, error } = await supabase
+          .from('weekly_entries')
+          .select('*')
+          .eq('client_id', clientId)
+          .eq('week_start_date', isoDate(weekStart))
+          .maybeSingle()
+        if (cancelled) return
+        setLoadingEntry(false)
+        if (error) {
+          setLoadError(error.message)
+          return
+        }
+        const e = (data as WeeklyEntry) ?? null
+        setEntries({ a: e, b: null })
+        setSelectedSide('a')
+        seedFromEntry(e)
       }
-      const e = (data as WeeklyEntry) ?? null
-      setEntry(e)
-      seedFromEntry(e)
       setSavedAt(null)
       setSaveError(null)
     })()
@@ -294,15 +359,15 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
 
   // ---- Dirty tracking ----------------------------------------------------
   const isDirty = useMemo(() => {
-    const savedKpi = entry?.kpi_values ?? {}
-    const savedCap = entry?.capacity_values ?? {}
+    const savedKpi = activeEntry?.kpi_values ?? {}
+    const savedCap = activeEntry?.capacity_values ?? {}
     if (JSON.stringify(kpiValues) !== JSON.stringify(savedKpi)) return true
     if (JSON.stringify(capacityValues) !== JSON.stringify(savedCap))
       return true
-    if (notes !== (entry?.notes ?? '')) return true
-    if (closed !== (entry?.closed ?? false)) return true
+    if (notes !== (activeEntry?.notes ?? '')) return true
+    if (closed !== (activeEntry?.closed ?? false)) return true
     return false
-  }, [kpiValues, capacityValues, notes, closed, entry])
+  }, [kpiValues, capacityValues, notes, closed, activeEntry])
 
   // Toggling closed ON wipes KPI / capacity inputs to {} so the save
   // round-trip leaves no stale numbers under the closed row. If the
@@ -404,11 +469,29 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       !confirm('You have unsaved changes. Leave without saving? Click OK to continue or Cancel to stay.')
     )
       return
-    seedFromEntry(entry)
+    seedFromEntry(activeEntry)
     setSavedAt(null)
     setSaveError(null)
     setGuardDirty(false)
     onLeave()
+  }
+
+  /** Switch which side of a boundary week the form is editing. Dirty-
+   *  guarded — if the user has unsaved edits on the current side, prompt
+   *  before discarding and re-seeding from the other side. */
+  const switchSide = (next: 'a' | 'b') => {
+    if (next === selectedSide || !boundary) return
+    if (
+      isDirty &&
+      !confirm(
+        'You have unsaved changes on this partial. Switch to the other partial without saving?'
+      )
+    )
+      return
+    setSelectedSide(next)
+    seedFromEntry(entries[next])
+    setSavedAt(null)
+    setSaveError(null)
   }
 
   const onSave = async () => {
@@ -451,7 +534,12 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     const payload = {
       client_id: client.id,
       coach_id: client.coach_id,
-      week_start_date: isoDate(weekStart),
+      // For boundary partials, activeSlot.startIso is the side's start
+      // (Sunday for A, 1st-of-next-month for B). For normal weeks it's
+      // the Sunday.
+      week_start_date: activeSlot.startIso,
+      days: activeSlot.days,
+      is_partial: activeSlot.isPartial,
       // Closed weeks store {} so dashboards / cumulative math read 0
       // for every KPI; non-closed weeks save whatever's in the form.
       kpi_values: closed ? {} : kpiValues,
@@ -460,8 +548,8 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       closed,
     }
 
-    const op = entry
-      ? supabase.from('weekly_entries').update(payload).eq('id', entry.id)
+    const op = activeEntry
+      ? supabase.from('weekly_entries').update(payload).eq('id', activeEntry.id)
       : supabase.from('weekly_entries').insert(payload)
     const { data, error } = await op.select().single()
 
@@ -471,62 +559,58 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       return
     }
     const saved = data as WeeklyEntry
-    setEntry(saved)
+    // Replace the saved entry on the side that was being edited; the
+    // other side stays as-is (null if not yet entered).
+    setEntries((prev) => ({ ...prev, [selectedSide]: saved }))
     seedFromEntry(saved)
     setSaveError(null)
     setSavedAt(Date.now())
-    // Track this week as saved so it falls out of the missed-weeks list.
-    setSavedWeekDates((prev) => {
-      if (prev.has(saved.week_start_date)) return prev
-      const next = new Set(prev)
-      next.add(saved.week_start_date)
-      return next
+    // Track the new (or updated) range so range-aware missed-weeks
+    // reflects the save immediately. Dedup by startIso — partial saves
+    // and re-saves should update the days field rather than duplicate.
+    setSavedEntryRanges((prev) => {
+      const without = prev.filter((r) => r.startIso !== saved.week_start_date)
+      return [...without, { startIso: saved.week_start_date, days: saved.days ?? 7 }]
     })
   }
 
   const onDelete = async () => {
-    if (!entry || !client || saving) return
-    if (
-      !confirm(
-        `Delete the entry for ${formatWeekShort(weekStart)}? This can't be undone.`
-      )
-    )
-      return
+    if (!activeEntry || !client || saving) return
+    const label = boundary
+      ? `the ${activeSlot.days}-day partial starting ${formatWeekShort(dateFromIso(activeSlot.startIso))}`
+      : `the entry for ${formatWeekShort(weekStart)}`
+    if (!confirm(`Delete ${label}? This can't be undone.`)) return
     setSaveError(null)
     setSaving(true)
     const { error } = await supabase
       .from('weekly_entries')
       .delete()
-      .eq('id', entry.id)
+      .eq('id', activeEntry.id)
     setSaving(false)
     if (error) {
       setSaveError(error.message)
       return
     }
-    // Reset form to a blank entry for the same week.
-    setEntry(null)
+    // Reset active side back to "not yet entered"; other side untouched.
+    setEntries((prev) => ({ ...prev, [selectedSide]: null }))
     seedFromEntry(null)
     setSavedAt(null)
     setGuardDirty(false)
-    // Surface the week as missed again so the dropdown picks it up.
-    setSavedWeekDates((prev) => {
-      const iso = isoDate(weekStart)
-      if (!prev.has(iso)) return prev
-      const next = new Set(prev)
-      next.delete(iso)
-      return next
-    })
+    // Drop this range from saved so missed-weeks reflects the gap.
+    setSavedEntryRanges((prev) =>
+      prev.filter((r) => r.startIso !== activeSlot.startIso)
+    )
   }
 
   // ---- Missed-weeks list -------------------------------------------------
-  // Sundays from the client's first week up to (but not including) the
-  // current in-progress week, minus any week that already has an entry.
-  // The in-progress week is never selectable (entry is for completed
-  // weeks only), so it doesn't appear here even if "missed".
+  // Range-aware — walks each Sun-Sat week day-by-day and checks every
+  // day is covered by some saved entry's date range. A boundary week
+  // with only one partial saved still flags as missed because the
+  // other partial's days aren't covered.
   const missedWeeks = useMemo(() => {
     if (!client) return []
-    return missedWeeksBetween(new Date(client.created_at), savedWeekDates)
-  }, [client, savedWeekDates])
+    return missedWeeksBetween(new Date(client.created_at), savedEntryRanges)
+  }, [client, savedEntryRanges])
 
   // ---- Render ------------------------------------------------------------
   if (loadError) {
@@ -569,9 +653,25 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         missedWeeks={missedWeeks}
       />
 
+      {/* Boundary-week card picker. Only renders when the picked Sun-
+          Sat week crosses a month. The two cards show each partial's
+          date range, day count, and saved/not-entered status. Clicking
+          one (with dirty-guard) scopes every input below to that
+          partial's row. */}
+      {boundary && (
+        <BoundaryCardPicker
+          boundary={boundary}
+          entries={entries}
+          selectedSide={selectedSide}
+          onSelect={switchSide}
+        />
+      )}
+
       {/* Closed-week toggle + banner. When on, the KPI cards below are
           replaced with a yellow informational banner and only Notes
-          stays editable. Saving sends closed=true + cleared values. */}
+          stays editable. Saving sends closed=true + cleared values.
+          In boundary mode the flag scopes to whichever side is
+          selected — each partial has its own closed state. */}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
@@ -600,7 +700,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         </div>
       )}
 
-      {loadingEntry && !entry && (
+      {loadingEntry && !activeEntry && (
         <div className="text-xs text-black italic">Loading week…</div>
       )}
 
@@ -743,9 +843,10 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         })()
       ))}
 
-      {/* Delete this entry — only when a saved entry exists for this week.
-          Per Doc 06: small subtle link below the sticky top Save bar, requires confirm. */}
-      {entry && (
+      {/* Delete this entry — only when a saved entry exists for the
+          currently-selected partial / week. Per Doc 06: small subtle
+          link below the sticky top Save bar, requires confirm. */}
+      {activeEntry && (
         <div className="flex justify-end">
           <button
             type="button"
@@ -764,6 +865,86 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/** Two-card picker for boundary weeks. Each card shows one partial's
+ *  date range + day count + saved-status; the active card is highlighted
+ *  with the dark pill treatment, the inactive one stays light with a
+ *  hover affordance. Tapping the inactive card swaps which partial the
+ *  form below is editing (dirty-guarded in the parent). */
+function BoundaryCardPicker({
+  boundary,
+  entries,
+  selectedSide,
+  onSelect,
+}: {
+  boundary: { a: PartialSlot; b: PartialSlot }
+  entries: { a: WeeklyEntry | null; b: WeeklyEntry | null }
+  selectedSide: 'a' | 'b'
+  onSelect: (side: 'a' | 'b') => void
+}) {
+  const renderRange = (startIso: string, days: number) => {
+    const start = dateFromIso(startIso)
+    const end = new Date(start)
+    end.setDate(end.getDate() + days - 1)
+    const sameMonth = start.getMonth() === end.getMonth()
+    const startFmt = start.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })
+    const endFmt = end.toLocaleDateString('en-US', {
+      month: sameMonth ? undefined : 'short',
+      day: 'numeric',
+    })
+    return `${startFmt}–${endFmt}`
+  }
+
+  const Card = ({
+    side,
+    slot,
+    entry,
+  }: {
+    side: 'a' | 'b'
+    slot: { startIso: string; days: number }
+    entry: WeeklyEntry | null
+  }) => {
+    const active = selectedSide === side
+    const status = entry
+      ? entry.closed
+        ? 'Saved · closed'
+        : 'Saved'
+      : 'Not yet entered'
+    // Compact pill — both cards bg-ink, sized to content (no flex-1).
+    // Active card carries a yellow accent border per the fillable-
+    // input convention; inactive card uses a subtle dark border.
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(side)}
+        aria-pressed={active}
+        className={`bg-ink text-white text-left rounded px-2.5 py-1.5 border-2 transition-colors hover:brightness-110 ${
+          active ? 'border-accent' : 'border-line'
+        }`}
+      >
+        <div className="text-sm font-bold">
+          {renderRange(slot.startIso, slot.days)}
+        </div>
+        <div className="text-xs text-white/80">
+          {slot.days}-day partial · {status}
+        </div>
+        <div className="text-xs font-semibold text-accent">
+          {active ? '● Editing' : '○ Click to update'}
+        </div>
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <Card side="a" slot={boundary.a} entry={entries.a} />
+      <Card side="b" slot={boundary.b} entry={entries.b} />
+    </div>
+  )
+}
 
 function WeekPicker({
   weekStart,

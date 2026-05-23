@@ -8,7 +8,7 @@ import type {
   CustomKpi,
   WeeklyEntry,
 } from '../lib/types'
-import { isoDate, dateFromIso, formatWeekShort } from '../lib/week'
+import { isoDate, dateFromIso, formatEntryRange } from '../lib/week'
 import {
   visibleTileKpis,
   weeklyGoal,
@@ -416,7 +416,7 @@ async function exportXlsx({
     { value: 'KPI', fontWeight: 'bold' },
     ...entries.map(
       (e): ExcelCell => ({
-        value: formatWeekShort(dateFromIso(e.week_start_date)),
+        value: formatEntryRange(e.week_start_date, e.days ?? 7),
         fontWeight: 'bold',
         align: 'right',
       })
@@ -600,7 +600,10 @@ function HistoryTable({
                       </span>
                     )}
                     <span>
-                      {formatWeekShort(dateFromIso(entry.week_start_date))}
+                      {formatEntryRange(
+                        entry.week_start_date,
+                        entry.days ?? 7
+                      )}
                     </span>
                   </div>
                 </th>
