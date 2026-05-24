@@ -174,6 +174,15 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     loadAll()
   }, [clientId])
 
+  // Period anchor — today is stable per render. Declared up here (vs
+  // colocated with the cumulative-mode block below) because the
+  // year-boundary weeklyBudget memo references currentYear during
+  // render and `const` declarations are in the temporal dead zone
+  // until reached.
+  const today = useMemo(() => new Date(), [])
+  const currentYear = today.getFullYear()
+  const currentMonth = today.getMonth()
+
   // Missed weeks — gaps between the client's onboarding week and the
   // current in-progress week with no saved entry. Drives the dashboard's
   // status pill (count + dropdown to deep-link straight into Entry).
@@ -372,16 +381,12 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     return out
   }, [client])
 
-  // Cumulative-mode period anchor. today is stable per render. Period
-  // year stays the current calendar year (per product direction —
-  // prior-year YTD is out of scope for now).
-  const today = useMemo(() => new Date(), [])
-  const currentYear = today.getFullYear()
-  const currentMonth = today.getMonth()
-  // activeMonth drives every period calc (entriesInPeriod, periodLabel,
-  // ytdActualsContribution, CumulativeKpiGrid). When the user hasn't
-  // picked a past period it falls through to currentMonth — i.e. the
-  // dashboard reads "month-to-date through today" exactly as before.
+  // activeMonth drives every cumulative-period calc (entriesInPeriod,
+  // periodLabel, ytdActualsContribution, CumulativeKpiGrid). Falls
+  // through to currentMonth when the user hasn't picked a past period —
+  // the dashboard reads "month-to-date through today" exactly as before.
+  // (today/currentYear/currentMonth are declared earlier in the function
+  // body because the year-boundary weeklyBudget memo needs them.)
   const activeMonth = pickedPeriodMonth ?? currentMonth
   const isPastPeriod = activeMonth !== currentMonth
 

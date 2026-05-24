@@ -8,6 +8,7 @@ import { BudgetGoalsPage } from '../components/BudgetGoalsPage'
 import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
 import { WeeklyDashboard } from '../components/WeeklyDashboard'
 import { HistoryPage } from '../components/HistoryPage'
+import { ResourcesPage } from '../components/ResourcesPage'
 import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 
 type Props = {
@@ -16,7 +17,13 @@ type Props = {
   onBack?: () => void
 }
 
-type NavTab = 'dashboard' | 'entry' | 'budget' | 'history' | 'settings'
+type NavTab =
+  | 'dashboard'
+  | 'entry'
+  | 'budget'
+  | 'history'
+  | 'resources'
+  | 'settings'
 
 export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const { signOut, coach } = useAuth()
@@ -147,6 +154,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
               <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
               <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
+              <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
               <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
             </>
           )}
@@ -234,6 +242,8 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           />
         ) : tab === 'history' ? (
           <HistoryPage clientId={clientId} />
+        ) : tab === 'resources' ? (
+          <ResourcesPage clientId={clientId} />
         ) : (
           <Body tab={tab} />
         )}
@@ -281,6 +291,7 @@ function Body({ tab }: { tab: NavTab }) {
     entry: 'Weekly Entry',
     budget: 'Budget & Goals',
     history: 'History',
+    resources: 'Resources',
     settings: 'Company Settings',
   }
   const subtitles: Record<NavTab, string> = {
@@ -288,6 +299,7 @@ function Body({ tab }: { tab: NavTab }) {
     entry: 'Weekly Entry form lands in Phase 5.',
     budget: '',
     history: 'History view lands in Phase 7.',
+    resources: '',
     settings: '',
   }
   return (
