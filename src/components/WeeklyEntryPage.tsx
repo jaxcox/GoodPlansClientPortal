@@ -502,11 +502,17 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     }
     setSaveError(null)
 
-    // YTD overlap notification — if a budget exists for this week's year
-    // with a ytd_thru_month that already covers this week's month, the
-    // cumulative dashboard will double-count income. Surface it before
-    // the save commits so the user can decide.
-    const year = weekStart.getFullYear()
+    // YTD overlap notification — if a budget exists for this entry's
+    // year with a ytd_thru_month that already covers this entry's month,
+    // the cumulative dashboard will double-count income. Surface it
+    // before the save commits so the user can decide.
+    //
+    // Use activeSlot.startIso (not weekStart) so the Jan-side partial
+    // of a Dec/Jan boundary checks the NEW year's budget, not the old
+    // year's — weekStart stays on the boundary Sunday for both partials.
+    const slotStart = dateFromIso(activeSlot.startIso)
+    const year = slotStart.getFullYear()
+    const slotMonth = slotStart.getMonth()
     const { data: budget } = await supabase
       .from('budgets')
       .select('ytd_thru_month')
@@ -515,7 +521,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       .maybeSingle()
     const thru = (budget as { ytd_thru_month: number | null } | null)
       ?.ytd_thru_month
-    if (thru != null && weekStart.getMonth() <= thru) {
+    if (thru != null && slotMonth <= thru) {
       const monthName = new Date(year, thru, 1).toLocaleDateString(
         'en-US',
         { month: 'long' }

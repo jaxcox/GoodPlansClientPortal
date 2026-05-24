@@ -119,6 +119,16 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
   const [pickedPeriodMonth, setPickedPeriodMonth] = useState<number | null>(
     null
   )
+  /** On-demand cache for a prior-year budget — populated when the
+   *  weekly mode displays an entry whose year doesn't match
+   *  currentYear. Keeps current-year's `budget` untouched (cumulative
+   *  modes always read that one). Holds a single year at a time;
+   *  switching between two different prior years would re-fetch — fine
+   *  for the rare case it happens. */
+  const [otherYearBudget, setOtherYearBudget] = useState<{
+    year: number
+    data: Budget | null
+  } | null>(null)
 
   const loadAll = async () => {
     setLoading(true)
@@ -207,6 +217,16 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     return entries.find((e) => e.week_start_date === prevIso) ?? null
   }, [entries, displayedEntry])
 
+  // Year the displayed entry belongs to. Drives which budget the
+  // weekly tile grid pulls goals from — important for the Dec-side
+  // partial of a Dec/Jan boundary week (year N-1) viewed early in
+  // year N, and for the rare case a coach scrolls back to view a
+  // prior year's regular week.
+  const displayedYear = useMemo<number | null>(() => {
+    if (!displayedEntry) return null
+    return dateFromIso(displayedEntry.week_start_date).getFullYear()
+  }, [displayedEntry])
+
   // Compute the budget view for the entry's year. Returns null if no
   // budget exists yet. GP% derives from cogs_target_pct (which is what the
   // DB stores — Budget & Goals form just inverts it for display).
@@ -245,17 +265,101 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     [budget]
   )
 
-  // Find the MonthlyGoal for whichever month the displayed entry's Sunday
-  // belongs to.
-  const entryMonthlyGoal: MonthlyGoal | null = useMemo(() => {
-    if (!displayedEntry || !budgetView) return null
-    const month = dateFromIso(displayedEntry.week_start_date).getMonth()
-    return budgetView.months.find((m) => m.monthIdx === month) ?? null
-  }, [displayedEntry, budgetView])
-
   // KPI annual goals — live on the budget, NOT on client.kpis (that's the
   // active-toggle map keyed by KPI id with 0/1 values).
   const kpiGoals = (budget?.goals ?? {}) as Record<string, number>
+
+  // ---- Weekly-mode budget routing --------------------------------------
+  // When the displayed week belongs to a prior year (Dec-side partial of
+  // a Dec/Jan boundary, or a coach scrolling back to last year), the
+  // weekly tile grid needs THAT year's budget for goals + season_pct —
+  // current year's budget would color tiles against the wrong numbers.
+  // Cumulative modes (MTD/QTD/YTD) always use the current year's budget
+  // and aren't touched here.
+  useEffect(() => {
+    if (displayedYear == null || displayedYear === currentYear) return
+    if (otherYearBudget?.year === displayedYear) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('client_id', clientId)
+        .eq('year', displayedYear)
+        .maybeSingle()
+      if (cancelled) return
+      setOtherYearBudget({
+        year: displayedYear,
+        data: (data as Budget | null) ?? null,
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [clientId, displayedYear, currentYear, otherYearBudget])
+
+  /** Which budget the weekly tile grid uses — current year's `budget`
+   *  when the displayed entry is current-year (typical), the cached
+   *  prior-year budget otherwise. Null while a prior-year load is in
+   *  flight (the weekly grid handles null goals gracefully). */
+  const weeklyBudget = useMemo<Budget | null>(() => {
+    if (displayedYear == null || displayedYear === currentYear) return budget
+    return otherYearBudget?.year === displayedYear
+      ? otherYearBudget.data
+      : null
+  }, [displayedYear, currentYear, budget, otherYearBudget])
+
+  // Weekly-mode budgetView / monthShares / kpiGoals derived from the
+  // (possibly prior-year) weeklyBudget. Mirrors the cumulative versions
+  // above but routes through whichever year matches the displayed entry.
+  const weeklyBudgetView = useMemo(() => {
+    if (!weeklyBudget) return null
+    const cogsPct =
+      weeklyBudget.cogs_target_pct != null
+        ? Number(weeklyBudget.cogs_target_pct)
+        : null
+    const gpPct = cogsPct != null ? 100 - cogsPct : null
+    return computeBudgetView({
+      annualRevenue:
+        weeklyBudget.annual_revenue != null
+          ? Number(weeklyBudget.annual_revenue)
+          : null,
+      grossProfitPct: gpPct,
+      annualExpenses:
+        weeklyBudget.annual_expenses != null
+          ? Number(weeklyBudget.annual_expenses)
+          : null,
+      seasonType: (weeklyBudget.season_type ?? 'even') as Budget['season_type'],
+      seasonPct: (weeklyBudget.season_pct as number[] | null) ?? [],
+      ytdThruMonth: weeklyBudget.ytd_thru_month ?? null,
+      ytdRevenueByMonth:
+        (weeklyBudget.ytd_revenue_by_month as (number | null)[] | null) ??
+        null,
+      ytdCogsByMonth:
+        (weeklyBudget.ytd_cogs_by_month as (number | null)[] | null) ?? null,
+      ytdExpensesByMonth:
+        (weeklyBudget.ytd_expenses_by_month as (number | null)[] | null) ??
+        emptyMonthArray(),
+    })
+  }, [weeklyBudget])
+  const weeklyMonthShares = useMemo(
+    () =>
+      monthShareFractions(
+        (weeklyBudget?.season_type ?? 'even') as Budget['season_type'],
+        (weeklyBudget?.season_pct as number[] | null) ?? []
+      ),
+    [weeklyBudget]
+  )
+  const weeklyKpiGoals = (weeklyBudget?.goals ?? {}) as Record<string, number>
+
+  // Find the MonthlyGoal for whichever month the displayed entry's
+  // start belongs to. Uses weeklyBudgetView so prior-year entries pull
+  // the right year's per-month goals.
+  const entryMonthlyGoal: MonthlyGoal | null = useMemo(() => {
+    if (!displayedEntry || !weeklyBudgetView) return null
+    const month = dateFromIso(displayedEntry.week_start_date).getMonth()
+    return weeklyBudgetView.months.find((m) => m.monthIdx === month) ?? null
+  }, [displayedEntry, weeklyBudgetView])
 
   // Which KPI ids are currently enabled per client.kpis. Used when picking
   // between mutex partners (e.g. closeRate's won-dollars source) in
@@ -365,23 +469,27 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
       )}
 
       {/* KPI grid — weekly view uses the displayed entry; cumulative
-          views aggregate all in-period entries. */}
+          views aggregate all in-period entries. Weekly mode pulls
+          every budget-derived value from weeklyBudget so a prior-year
+          entry (e.g. the Dec-side of a Dec/Jan boundary partial viewed
+          in early January) colors tiles against THAT year's goals,
+          not the current year's. */}
       {mode === 'weekly' && displayedEntry && (
         <KpiGrid
           client={client}
           entry={displayedEntry}
           priorEntry={priorEntry}
           monthlyGoal={entryMonthlyGoal}
-          monthShares={monthShares}
-          kpiGoals={kpiGoals}
+          monthShares={weeklyMonthShares}
+          kpiGoals={weeklyKpiGoals}
           enabledIds={enabledIds}
           annualRevenue={
-            budget?.annual_revenue != null
-              ? Number(budget.annual_revenue)
+            weeklyBudget?.annual_revenue != null
+              ? Number(weeklyBudget.annual_revenue)
               : undefined
           }
           capacityGroupGoals={
-            (budget?.capacity_group_goals ?? {}) as Record<
+            (weeklyBudget?.capacity_group_goals ?? {}) as Record<
               string,
               CapacityGroupGoal
             >
