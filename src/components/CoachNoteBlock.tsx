@@ -191,7 +191,7 @@ export function CoachNoteBlock({
             markSeen()
           }}
           aria-label="Expand coach note"
-          className="text-accent border border-mute rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10 shrink-0"
+          className="text-accent border border-accent rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10 shrink-0"
         >
           +
         </button>
