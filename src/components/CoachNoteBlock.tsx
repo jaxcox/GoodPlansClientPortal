@@ -176,7 +176,7 @@ export function CoachNoteBlock({
       <div className="bg-ink border border-line rounded-lg p-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-xs font-bold uppercase tracking-wider text-white truncate">
-            Coach Note {!hasNote && '· (none)'}
+            Coach Note {!hasNote && '📝 (none)'}
           </span>
           {isNew && (
             <span className="bg-accent text-black text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0">
@@ -191,7 +191,7 @@ export function CoachNoteBlock({
             markSeen()
           }}
           aria-label="Expand coach note"
-          className="text-white border border-mute rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10 shrink-0"
+          className="text-accent border border-mute rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10 shrink-0"
         >
           +
         </button>

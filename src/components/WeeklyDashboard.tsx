@@ -1,5 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/auth'
+import type {
+  CapacityCell,
+  CapacityGroupData,
+  CapacitySectionData,
+  ReportData,
+} from './ReportDocument'
 import { CATEGORIES, KPIS } from '../lib/kpis'
 import type { KpiCategory, KpiDef } from '../lib/kpis'
 import type {
@@ -41,9 +48,15 @@ import { InfoIcon } from './InfoIcon'
 import { CumulativeKpiGrid } from './CumulativeKpiGrid'
 import { MissedWeeksPill, WeekOfCalendarPill } from './HeaderPills'
 import {
+  aggregateCapacityValue,
+  aggregateCustomKpi,
+  aggregateKpi,
   entryInPeriod,
+  getPeriodGoalFull,
+  paceFrac,
   periodLabel,
   quarterFromMonth,
+  totalWeeksInPeriod,
   ytdActualsContribution,
 } from '../lib/cumulative'
 
@@ -88,9 +101,14 @@ type Props = {
 type Mode = 'weekly' | 'mtd' | 'qtd' | 'ytd'
 
 export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props) {
+  const { coach } = useAuth()
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [entries, setEntries] = useState<WeeklyEntry[]>([])
+  /** True while a PDF report is being generated — toggles the Download
+   *  button to a "Preparing…" disabled state so a slow click doesn't
+   *  double-trigger. */
+  const [downloading, setDownloading] = useState(false)
   /** ISO YYYY-MM-DD for every saved entry across the client's history —
    *  used to compute the missed-weeks set for the status pill. Separate
    *  from `entries` (which caps at 60 for tile rendering) so the gap
@@ -409,6 +427,528 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     )
   }, [entries, mode, currentYear, activeMonth, today])
 
+  // ---- Download Report (PDF) ----------------------------------------------
+  // Builds the report data using the same value/goal helpers the on-screen
+  // tiles use so the PDF mirrors what the coach sees. Weekly mode uses
+  // actualValue + weeklyGoal; cumulative modes (MTD/QTD/YTD) use the
+  // aggregate helpers from cumulative.ts. Custom KPIs and capacity-derived
+  // tiles still TODO for both branches.
+
+  const reportData = useMemo<ReportData | null>(() => {
+    if (!client) return null
+    const visible = visibleTileKpis(client)
+    const byCategory = new Map<KpiCategory, KpiDef[]>()
+    for (const k of visible) {
+      const list = byCategory.get(k.category) ?? []
+      list.push(k)
+      byCategory.set(k.category, list)
+    }
+
+    const baseHeader = {
+      clientName: client.company_name,
+      brandName: coach?.brand_name ?? 'The Good Plans Co',
+      coachNote: client.coach_note ?? null,
+    }
+
+    const activeCustomKpis = (client.custom_kpis ?? []).filter(
+      (c) => c.active !== false
+    )
+    // Capacity groups render under Team when the Utilization KPI is on.
+    // Each group produces one or more rows: utilization, plus Labor
+    // Hours / Labor Efficiency for labor-method groups.
+    const reportCapacityGroups =
+      Number(client.kpis?.capacityUtilization) === 1
+        ? client.capacity_groups ?? []
+        : []
+
+    if (mode === 'weekly') {
+      if (!displayedEntry) return null
+      const groups = client.capacity_groups ?? []
+      const weeklyEntryStart = dateFromIso(displayedEntry.week_start_date)
+      const entryMonth = weeklyEntryStart.getMonth()
+      const entryYear = weeklyEntryStart.getFullYear()
+      const capacityGroupGoalsArg = (weeklyBudget?.capacity_group_goals ??
+        {}) as Record<string, CapacityGroupGoal>
+      // Weekly capacity row builder — mirrors CapacityTile / LaborHoursTile
+      // / LaborEfficiencyTile so the report values match what's on-screen.
+      const weeklyCapacityGroups = (): CapacityGroupData[] => {
+        return reportCapacityGroups.map((g) => {
+          const cv = (displayedEntry.capacity_values ?? {})[g.id]
+          const cap = groupMaxCapacity(g)
+          // Utilization cell — value depends on method.
+          let utilPct: number | null = null
+          let utilValueRaw: number | null = null
+          if (g.method === 'manual') {
+            const v = cv as { utilizationPct?: number } | undefined
+            utilPct = v?.utilizationPct ?? g.staticUtilPct ?? null
+          } else if (g.method === 'slots') {
+            const v = cv as { slotsFilled?: number } | undefined
+            const filled = v?.slotsFilled ?? 0
+            utilPct = cap ? (filled / cap) * 100 : null
+          } else if (g.method === 'labor') {
+            const v = cv as { producedHours?: number } | undefined
+            const produced = v?.producedHours ?? 0
+            utilPct = cap ? (produced / cap) * 100 : null
+          } else if (g.method === 'revenue') {
+            const v = cv as { revenueProduced?: number } | undefined
+            const produced = v?.revenueProduced ?? 0
+            utilValueRaw = produced
+            utilPct = cap ? (produced / cap) * 100 : null
+          } else if (g.method === 'headcount') {
+            const v = cv as
+              | {
+                  hoursWorked?: number
+                  departments?: Record<string, { hoursWorked: number }>
+                }
+              | undefined
+            const legacy = Object.values(v?.departments ?? {}).reduce(
+              (s, d) => s + (d.hoursWorked ?? 0),
+              0
+            )
+            const totalWorked = v?.hoursWorked ?? legacy
+            utilPct = cap ? (totalWorked / cap) * 100 : null
+          }
+          const gGoal = capacityGroupGoalsArg[g.id]
+          const useDollarGoal =
+            g.method === 'revenue' && gGoal?.format === '$'
+          const utilization: CapacityCell = {
+            format: useDollarGoal ? '$' : '%',
+            direction: 'hi',
+            range: true,
+            value: useDollarGoal ? utilValueRaw : utilPct,
+            goal: gGoal?.target ?? null,
+          }
+          // Labor-method extras.
+          let laborHours: CapacityCell | null = null
+          let laborEfficiency: CapacityCell | null = null
+          if (g.method === 'labor') {
+            const v = cv as { producedHours?: number } | undefined
+            const produced = v?.producedHours ?? 0
+            const laborHrsGoal = gGoal?.laborHoursGoal
+            laborHours = {
+              format: '#',
+              direction: 'hi',
+              // Labor Hours is hi-direction (more produced = better), not
+              // a bidirectional range KPI. Over-producing labor hours is
+              // unambiguously good — colors green / yellow / red against
+              // ratio, not ±10% of goal.
+              range: false,
+              value: produced > 0 ? produced : null,
+              goal: laborHrsGoal && laborHrsGoal > 0 ? laborHrsGoal : null,
+            }
+            if (!g.hideLaborEfficiency) {
+              const working = groupWorkingHours(g)
+              const effPct =
+                working > 0 ? (produced / working) * 100 : null
+              const laborEffGoal = gGoal?.laborEfficiencyGoal
+              laborEfficiency = {
+                format: '%',
+                direction: 'hi',
+                range: true,
+                value: effPct,
+                goal: laborEffGoal && laborEffGoal > 0 ? laborEffGoal : null,
+              }
+            }
+          }
+          return {
+            name: g.name || 'Capacity',
+            utilization,
+            laborHours,
+            laborEfficiency,
+          }
+        })
+      }
+
+      const sections = CATEGORIES.map((cat) => {
+        const kpis = byCategory.get(cat) ?? []
+        const customs = activeCustomKpis.filter((c) => c.category === cat)
+        const standardRows = kpis.map((kpi) => {
+          const value = actualValue(kpi.id, displayedEntry, groups)
+          const goal = weeklyGoal({
+            kpi,
+            entry: displayedEntry,
+            client,
+            monthlyGoal: entryMonthlyGoal,
+            monthShares: weeklyMonthShares,
+            kpiGoals: weeklyKpiGoals,
+            enabledIds,
+            annualRevenue:
+              weeklyBudget?.annual_revenue != null
+                ? Number(weeklyBudget.annual_revenue)
+                : undefined,
+          })
+          return {
+            label: kpi.label,
+            format: kpi.format,
+            direction: kpi.direction ?? ('hi' as const),
+            range: kpi.range ?? false,
+            value,
+            goal,
+          }
+        })
+        // Custom KPIs follow the same goal-periodicity rule as standard
+        // sum/$ KPIs: $/# stored as annual + pro-rated to the week; %
+        // stays flat. Mirrors CustomTile in this file.
+        const customRows = customs.map((custom) => {
+          const value =
+            (displayedEntry.kpi_values ?? {})[custom.id] ?? null
+          const rawGoal = weeklyKpiGoals[custom.id]
+          let goal: number | null = null
+          if (typeof rawGoal === 'number' && Number.isFinite(rawGoal)) {
+            if (custom.format === '%') {
+              goal = rawGoal
+            } else {
+              const share = weeklyMonthShares[entryMonth] ?? 1 / 12
+              const frac = 7 / daysInMonth(entryYear, entryMonth)
+              goal = rawGoal * share * frac
+            }
+          }
+          return {
+            label: custom.name,
+            format: custom.format,
+            direction: custom.direction ?? ('hi' as const),
+            range: false,
+            value,
+            goal,
+          }
+        })
+        return {
+          title: cat,
+          rows: [...standardRows, ...customRows],
+        }
+      }).filter((s) => s.rows.length > 0)
+      const capacityGroupsData = weeklyCapacityGroups()
+      const capacitySection: CapacitySectionData | undefined =
+        capacityGroupsData.length > 0
+          ? { title: 'Team', groups: capacityGroupsData }
+          : undefined
+      return {
+        ...baseHeader,
+        periodLabel: `Week of ${formatWeekShort(
+          dateFromIso(displayedEntry.week_start_date)
+        )}`,
+        sections,
+        capacitySection,
+      }
+    }
+
+    // Cumulative modes (mtd / qtd / ytd) — pace-adjusted goals so the
+    // "Goal" column represents "where you should be by today in this
+    // period," matching the dashboard's CumulativeTile color anchor.
+    const ytd = ytdActualsContribution(budget, mode, currentYear, activeMonth)
+    if (
+      entriesInPeriod.length === 0 &&
+      ytd.monthsCovered.length === 0
+    ) {
+      return null
+    }
+    const weeksInPeriod = totalWeeksInPeriod(mode, currentYear, activeMonth)
+    const weeksFromEntries = entriesInPeriod.reduce(
+      (sum, e) => sum + (e.days ?? 7) / 7,
+      0
+    )
+    const pace = paceFrac(weeksFromEntries + ytd.weeksCovered, weeksInPeriod)
+    const annualRevenueArg =
+      budget?.annual_revenue != null ? Number(budget.annual_revenue) : undefined
+
+    // sumQuarterShares — mirrors the private helper in CumulativeKpiGrid.
+    // Inlined here so the report doesn't depend on internal grid helpers.
+    const sumQuarterShares = (month: number): number => {
+      const q = Math.floor(month / 3)
+      let s = 0
+      for (let i = 0; i < 3; i++) s += monthShares[q * 3 + i] ?? 1 / 12
+      return s
+    }
+    const periodShareFor = (month: number): number =>
+      mode === 'mtd'
+        ? monthShares[month] ?? 1 / 12
+        : mode === 'qtd'
+          ? sumQuarterShares(month)
+          : 1
+
+    // Cumulative capacity group builder — mirrors CumulativeCapacityTile /
+    // CumulativeLaborHoursTile / CumulativeLaborEfficiencyTile, returning
+    // one CapacityGroupData per group so the PDF's transposed Utilization
+    // table can put each group in its own column.
+    const cumCapacityGroups = (): CapacityGroupData[] => {
+      const capGoals = (budget?.capacity_group_goals ?? {}) as Record<
+        string,
+        CapacityGroupGoal
+      >
+      return reportCapacityGroups.map((g) => {
+        const cap = groupMaxCapacity(g)
+        const cumCap = cap * weeksInPeriod
+        let utilValue: number | null
+        let utilPct: number | null
+        if (g.method === 'manual') {
+          const vals: number[] = []
+          for (const e of entriesInPeriod) {
+            const cv = (e.capacity_values ?? {})[g.id] as
+              | { utilizationPct?: number }
+              | undefined
+            const v = cv?.utilizationPct
+            if (typeof v === 'number' && Number.isFinite(v)) vals.push(v)
+          }
+          utilValue = vals.length === 0 ? null : vals.reduce((s, v) => s + v, 0) / vals.length
+          utilPct = utilValue
+        } else {
+          utilValue = aggregateCapacityValue(g, entriesInPeriod)
+          utilPct = cumCap > 0 && utilValue != null
+            ? (utilValue / cumCap) * 100
+            : null
+        }
+        const gGoal = capGoals[g.id]
+        // Utilization cell shape varies with method + goal format. All
+        // variants are range KPIs (target band), so paceGoal === goal —
+        // pace doesn't scale for range. The Pace column will display the
+        // same value as Goal so the column reads "pace = full goal."
+        let utilization: CapacityCell
+        if (g.method === 'revenue' && gGoal?.format === '$') {
+          const periodGoal = gGoal.target * weeksInPeriod
+          utilization = {
+            format: '$',
+            direction: 'hi',
+            range: true,
+            value: utilValue,
+            goal: periodGoal,
+            paceGoal: periodGoal,
+          }
+        } else if (g.method === 'revenue' && gGoal?.format === '%') {
+          const periodGoal = (cumCap * gGoal.target) / 100
+          utilization = {
+            format: '$',
+            direction: 'hi',
+            range: true,
+            value: utilValue,
+            goal: periodGoal,
+            paceGoal: periodGoal,
+          }
+        } else if (gGoal?.format === '$') {
+          const periodGoal = gGoal.target * weeksInPeriod
+          utilization = {
+            format: '$',
+            direction: 'hi',
+            range: true,
+            value: utilValue,
+            goal: periodGoal,
+            paceGoal: periodGoal,
+          }
+        } else {
+          // % utilization goal — doesn't scale with period.
+          const periodGoal = gGoal?.target ?? null
+          utilization = {
+            format: '%',
+            direction: 'hi',
+            range: true,
+            value: utilPct,
+            goal: periodGoal,
+            paceGoal: periodGoal,
+          }
+        }
+        // Labor-method extras.
+        let laborHours: CapacityCell | null = null
+        let laborEfficiency: CapacityCell | null = null
+        if (g.method === 'labor') {
+          let total = 0
+          let any = false
+          for (const e of entriesInPeriod) {
+            const cv = (e.capacity_values ?? {})[g.id] as
+              | { producedHours?: number }
+              | undefined
+            if (
+              cv &&
+              typeof cv.producedHours === 'number' &&
+              Number.isFinite(cv.producedHours)
+            ) {
+              total += cv.producedHours
+              any = true
+            }
+          }
+          const lhrsWeekly = gGoal?.laborHoursGoal
+          const fullLhrs =
+            lhrsWeekly && lhrsWeekly > 0 ? lhrsWeekly * weeksInPeriod : null
+          const paceLhrs = fullLhrs != null ? fullLhrs * pace : null
+          laborHours = {
+            format: '#',
+            direction: 'hi',
+            // Hi-direction (see weekly builder). Cumulative Labor Hours
+            // pace-colors against produced/paceGoal — over-producing is
+            // good, not "out of range." Goal column shows the full
+            // period total; Pace shows where you should be by today.
+            range: false,
+            value: any ? total : null,
+            goal: fullLhrs,
+            paceGoal: paceLhrs,
+          }
+          if (!g.hideLaborEfficiency) {
+            const working = groupWorkingHours(g)
+            const cumWorking = working * weeksInPeriod
+            const effPct =
+              any && cumWorking > 0 ? (total / cumWorking) * 100 : null
+            const leffGoal = gGoal?.laborEfficiencyGoal
+            const effPeriodGoal = leffGoal && leffGoal > 0 ? leffGoal : null
+            laborEfficiency = {
+              format: '%',
+              direction: 'hi',
+              range: true,
+              value: effPct,
+              // % efficiency target stays flat across the period; pace
+              // doesn't scale for range KPIs.
+              goal: effPeriodGoal,
+              paceGoal: effPeriodGoal,
+            }
+          }
+        }
+        return {
+          name: g.name || 'Capacity',
+          utilization,
+          laborHours,
+          laborEfficiency,
+        }
+      })
+    }
+
+    const sections = CATEGORIES.map((cat) => {
+      const kpis = byCategory.get(cat) ?? []
+      const customs = activeCustomKpis.filter((c) => c.category === cat)
+      const standardRows = kpis.map((kpi) => {
+        const value = aggregateKpi(kpi, entriesInPeriod, ytd.extra)
+        const fullGoal = getPeriodGoalFull({
+          kpi,
+          mode,
+          month: activeMonth,
+          monthlyGoals: budgetView?.months ?? null,
+          monthShares,
+          kpiGoals,
+          enabledIds,
+          annualRevenue: annualRevenueArg,
+        })
+        // Pace-scaling rule mirrors CumulativeStandardTile: sum/$ and
+        // dollar-derived KPIs scale; ratios / range / per-unit avgs stay
+        // flat (a 60% conversion rate is 60% regardless of period). The
+        // Pace column shows the scaled goal; non-scaling KPIs render the
+        // same value in both Pace and Goal so the column reads as
+        // "pace = the goal still applies".
+        const scalesWithPace =
+          kpi.format !== '%' &&
+          !kpi.range &&
+          (kpi.aggregation === 'sum' ||
+            kpi.id === 'grossProfit' ||
+            kpi.id === 'netProfit')
+        const paceGoal =
+          fullGoal != null && scalesWithPace ? fullGoal * pace : fullGoal
+        return {
+          label: kpi.label,
+          format: kpi.format,
+          direction: kpi.direction ?? ('hi' as const),
+          range: kpi.range ?? false,
+          value,
+          goal: fullGoal,
+          paceGoal,
+        }
+      })
+      // Custom KPIs — same goal-periodicity rule as standard sum/$ KPIs,
+      // plus pace adjustment for the in-flight period. Custom % KPIs
+      // don't scale (same flat rate for the period).
+      const customRows = customs.map((custom) => {
+        const value = aggregateCustomKpi(custom, entriesInPeriod)
+        const rawGoal = kpiGoals[custom.id]
+        let goal: number | null = null
+        let paceGoal: number | null = null
+        if (typeof rawGoal === 'number' && Number.isFinite(rawGoal)) {
+          if (custom.format === '%') {
+            goal = rawGoal
+            paceGoal = rawGoal
+          } else {
+            const fullG = rawGoal * periodShareFor(activeMonth)
+            goal = fullG
+            paceGoal = fullG * pace
+          }
+        }
+        return {
+          label: custom.name,
+          format: custom.format,
+          direction: custom.direction ?? ('hi' as const),
+          range: false,
+          value,
+          goal,
+          paceGoal,
+        }
+      })
+      return {
+        title: cat,
+        rows: [...standardRows, ...customRows],
+      }
+    }).filter((s) => s.rows.length > 0)
+
+    const cumCapacityData = cumCapacityGroups()
+    const capacitySection: CapacitySectionData | undefined =
+      cumCapacityData.length > 0
+        ? { title: 'Team', groups: cumCapacityData }
+        : undefined
+
+    // Period label: "April 2026" / "Q2 2026" / "2026". The mode pill
+    // makes MTD/QTD/YTD framing explicit in the on-screen experience;
+    // adding a parenthetical to the PDF would just clutter the header.
+    const baseLabel = periodLabel(mode, currentYear, activeMonth)
+    const reportPeriodLabel =
+      mode === 'ytd' ? baseLabel : `${baseLabel} ${currentYear}`
+
+    return {
+      ...baseHeader,
+      periodLabel: reportPeriodLabel,
+      sections,
+      capacitySection,
+      // MTD / QTD / YTD reports add a Pace column between Actual and
+      // Goal. Weekly omits showPace (defaults to false in the PDF).
+      showPace: true,
+    }
+  }, [
+    mode,
+    client,
+    displayedEntry,
+    entryMonthlyGoal,
+    weeklyMonthShares,
+    weeklyKpiGoals,
+    enabledIds,
+    weeklyBudget,
+    coach,
+    budget,
+    budgetView,
+    entriesInPeriod,
+    currentYear,
+    activeMonth,
+    monthShares,
+    kpiGoals,
+  ])
+
+  const onDownloadReport = async () => {
+    if (!reportData || downloading) return
+    setDownloading(true)
+    try {
+      // Dynamic import so the ~2MB react-pdf bundle only loads when the
+      // user actually clicks Download (instead of bloating the main
+      // bundle for everyone who just views the dashboard).
+      const [{ pdf }, { ReportDocument }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./ReportDocument'),
+      ])
+      const blob = await pdf(<ReportDocument data={reportData} />).toBlob()
+      const safeName = reportData.clientName.replace(/[^a-z0-9]+/gi, '-')
+      const safePeriod = reportData.periodLabel.replace(/[^a-z0-9]+/gi, '-')
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${safeName}-${safePeriod}-Report.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   // ---- Render --------------------------------------------------------------
 
   if (loading)
@@ -436,6 +976,8 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
         onPickPeriod={(m) =>
           setPickedPeriodMonth(m === currentMonth ? null : m)
         }
+        onDownloadReport={reportData ? onDownloadReport : undefined}
+        downloading={downloading}
       />
 
       {/* Coach Note block at the top — coach edits, client reads. Empty
@@ -584,6 +1126,8 @@ function Header({
   currentMonth,
   activeMonth,
   onPickPeriod,
+  onDownloadReport,
+  downloading,
 }: {
   mode: Mode
   onMode: (m: Mode) => void
@@ -595,12 +1139,34 @@ function Header({
   currentMonth: number
   activeMonth: number
   onPickPeriod: (month: number) => void
+  /** Click-to-download handler. Only provided when the current mode
+   *  has a downloadable report. */
+  onDownloadReport?: () => void
+  downloading: boolean
 }) {
   return (
     <div className="sticky top-[48px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 sm:-mt-8 space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <h1 className="text-lg font-bold text-ink">Performance Dashboard</h1>
-        <ModePills mode={mode} onMode={onMode} />
+        <div className="flex items-center gap-2 flex-wrap">
+          {onDownloadReport && (
+            <button
+              type="button"
+              onClick={onDownloadReport}
+              disabled={downloading}
+              className="bg-ink text-white text-sm font-semibold px-3 py-1 rounded hover:brightness-110 disabled:opacity-60"
+            >
+              {downloading ? (
+                'Preparing…'
+              ) : (
+                <>
+                  <span className="text-accent">⬇</span> Download Report
+                </>
+              )}
+            </button>
+          )}
+          <ModePills mode={mode} onMode={onMode} />
+        </div>
       </div>
 
       {/* Pill row, mode-dependent:
@@ -1125,10 +1691,9 @@ function FinancialsRowTile({
   const resultColor = (() => {
     if (ratio == null) return isLight ? 'text-black' : 'text-white'
     if (range) {
+      // Two-tone (see ProgressRing.computeBand): ±10% green, else red.
       const dev = Math.abs((value ?? 0) - (goal ?? 0)) / (goal ?? 1)
-      if (dev <= 0.1) return 'text-good'
-      if (dev <= 0.15) return 'text-accent'
-      return 'text-bad'
+      return dev <= 0.1 ? 'text-good' : 'text-bad'
     }
     if (direction === 'hi') {
       if (ratio >= 1) return 'text-good'
@@ -1353,8 +1918,9 @@ function CustomTile({
 }
 
 /** Per-group tile: labor hours produced this week for one labor-method
- *  capacity group. Optional weekly goal — when set, the tile colors
- *  green/red against a ±10% band and shows "Goal: X hrs ±10%". */
+ *  capacity group. Hi-direction (more produced hours = better) — colors
+ *  red below 90% of goal, yellow 90–100%, green at-or-above goal. Not
+ *  a range KPI; over-producing labor hours is unambiguously good. */
 function LaborHoursTile({
   group,
   entry,
@@ -1373,7 +1939,7 @@ function LaborHoursTile({
     value,
     goal: goal && goal > 0 ? goal : null,
     direction: 'hi',
-    range: true,
+    range: false,
   })
   const valueColor =
     band === 'green'
@@ -1396,7 +1962,7 @@ function LaborHoursTile({
           {value != null ? `${value} hrs` : '—'}
         </div>
         <div className="text-base text-white mt-1">
-          {goal && goal > 0 ? `Goal: ${goal} hrs (±10%)` : 'No goal set'}
+          {goal && goal > 0 ? `Goal: ${goal} hrs` : 'No goal set'}
         </div>
       </div>
     </div>
@@ -1436,26 +2002,30 @@ function LaborEfficiencyTile({
           ? 'text-bad'
           : 'text-white'
   return (
-    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative">
       <div className="flex items-center gap-0.5">
         <div className="text-sm font-semibold uppercase tracking-wider text-white">
           Labor Efficiency
         </div>
         <InfoIcon text="How productively the team used their scheduled time this week." />
       </div>
+      {/* Value + goal centered (matches every other 2-item tile so the
+          % anchors at the same vertical position). Raw "X / Y hrs"
+          line is absolute-positioned at the bottom so it doesn't
+          shift the centered pair. */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`text-xl font-bold leading-none ${valueColor}`}>
           {pct != null ? `${pct.toFixed(1)}%` : '—'}
         </div>
-        {pct != null && (
-          <div className="text-sm text-white mt-1">
-            {produced} / {working} hrs
-          </div>
-        )}
         <div className="text-base text-white mt-1">
           {goal && goal > 0 ? `Goal: ${goal}% (±10%)` : 'No goal set'}
         </div>
       </div>
+      {pct != null && (
+        <div className="absolute bottom-2 left-0 right-0 text-sm text-white text-center">
+          {produced} / {working} hrs
+        </div>
+      )}
     </div>
   )
 }
@@ -1473,41 +2043,37 @@ function CapacityTile({
   const cv = (entry.capacity_values ?? {})[group.id]
   const cap = groupMaxCapacity(group)
 
-  // Big number is the weekly result (what the coach/client entered on
-  // Weekly Entry — produced hours, slots filled, $ produced, etc.).
-  // Sub-label is the utilization % derived from that value vs the team's
-  // defined capacity.
-  //
-  // Manual method is the one exception: the input IS already a %, so the
-  // big number is the % and there's no separate utilization line.
+  // Big number is always the utilization PERCENT (matches the KPI's
+  // single name "Utilization" and the parallel Labor Efficiency tile
+  // structure). The raw method-specific value (hours / slots / dollars)
+  // moves into a sub-line below the goal so the user can still see
+  // what was actually entered.
   let actualPct: number | null = null
   let actualDollars: number | null = null
-  let valueText = '—'
-  let subLabel = ''
+  let rawLine = ''
 
   if (group.method === 'manual') {
     const v = cv as { utilizationPct?: number } | undefined
     actualPct = v?.utilizationPct ?? group.staticUtilPct ?? null
-    valueText = actualPct != null ? `${actualPct.toFixed(1)}%` : '—'
+    // Manual method has no separate raw value — the input IS the %.
   } else if (group.method === 'slots') {
     const v = cv as { slotsFilled?: number } | undefined
     const filled = v?.slotsFilled ?? 0
     actualPct = cap ? (filled / cap) * 100 : null
-    valueText = `${filled} slots`
-    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
+    rawLine = cap ? `${filled} / ${cap} slots` : `${filled} slots`
   } else if (group.method === 'labor') {
     const v = cv as { producedHours?: number } | undefined
     const produced = v?.producedHours ?? 0
     actualPct = cap ? (produced / cap) * 100 : null
-    valueText = `${produced} hrs`
-    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
+    rawLine = cap ? `${produced} / ${cap} hrs` : `${produced} hrs`
   } else if (group.method === 'revenue') {
     const v = cv as { revenueProduced?: number } | undefined
     const produced = v?.revenueProduced ?? 0
     actualDollars = produced
     actualPct = cap ? (produced / cap) * 100 : null
-    valueText = `$${produced.toLocaleString()}`
-    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
+    rawLine = cap
+      ? `$${produced.toLocaleString()} / $${cap.toLocaleString()}`
+      : `$${produced.toLocaleString()}`
   } else if (group.method === 'headcount') {
     const v = cv as
       | {
@@ -1521,8 +2087,7 @@ function CapacityTile({
     )
     const totalWorked = v?.hoursWorked ?? legacy
     actualPct = cap ? (totalWorked / cap) * 100 : null
-    valueText = `${totalWorked} hrs`
-    subLabel = actualPct != null ? `${actualPct.toFixed(1)}% utilization` : ''
+    rawLine = cap ? `${totalWorked} / ${cap} hrs` : `${totalWorked} hrs`
   }
 
   // Goal label + band coloring. All capacity goals are range-style
@@ -1565,22 +2130,28 @@ function CapacityTile({
           : 'text-white'
 
   return (
-    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col">
+    <div className="bg-ink rounded-lg p-3 min-h-[110px] flex flex-col relative">
       <div className="flex items-center gap-0.5">
         <div className="text-sm font-semibold uppercase tracking-wider text-white">
-          Capacity Utilization
+          Utilization
         </div>
         <InfoIcon text={TEAM_CAPACITY_DESC} />
       </div>
+      {/* Value + goal centered (matches every other 2-item tile so the
+          % anchors at the same vertical position as e.g. Labor Hours).
+          Raw line is absolute-positioned at the bottom so it doesn't
+          shift the centered pair. */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`text-xl font-bold leading-none ${valueColor}`}>
-          {valueText}
+          {actualPct != null ? `${actualPct.toFixed(1)}%` : '—'}
         </div>
-        {subLabel && (
-          <div className="text-sm text-white mt-1">{subLabel}</div>
-        )}
         <div className="text-base text-white mt-1">{goalLabel}</div>
       </div>
+      {rawLine && (
+        <div className="absolute bottom-2 left-0 right-0 text-sm text-white text-center">
+          {rawLine}
+        </div>
+      )}
     </div>
   )
 }

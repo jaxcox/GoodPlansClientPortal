@@ -622,22 +622,28 @@ function CumulativeCapacityTile({
         ? (value / cumCap) * 100
         : null
 
-  let valueText = '—'
-  if (value != null) {
-    if (group.method === 'manual') {
-      valueText = utilPct != null ? `${utilPct.toFixed(1)}%` : '—'
-    } else if (group.method === 'slots') {
-      valueText = `${Math.round(value).toLocaleString()} slots`
+  // Big number is always the utilization PERCENT (single-name
+  // "Utilization" KPI). The raw method-specific value (hours / slots /
+  // dollars) becomes the sub-label so it still reads at a glance.
+  const valueText = utilPct != null ? `${utilPct.toFixed(1)}%` : '—'
+  let subLabel: string | undefined
+  if (group.method !== 'manual' && value != null) {
+    const cumCapLabel =
+      cumCap > 0 ? cumCap.toLocaleString() : null
+    if (group.method === 'slots') {
+      subLabel = cumCapLabel
+        ? `${Math.round(value).toLocaleString()} / ${cumCapLabel} slots`
+        : `${Math.round(value).toLocaleString()} slots`
     } else if (group.method === 'labor' || group.method === 'headcount') {
-      valueText = `${Math.round(value).toLocaleString()} hrs`
+      subLabel = cumCapLabel
+        ? `${Math.round(value).toLocaleString()} / ${cumCapLabel} hrs`
+        : `${Math.round(value).toLocaleString()} hrs`
     } else if (group.method === 'revenue') {
-      valueText = `$${Math.round(value).toLocaleString()}`
+      subLabel = cumCapLabel
+        ? `$${Math.round(value).toLocaleString()} / $${cumCapLabel}`
+        : `$${Math.round(value).toLocaleString()}`
     }
   }
-  const subLabel =
-    group.method !== 'manual' && utilPct != null
-      ? `${utilPct.toFixed(1)}% utilization`
-      : undefined
 
   // Resolve goal + comparison anchor. For % utilization goals the
   // comparison is the cumulative util %; for $ goals on revenue groups
@@ -689,10 +695,11 @@ function CumulativeCapacityTile({
 
   return (
     <CumulativeTile
-      label="Capacity Utilization"
+      label="Utilization"
       desc={TEAM_CAPACITY_DESC}
       format={goal?.format === '$' || group.method === 'revenue' ? '$' : '%'}
       direction="hi"
+      range
       value={bandValue}
       fullGoal={bandFullGoal}
       paceGoal={bandPaceGoal}
@@ -798,6 +805,7 @@ function CumulativeLaborEfficiencyTile({
       desc="How productively the team used their scheduled time across this period."
       format="%"
       direction="hi"
+      range
       value={pct}
       fullGoal={goal && goal > 0 ? goal : null}
       paceGoal={goal && goal > 0 ? goal : null}

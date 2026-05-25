@@ -159,12 +159,9 @@ export function CumulativeTile({
         <div className={`${valueTextSize} ${valueColor}`}>
           {valueText ?? formatValue(value, format)}
         </div>
-        {subLabel && (
-          <div className="text-sm text-white mt-1">{subLabel}</div>
-        )}
         {/* Ratio / range tiles: goal caption sits centered under the
-            value, same placement as Weekly — no progress bar context to
-            anchor to. */}
+            value, same placement as Weekly's Utilization / Labor
+            Efficiency tiles. */}
         {isRatio && (
           <div className="text-base text-white mt-1">
             {fullGoal == null
@@ -174,7 +171,24 @@ export function CumulativeTile({
                 : `Goal: ${goalText ?? formatValue(fullGoal, format)}`}
           </div>
         )}
+        {/* Non-ratio sum tiles: subLabel (rare, but supported) sits in
+            the centered stack since the progress-bar footer handles the
+            ratio-tile equivalent. */}
+        {subLabel && !isRatio && (
+          <div className="text-sm text-white mt-1">{subLabel}</div>
+        )}
       </div>
+
+      {/* Ratio-tile subLabel (raw amount on capacity tiles) is absolute-
+          positioned at the bottom of the tile so it doesn't shift the
+          centered value + goal pair — same trick the weekly Utilization
+          / Labor Efficiency tiles use to keep the % anchored at the
+          standard tile position. */}
+      {subLabel && isRatio && (
+        <div className="absolute bottom-2 left-0 right-0 text-sm text-white text-center">
+          {subLabel}
+        </div>
+      )}
 
       {/* Sum tiles get the progress bar with Pace + Goal split below.
           Same text size and white color as the Weekly tile's goal line. */}

@@ -150,8 +150,10 @@ const COLOR_RED: RingColor = {
  *  - direction='hi': < 90% of goal = red. 90–100% = yellow. ≥ 100% = green.
  *  - direction='lo' (Expenses): ≤ goal = green. 100–110% = yellow.
  *    > 110% = red.
- *  - range (AR): within ±10% = green. ±10–15% = yellow. > ±15% = red.
- *    Ring is always full for range KPIs. */
+ *  - range (AR, Utilization, Labor Efficiency): within ±10% = green, else
+ *    red. Two-tone — the yellow "close" middle doesn't translate to a
+ *    bidirectional target where missing by 14% in either direction is just
+ *    as off as missing by 30%. Ring is always full for range KPIs. */
 /** Returns just the color band identifier (no fill/overlay info). Same
  *  thresholds as `computeRingStatus` — used by surfaces other than the
  *  ring that need the band tag (e.g. History cells, FinancialsRowTile
@@ -169,10 +171,11 @@ export function computeBand({
 }): 'green' | 'yellow' | 'red' | null {
   if (value == null || goal == null || goal === 0) return null
   if (range) {
-    const dev = Math.abs(value - goal) / goal
-    if (dev <= 0.1) return 'green'
-    if (dev <= 0.15) return 'yellow'
-    return 'red'
+    // Two-tone: ±10% is on-target, anything beyond is off-target. No
+    // yellow middle band — missing a bidirectional target by 14% is just
+    // as off as missing it by 30%; the goal text caption already
+    // advertises "(±10%)" so a 14% miss should read red, not yellow.
+    return Math.abs(value - goal) / goal <= 0.1 ? 'green' : 'red'
   }
   const ratio = value / goal
   if (direction === 'hi') {
@@ -200,10 +203,12 @@ export function computeRingStatus({
     return { progress: 0, color: null }
   }
   if (range) {
+    // Two-tone (see computeBand): ±10% is on-target, anything beyond
+    // is off-target. Ring is always full for range KPIs.
     const dev = Math.abs(value - goal) / goal
-    if (dev <= 0.1) return { progress: 1, color: COLOR_GREEN }
-    if (dev <= 0.15) return { progress: 1, color: COLOR_YELLOW }
-    return { progress: 1, color: COLOR_RED }
+    return dev <= 0.1
+      ? { progress: 1, color: COLOR_GREEN }
+      : { progress: 1, color: COLOR_RED }
   }
   const ratio = value / goal
   if (direction === 'hi') {
