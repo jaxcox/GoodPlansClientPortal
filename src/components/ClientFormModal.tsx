@@ -219,14 +219,28 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
       .select()
       .single()
 
-    setSubmitting(false)
-
     if (insertError) {
+      setSubmitting(false)
       setError(insertError.message)
       return
     }
 
-    onSaved(data as Client)
+    // Fire-and-don't-block the invite email. Client creation already
+    // succeeded; if Resend rejects (DNS hiccup, rate limit, key issue)
+    // the coach can hit "Resend Invite" on the pending card.
+    const newClient = data as Client
+    const { error: inviteErr } = await supabase.functions.invoke(
+      'send-client-invite',
+      { body: { clientId: newClient.id } }
+    )
+    setSubmitting(false)
+    if (inviteErr) {
+      // Surface as a soft warning — client row still got created, the
+      // coach can manually resend from the pending card.
+      console.warn('Invite email failed:', inviteErr.message)
+    }
+
+    onSaved(newClient)
     onClose()
   }
 

@@ -598,6 +598,25 @@ function ClientCard({
     onChange()
   }
 
+  /** Re-send the invite email via the send-client-invite Edge Function.
+   *  Useful when the original email got lost / went to spam / the client
+   *  asks the coach for another copy. The Edge Function re-validates the
+   *  invite code expiry, so an expired code would 400 here — coach
+   *  should Regenerate Code first in that case. */
+  const resendInvite = async () => {
+    if (busy) return
+    setBusy(true)
+    const { error } = await supabase.functions.invoke('send-client-invite', {
+      body: { clientId: client.id },
+    })
+    setBusy(false)
+    if (error) {
+      alert(`Invite email failed: ${error.message}`)
+      return
+    }
+    alert(`Invite email sent to ${client.email}.`)
+  }
+
   return (
     <li className="bg-ink border border-line rounded-lg p-4 flex flex-col gap-3">
       <div className="min-w-0">
@@ -670,14 +689,25 @@ function ClientCard({
           </button>
         )}
         {!client.activated && !client.archived && (
-          <button
-            type="button"
-            onClick={regenerateCode}
-            disabled={busy}
-            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
-          >
-            Regenerate Code
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={resendInvite}
+              disabled={busy}
+              className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
+              title="Re-send the invite email to this client"
+            >
+              Resend Invite
+            </button>
+            <button
+              type="button"
+              onClick={regenerateCode}
+              disabled={busy}
+              className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
+            >
+              Regenerate Code
+            </button>
+          </>
         )}
         <button
           type="button"
