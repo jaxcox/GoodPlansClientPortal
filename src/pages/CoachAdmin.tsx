@@ -571,50 +571,51 @@ function ClientCard({
     onChange()
   }
 
-  const regenerateCode = async () => {
+  /** Send (or re-send) the invite email. Single entry point — handles
+   *  the "code expired, need a new one" path transparently so the coach
+   *  doesn't have to think about which button to click. Flow:
+   *    - If the existing code is missing or expired: generate a fresh
+   *      code + new 30-day expiry, save it, then send.
+   *    - Otherwise: just send the existing code as-is.
+   *  Either path ends with an alert telling the coach what happened. */
+  const sendInvite = async () => {
     if (busy) return
-    if (
-      !confirm(
-        `Regenerate the invite code for ${client.company_name}? The current code (${client.invite_code ?? '—'}) will stop working immediately. The new code will appear on this card — share it with the client.`
-      )
-    )
-      return
     setBusy(true)
-    const newCode = generateInviteCode()
-    const expires = new Date()
-    expires.setDate(expires.getDate() + 30)
-    const { error } = await supabase
-      .from('clients')
-      .update({
-        invite_code: newCode,
-        invite_code_expires_at: expires.toISOString(),
-      })
-      .eq('id', client.id)
+
+    const codeExpired =
+      client.invite_code_expires_at != null &&
+      new Date(client.invite_code_expires_at) < new Date()
+    const needsNewCode = !client.invite_code || codeExpired
+
+    if (needsNewCode) {
+      const newCode = generateInviteCode()
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 30)
+      const { error: updateErr } = await supabase
+        .from('clients')
+        .update({
+          invite_code: newCode,
+          invite_code_expires_at: expires.toISOString(),
+        })
+        .eq('id', client.id)
+      if (updateErr) {
+        setBusy(false)
+        alert(updateErr.message)
+        return
+      }
+    }
+
+    const { error: emailErr } = await supabase.functions.invoke(
+      'send-client-invite',
+      { body: { clientId: client.id } }
+    )
     setBusy(false)
-    if (error) {
-      alert(error.message)
-      return
+    if (emailErr) {
+      alert(`Invite email failed: ${emailErr.message}`)
+    } else {
+      alert(`Invite email sent to ${client.email}.`)
     }
     onChange()
-  }
-
-  /** Re-send the invite email via the send-client-invite Edge Function.
-   *  Useful when the original email got lost / went to spam / the client
-   *  asks the coach for another copy. The Edge Function re-validates the
-   *  invite code expiry, so an expired code would 400 here — coach
-   *  should Regenerate Code first in that case. */
-  const resendInvite = async () => {
-    if (busy) return
-    setBusy(true)
-    const { error } = await supabase.functions.invoke('send-client-invite', {
-      body: { clientId: client.id },
-    })
-    setBusy(false)
-    if (error) {
-      alert(`Invite email failed: ${error.message}`)
-      return
-    }
-    alert(`Invite email sent to ${client.email}.`)
   }
 
   return (
@@ -689,25 +690,15 @@ function ClientCard({
           </button>
         )}
         {!client.activated && !client.archived && (
-          <>
-            <button
-              type="button"
-              onClick={resendInvite}
-              disabled={busy}
-              className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
-              title="Re-send the invite email to this client"
-            >
-              Resend Invite
-            </button>
-            <button
-              type="button"
-              onClick={regenerateCode}
-              disabled={busy}
-              className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
-            >
-              Regenerate Code
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={sendInvite}
+            disabled={busy}
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10 disabled:opacity-50"
+            title="Send (or re-send) the invite email to this client. Generates a fresh code automatically if the existing one is expired."
+          >
+            Send Invite
+          </button>
         )}
         <button
           type="button"
