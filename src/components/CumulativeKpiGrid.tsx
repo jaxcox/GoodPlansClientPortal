@@ -625,11 +625,12 @@ function CumulativeCapacityTile({
   // Big number is always the utilization PERCENT (single-name
   // "Utilization" KPI). The raw method-specific value (hours / slots /
   // dollars) becomes the sub-label so it still reads at a glance.
-  const valueText = utilPct != null ? `${utilPct.toFixed(1)}%` : '—'
+  // Rounded to whole number to match the weekly CapacityTile.
+  const valueText = utilPct != null ? `${Math.round(utilPct)}%` : '—'
   let subLabel: string | undefined
   if (group.method !== 'manual' && value != null) {
     const cumCapLabel =
-      cumCap > 0 ? cumCap.toLocaleString() : null
+      cumCap > 0 ? Math.round(cumCap).toLocaleString() : null
     if (group.method === 'slots') {
       subLabel = cumCapLabel
         ? `${Math.round(value).toLocaleString()} / ${cumCapLabel} slots`
@@ -809,6 +810,9 @@ function CumulativeLaborEfficiencyTile({
       value={pct}
       fullGoal={goal && goal > 0 ? goal : null}
       paceGoal={goal && goal > 0 ? goal : null}
+      // Whole-number % to match the weekly LaborEfficiencyTile (default
+      // formatValue('%') would show 1 decimal).
+      valueText={pct != null ? `${Math.round(pct)}%` : '—'}
       subLabel={
         any && cumWorking > 0
           ? `${Math.round(total).toLocaleString()} / ${Math.round(

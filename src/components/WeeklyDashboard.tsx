@@ -1959,10 +1959,10 @@ function LaborHoursTile({
       </div>
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`text-xl font-bold leading-none ${valueColor}`}>
-          {value != null ? `${value} hrs` : '—'}
+          {value != null ? `${Math.round(value)} hrs` : '—'}
         </div>
         <div className="text-base text-white mt-1">
-          {goal && goal > 0 ? `Goal: ${goal} hrs` : 'No goal set'}
+          {goal && goal > 0 ? `Goal: ${Math.round(goal)} hrs` : 'No goal set'}
         </div>
       </div>
     </div>
@@ -2015,7 +2015,7 @@ function LaborEfficiencyTile({
           shift the centered pair. */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`text-xl font-bold leading-none ${valueColor}`}>
-          {pct != null ? `${pct.toFixed(1)}%` : '—'}
+          {pct != null ? `${Math.round(pct)}%` : '—'}
         </div>
         <div className="text-base text-white mt-1">
           {goal && goal > 0 ? `Goal: ${goal}% (±10%)` : 'No goal set'}
@@ -2023,7 +2023,7 @@ function LaborEfficiencyTile({
       </div>
       {pct != null && (
         <div className="absolute bottom-2 left-0 right-0 text-sm text-white text-center">
-          {produced} / {working} hrs
+          {Math.round(produced)} / {Math.round(working)} hrs
         </div>
       )}
     </div>
@@ -2060,20 +2060,24 @@ function CapacityTile({
     const v = cv as { slotsFilled?: number } | undefined
     const filled = v?.slotsFilled ?? 0
     actualPct = cap ? (filled / cap) * 100 : null
-    rawLine = cap ? `${filled} / ${cap} slots` : `${filled} slots`
+    rawLine = cap
+      ? `${Math.round(filled)} / ${Math.round(cap)} slots`
+      : `${Math.round(filled)} slots`
   } else if (group.method === 'labor') {
     const v = cv as { producedHours?: number } | undefined
     const produced = v?.producedHours ?? 0
     actualPct = cap ? (produced / cap) * 100 : null
-    rawLine = cap ? `${produced} / ${cap} hrs` : `${produced} hrs`
+    rawLine = cap
+      ? `${Math.round(produced)} / ${Math.round(cap)} hrs`
+      : `${Math.round(produced)} hrs`
   } else if (group.method === 'revenue') {
     const v = cv as { revenueProduced?: number } | undefined
     const produced = v?.revenueProduced ?? 0
     actualDollars = produced
     actualPct = cap ? (produced / cap) * 100 : null
     rawLine = cap
-      ? `$${produced.toLocaleString()} / $${cap.toLocaleString()}`
-      : `$${produced.toLocaleString()}`
+      ? `$${Math.round(produced).toLocaleString()} / $${Math.round(cap).toLocaleString()}`
+      : `$${Math.round(produced).toLocaleString()}`
   } else if (group.method === 'headcount') {
     const v = cv as
       | {
@@ -2087,7 +2091,9 @@ function CapacityTile({
     )
     const totalWorked = v?.hoursWorked ?? legacy
     actualPct = cap ? (totalWorked / cap) * 100 : null
-    rawLine = cap ? `${totalWorked} / ${cap} hrs` : `${totalWorked} hrs`
+    rawLine = cap
+      ? `${Math.round(totalWorked)} / ${Math.round(cap)} hrs`
+      : `${Math.round(totalWorked)} hrs`
   }
 
   // Goal label + band coloring. All capacity goals are range-style
@@ -2143,7 +2149,7 @@ function CapacityTile({
           shift the centered pair. */}
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <div className={`text-xl font-bold leading-none ${valueColor}`}>
-          {actualPct != null ? `${actualPct.toFixed(1)}%` : '—'}
+          {actualPct != null ? `${Math.round(actualPct)}%` : '—'}
         </div>
         <div className="text-base text-white mt-1">{goalLabel}</div>
       </div>
