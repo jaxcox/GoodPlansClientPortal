@@ -19,7 +19,10 @@ import type {
 } from '../lib/types'
 import { NumberField } from './NumberField'
 import { KpiGoalsCard } from './KpiGoalsCard'
-import { MonthlyFinancialGoalsCard } from './MonthlyFinancialGoalsCard'
+import {
+  MonthlyFinancialGoalsCard,
+  MonthlyGoalsRemainingTiles,
+} from './MonthlyFinancialGoalsCard'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { CapacityGoalsCard } from './CapacityGoalsCard'
 import { SaveBar } from './SaveBar'
@@ -569,9 +572,12 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       </div>
         </>
       ) : (
-        <Card title="Monthly Financial Goals">
-          <MonthlyFinancialGoalsCard view={view} />
-        </Card>
+        <>
+          <MonthlyGoalsRemainingTiles view={view} />
+          <Card title="Monthly Financial Goals">
+            <MonthlyFinancialGoalsCard view={view} />
+          </Card>
+        </>
       )}
 
     </section>

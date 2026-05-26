@@ -1,3 +1,4 @@
+import { InfoIcon } from './InfoIcon'
 import { MONTH_LABELS, type BudgetView } from '../lib/budget'
 
 type Props = {
@@ -19,54 +20,89 @@ export function MonthlyFinancialGoalsCard({ view }: Props) {
     )
   }
 
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+      {view.months.map((m) => (
+        <MonthTile key={m.monthIdx} month={m} />
+      ))}
+    </div>
+  )
+}
+
+/** Standalone tile row showing remaining income / gross profit / net profit
+ *  for the year. Rendered ABOVE the Monthly Financial Goals card so the
+ *  card itself stays focused on the per-month grid. Returns null when no
+ *  budget view is available yet. */
+export function MonthlyGoalsRemainingTiles({ view }: { view: BudgetView | null }) {
+  if (!view) return null
   const anyAdjusted = view.months.some((m) => m.isAdjusted)
   // Adjustments fire symmetrically: a negative gpGap means YTD is behind
   // plan (raise future targets); positive means ahead (lower them).
   const aheadOfPlan = view.gpGap > 0
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <div className="text-white text-xs">
-          Remaining income to produce:{' '}
-          <strong>{formatDollars(view.remainingRevenue)}</strong> across{' '}
-          {view.remainingMonths} month
-          {view.remainingMonths === 1 ? '' : 's'}
-        </div>
-        <div className="text-white text-xs">
-          Remaining gross profit:{' '}
-          <strong>{formatDollars(view.remainingGrossProfit)}</strong>
-        </div>
-        <div className="text-white text-xs">
-          Remaining net profit:{' '}
-          <strong>{formatDollars(view.remainingNetProfit)}</strong>
-        </div>
+    <div className="space-y-3 mb-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <RemainingTile
+          label="Remaining Income"
+          subLabel={
+            view.remainingMonths > 0
+              ? `${view.remainingMonths} mo`
+              : undefined
+          }
+          value={formatDollars(view.remainingRevenue)}
+        />
+        <RemainingTile
+          label="Remaining Gross Profit"
+          value={formatDollars(view.remainingGrossProfit)}
+        />
+        <RemainingTile
+          label="Remaining Net Profit"
+          value={formatDollars(view.remainingNetProfit)}
+        />
+        <InfoIcon text="What's still left for the rest of the year. When YTD is ahead or behind plan, future months adjust so the year still lands on the original annual goal. Numbers are rounded to whole dollars; per-month figures may differ from totals by a dollar or two." />
       </div>
       {anyAdjusted && (
-        <div className="text-white text-xs italic">
-          {aheadOfPlan ? (
-            <>
-              YTD is ahead of plan — future-month targets are lowered so the
-              year still lands on the annual Gross Profit goal.
-            </>
-          ) : (
-            <>
-              YTD is behind plan — future-month targets are raised so the year
-              still lands on the annual Gross Profit goal.
-            </>
-          )}
+        <div className="text-black text-xs italic">
+          {aheadOfPlan
+            ? 'YTD is ahead of plan — future-month targets are lowered so the year still lands on the annual Gross Profit goal.'
+            : 'YTD is behind plan — future-month targets are raised so the year still lands on the annual Gross Profit goal.'}
         </div>
       )}
-      <div className="text-white text-xs italic">
-        Numbers are rounded to whole dollars; per-month figures may differ
-        from totals by a dollar or two.
-      </div>
+    </div>
+  )
+}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-        {view.months.map((m) => (
-          <MonthTile key={m.monthIdx} month={m} />
-        ))}
-      </div>
+/** Header tile — same geometry as the WeekOfCalendarPill on the Weekly
+ *  Dashboard (rounded square, font-semibold, inline-flex). Background is
+ *  bg-surface-1 + border-line so the tile reads against the surrounding
+ *  page surface; border matches the derived-box treatment rule for
+ *  non-fillable values. Yellow · separators between label, optional
+ *  sub-label, and value carry the visual rhythm of the row. */
+function RemainingTile({
+  label,
+  subLabel,
+  value,
+}: {
+  label: string
+  subLabel?: string
+  value: string
+}) {
+  return (
+    <div className="bg-surface-1 border border-line text-white px-3 py-1 rounded font-semibold inline-flex items-center gap-2">
+      <span>{label}</span>
+      {subLabel && (
+        <>
+          <span aria-hidden className="text-accent">
+            ·
+          </span>
+          <span>{subLabel}</span>
+        </>
+      )}
+      <span aria-hidden className="text-accent">
+        ·
+      </span>
+      <strong>{value}</strong>
     </div>
   )
 }

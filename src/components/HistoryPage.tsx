@@ -19,7 +19,7 @@ import { computeBudgetView, emptyMonthArray } from '../lib/budget'
 import type { MonthlyGoal } from '../lib/budget'
 import { formatValue as formatKpiValue } from './KpiTile'
 import { groupMaxCapacity, groupWorkingHours } from '../lib/capacity'
-import { computeBand } from './ProgressRing'
+import { computeBand } from '../lib/band'
 import type { CapacityGroupGoal } from '../lib/types'
 import writeXlsxFile from 'write-excel-file/browser'
 

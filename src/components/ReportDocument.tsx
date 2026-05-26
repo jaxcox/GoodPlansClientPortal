@@ -21,7 +21,7 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer'
-import { computeBand } from './ProgressRing'
+import { computeBand } from '../lib/band'
 import type { KpiDirection, KpiFormat } from '../lib/kpis'
 
 // -----------------------------------------------------------------------------

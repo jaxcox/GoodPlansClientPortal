@@ -1,6 +1,6 @@
 import { InfoIcon } from './InfoIcon'
 import type { KpiFormat, KpiDirection } from '../lib/kpis'
-import { ProgressRing, computeRingStatus, computeBand } from './ProgressRing'
+import { computeBand } from '../lib/band'
 
 type Props = {
   label: string
@@ -25,11 +25,6 @@ type Props = {
    *  only. Used for "awareness-only" tiles like Weekly Expenses where
    *  the coach doesn't want to set a per-week target. */
   hideGoal?: boolean
-  /** Tile visualization: 'number' (default) shows the big number inline;
-   *  'ring' wraps the number in a circular progress ring that fills from
-   *  red → yellow → green based on actual/goal. Used on Financials
-   *  dashboard tiles. */
-  view?: 'number' | 'ring'
 }
 
 // Tile-format helpers ---------------------------------------------------------
@@ -95,15 +90,10 @@ export function KpiTile({
   range = false,
   hideGoalPct = false,
   hideGoal = false,
-  view = 'number',
 }: Props) {
   const effectiveGoal = goal
   const onTrack = isOnTrack(value, effectiveGoal, direction, range)
   const pct = pctOfGoal(value, effectiveGoal)
-  const ring =
-    view === 'ring'
-      ? computeRingStatus({ value, goal: effectiveGoal, direction, range })
-      : null
 
   // Footer goal text shifts color with on-track status — green when at
   // goal or better, red when behind. White when no goal/value yet.
@@ -111,57 +101,12 @@ export function KpiTile({
     onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
 
   // Delta arrow color: directional. Higher-better KPIs going up is good
-  // (green); wrong way is bad (red). Inverted KPIs flip. Ring view uses
-  // black inside the cream ring since the ring color carries status.
+  // (green); wrong way is bad (red). Inverted KPIs flip.
   const deltaColor = (() => {
-    if (view === 'ring') return 'text-black'
     if (delta == null || delta === 0) return 'text-white'
     const isGood = direction === 'lo' ? delta < 0 : delta > 0
     return isGood ? 'text-good' : 'text-bad'
   })()
-
-  // Ring view: no dark card wrapper. Modeled after the Apple Card payment
-  // ring — title above, big value inside the ring, goal caption below.
-  if (ring) {
-    return (
-      <div className="relative flex flex-col items-center text-center px-2 py-3">
-        {!range && onTrack === true && (
-          <div className="absolute top-0 right-2 text-[10px] font-bold text-good">
-            Achieved!
-          </div>
-        )}
-        <div className="text-sm font-semibold uppercase tracking-wider text-black mb-2 flex items-center justify-center gap-1.5">
-          <span>{label}</span>
-          {desc && <InfoIcon text={desc} />}
-        </div>
-        <ProgressRing
-          progress={ring.progress}
-          color={ring.color}
-          size={240}
-          strokeWidth={20}
-        >
-          <div className="flex flex-col items-center justify-center max-w-[180px]">
-            <div className="text-3xl font-bold text-black leading-none">
-              {formatValue(value, format)}
-            </div>
-            <div className="text-sm text-black mt-1">
-              {effectiveGoal == null ? (
-                <span>No goal set</span>
-              ) : range ? (
-                <span>
-                  Goal: {formatValue(effectiveGoal, format)} (±10%)
-                </span>
-              ) : format === '%' ? (
-                <span>Goal: {effectiveGoal.toFixed(1)}%</span>
-              ) : (
-                <span>Goal: {formatValue(effectiveGoal, format)}</span>
-              )}
-            </div>
-          </div>
-        </ProgressRing>
-      </div>
-    )
-  }
 
   // Suppress unused-state warnings — derived values kept for future
   // re-use even though the current number-view layout doesn't render

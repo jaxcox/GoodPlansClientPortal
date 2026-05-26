@@ -42,7 +42,7 @@ import {
   formatValue as formatKpiValue,
   formatDelta as formatKpiDelta,
 } from './KpiTile'
-import { computeRingStatus, computeBand } from './ProgressRing'
+import { computeBand, bandColorVar } from '../lib/band'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
 import { CumulativeKpiGrid } from './CumulativeKpiGrid'
@@ -1678,7 +1678,7 @@ function FinancialsRowTile({
   })
   const direction = kpi.direction ?? 'hi'
   const range = kpi.range ?? false
-  const status = computeRingStatus({ value, goal, direction, range })
+  const pacebarBand = computeBand({ value, goal, direction, range })
   const ratio =
     value != null && goal != null && goal !== 0 ? value / goal : null
 
@@ -1738,12 +1738,12 @@ function FinancialsRowTile({
     <div
       className={`mt-3 w-full h-2 rounded-full overflow-hidden ${pacebarTrack}`}
     >
-      {status.color && (
+      {pacebarBand && (
         <div
           className="h-full rounded-full"
           style={{
             width: `${Math.min(ratio ?? 0, 1) * 100}%`,
-            backgroundColor: status.color.stroke,
+            backgroundColor: bandColorVar(pacebarBand),
           }}
         />
       )}
@@ -1861,7 +1861,6 @@ function StandardTile({
       delta={delta}
       range={kpi.range}
       hideGoal={isAwarenessOnly}
-      view="number"
     />
   )
 }
