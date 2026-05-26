@@ -266,7 +266,7 @@ export function weeklyGoal({
 export function actualValue(
   kpiId: string,
   entry: WeeklyEntry,
-  capacityGroups: CapacityGroup[] = []
+  _capacityGroups: CapacityGroup[] = []
 ): number | null {
   const values = entry.kpi_values ?? {}
   const raw = values[kpiId]

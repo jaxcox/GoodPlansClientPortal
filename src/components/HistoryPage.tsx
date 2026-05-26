@@ -124,7 +124,6 @@ export function HistoryPage({ clientId }: Props) {
   }, [clientId, fromDate, toDate])
 
   // ---- Derived data ------------------------------------------------------
-  const year = new Date().getFullYear()
   const budgetView = useMemo(() => {
     if (!budget) return null
     return computeBudgetView({
@@ -144,8 +143,8 @@ export function HistoryPage({ clientId }: Props) {
   const monthShares = useMemo(
     () =>
       monthShareFractions(
-        budget?.season_pct ?? [],
-        budget?.season_type ?? 'even'
+        budget?.season_type ?? 'even',
+        budget?.season_pct ?? []
       ),
     [budget]
   )

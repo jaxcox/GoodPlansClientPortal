@@ -100,20 +100,15 @@ export function KpiTile({
   const footerColor =
     onTrack == null ? 'text-white' : onTrack ? 'text-good' : 'text-bad'
 
-  // Delta arrow color: directional. Higher-better KPIs going up is good
-  // (green); wrong way is bad (red). Inverted KPIs flip.
-  const deltaColor = (() => {
-    if (delta == null || delta === 0) return 'text-white'
-    const isGood = direction === 'lo' ? delta < 0 : delta > 0
-    return isGood ? 'text-good' : 'text-bad'
-  })()
-
   // Suppress unused-state warnings — derived values kept for future
   // re-use even though the current number-view layout doesn't render
-  // an explicit goal-pct or "Achieved!" badge.
+  // an explicit goal-pct, week-over-week delta arrow, or "Achieved!"
+  // badge. The hooks stay so callers can pass them now and the UI can
+  // light up later without a prop shape change.
   void footerColor
   void pct
   void hideGoalPct
+  void delta
 
   // Value-text color from the same three-tone band the rings + primary
   // tiles use. Defaults to white when there's no goal / value yet.

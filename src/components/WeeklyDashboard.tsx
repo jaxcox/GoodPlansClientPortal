@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import type {
@@ -7,7 +7,7 @@ import type {
   CapacitySectionData,
   ReportData,
 } from './ReportDocument'
-import { CATEGORIES, KPIS, PRIMARY_KPI_IDS } from '../lib/kpis'
+import { CATEGORIES, PRIMARY_KPI_IDS } from '../lib/kpis'
 import type { KpiCategory, KpiDef } from '../lib/kpis'
 import type {
   Budget,
@@ -31,17 +31,12 @@ import {
   dateFromIso,
   formatWeekShort,
   isoDate,
-  lastCompletedSaturday,
   missedWeeksBetween,
   mostRecentCompletedWeekStart,
   shiftWeek,
   weekStartSunday,
 } from '../lib/week'
-import {
-  KpiTile,
-  formatValue as formatKpiValue,
-  formatDelta as formatKpiDelta,
-} from './KpiTile'
+import { KpiTile, formatValue as formatKpiValue } from './KpiTile'
 import { computeBand, bandColorVar } from '../lib/band'
 import { CoachNoteBlock } from './CoachNoteBlock'
 import { InfoIcon } from './InfoIcon'
@@ -812,7 +807,7 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
       const kpis = byCategory.get(cat) ?? []
       const customs = activeCustomKpis.filter((c) => c.category === cat)
       const standardRows = kpis.map((kpi) => {
-        const value = aggregateKpi(kpi, entriesInPeriod, ytd.extra)
+        const value = aggregateKpi(kpi, entriesInPeriod, ytd.contribution)
         const fullGoal = getPeriodGoalFull({
           kpi,
           mode,
@@ -1622,7 +1617,7 @@ function TileGrid({ children }: { children: React.ReactNode }) {
 function FinancialsRowTile({
   kpi,
   entry,
-  priorEntry,
+  priorEntry: _priorEntry,
   monthlyGoal,
   monthShares,
   kpiGoals,
@@ -1659,8 +1654,6 @@ function FinancialsRowTile({
 }) {
   const groups = client.capacity_groups ?? []
   const value = actualValue(kpi.id, entry, groups)
-  const prior = priorEntry ? actualValue(kpi.id, priorEntry, groups) : null
-  const delta = value != null && prior != null ? value - prior : null
   const goal = weeklyGoal({
     kpi,
     entry,
@@ -1700,25 +1693,6 @@ function FinancialsRowTile({
     return 'text-bad'
   })()
 
-  // Delta arrow color: directional. Higher-better KPIs moving up is
-  // green; the wrong way is red. Range KPIs (AR) pick "good" as
-  // movement toward goal. Falls back to body text color when there's
-  // no movement.
-  const deltaColor = (() => {
-    if (delta == null || delta === 0) {
-      return isLight ? 'text-black' : 'text-white'
-    }
-    if (range) {
-      if (value == null || goal == null) {
-        return isLight ? 'text-black' : 'text-white'
-      }
-      const before = Math.abs((prior ?? 0) - goal)
-      const after = Math.abs(value - goal)
-      return after < before ? 'text-good' : 'text-bad'
-    }
-    const isGood = direction === 'lo' ? delta < 0 : delta > 0
-    return isGood ? 'text-good' : 'text-bad'
-  })()
   const tileStyle = isLight ? { backgroundColor: lightBgHex } : undefined
   const tileBg = isLight ? '' : 'bg-ink'
   const labelText = isLight ? 'text-black' : 'text-white'

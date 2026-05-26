@@ -29,8 +29,8 @@ import {
   emptyMonthArray,
   sumMonthsThru,
   type BudgetView,
-  type SeasonType,
 } from '../lib/budget'
+import type { SeasonType } from '../lib/types'
 import { Card } from './Card'
 import { NumberField } from './NumberField'
 

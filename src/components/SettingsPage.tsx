@@ -689,11 +689,16 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
             )}
           </Card>
         )}
+        {/* Client-side Utilization card. Clients are permitted to edit
+            their own capacity groups (per migration 0010 — the column
+            is on the client-writable allowlist). Rendered in the right
+            column near Active KPIs so it sits next to the KPIs the
+            groups roll up into; the coach edits theirs in the matching
+            slot up in the left column. */}
         {!coachView && Number(kpis.capacityUtilization) === 1 && (
           <CapacityGroupsCard
             groups={capacityGroups}
             onChange={setCapacityGroups}
-            coachView
           />
         )}
         {tracksYtd && (

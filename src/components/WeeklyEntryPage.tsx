@@ -116,8 +116,6 @@ function wonDollarsActual(
 function deriveWeeklyValue(
   kpiId: string,
   kpiValues: Record<string, number>,
-  capacityValues: Record<string, WeeklyCapacityActual>,
-  capacityGroups: CapacityGroup[],
   visible: Set<string>
 ): number | null {
   const v = (id: string) => kpiValues[id]
@@ -766,8 +764,6 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
                           deriveWeeklyValue(
                             row.id,
                             kpiValues,
-                            capacityValues,
-                            client.capacity_groups ?? [],
                             visibleStandardIds
                           ),
                           row.format

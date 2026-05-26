@@ -8,7 +8,6 @@ import type {
   CapacityMethod,
 } from '../lib/types'
 import { NumberField } from './NumberField'
-import { InfoIcon } from './InfoIcon'
 import { Toggle } from './Toggle'
 import { UTILIZATION_DESC } from './WeeklyDashboard'
 import { Card } from './Card'

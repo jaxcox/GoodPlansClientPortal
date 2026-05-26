@@ -217,6 +217,7 @@ export type WeeklyCapacityActual =
   | { slotsFilled: number; totalSlots: number }
   | { producedHours: number }
   | { revenueProduced: number }
+  | { hoursWorked: number }
   | { departments: Record<string, { hoursWorked: number }> }
 
 export type WeeklyEntry = {

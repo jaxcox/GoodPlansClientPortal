@@ -116,6 +116,38 @@ npm run functions:deploy
 
 Repeat for any other function under `supabase/functions/`.
 
+## Deploy (Vercel)
+
+The portal is a Vite SPA — Vercel auto-detects the build settings (`npm run build` → `dist/`). The bundled `vercel.json` adds a SPA catch-all rewrite so `/coach`, `/client`, and any future client-side routes serve `index.html` instead of 404ing.
+
+### One-time setup
+
+1. Push the repo to GitHub (already at <https://github.com/jaxcox/GoodPlansClientPortal>).
+2. Sign up at <https://vercel.com>, click **Add New… → Project**, import the GitHub repo.
+3. **Environment variables** — add both, scoped to "Production" + "Preview" + "Development":
+   - `VITE_SUPABASE_URL` (same value as your `.env.local`)
+   - `VITE_SUPABASE_ANON_KEY` (same value as your `.env.local`)
+4. **Deploy.** First deploy lands on a `*.vercel.app` URL. Verify the app loads, you can sign in, and the dashboard renders.
+
+### Custom domain
+
+1. In Vercel → Project Settings → **Domains** → add `portal.thegoodplansco.com`.
+2. Vercel shows the CNAME target — add a CNAME record at your DNS provider (wherever `thegoodplansco.com` is registered) pointing `portal` → that target.
+3. Vercel issues an SSL cert automatically once DNS propagates.
+
+### Supabase configuration for production
+
+Once the production URL is live, update Supabase Auth → **URL Configuration**:
+
+- **Site URL** = `https://portal.thegoodplansco.com`
+- **Redirect URLs** = `https://portal.thegoodplansco.com/**`
+
+Without these, password-reset emails will either reject or send users to the wrong URL.
+
+### Optional: auto-apply migrations / Edge Functions
+
+Supabase Dashboard → **Settings → Integrations → GitHub** → connect the repo. New SQL files under `supabase/migrations/` and new Edge Functions under `supabase/functions/` will auto-deploy on push to `main`. Trade-off: less safety beat — a broken migration in `main` runs on the connected DB without manual approval. Fine at solo-coach scale; consider PR-based workflow with preview branches if collaborators come on board.
+
 ## Project structure
 
 ```
