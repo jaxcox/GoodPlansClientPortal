@@ -7,7 +7,7 @@ import type {
   CapacitySectionData,
   ReportData,
 } from './ReportDocument'
-import { CATEGORIES, KPIS } from '../lib/kpis'
+import { CATEGORIES, KPIS, PRIMARY_KPI_IDS } from '../lib/kpis'
 import type { KpiCategory, KpiDef } from '../lib/kpis'
 import type {
   Budget,
@@ -1453,15 +1453,10 @@ function CategorySection({
   ])
   // "Primary" KPIs — the true output measures of each department, as
   // opposed to the input drivers. Render in the tall 1/4-width tile at
-  // the top of their category.
-  const primaryKpiIds = new Set<string>([
-    'revenue',
-    'grossProfit',
-    'newClients',
-    'estimatesWonDollars',
-    'contractsWonDollars',
-    'jobsCompleted',
-  ])
+  // the top of their category. Source of truth lives in lib/kpis.ts so
+  // setup surfaces (Settings → Active KPIs) can mark the same set with
+  // a star and stay in sync.
+  const primaryKpiIds = PRIMARY_KPI_IDS
   const mainSales =
     category === 'Sales'
       ? standardKpis.filter((k) => !pipelineIds.has(k.id))

@@ -612,6 +612,31 @@ export const CATEGORIES: KpiCategory[] = [
 /** KPI ids whose tiles are NOT shown on the dashboard even when enabled. */
 export const HIDE_TILE_IDS = KPIS.filter((k) => k.hideTile).map((k) => k.id)
 
+/** "Primary" KPI ids — the output-focused KPIs each category features at
+ *  the top of its dashboard section with a tall, double-height tile.
+ *  These are the numbers the coach scans first; the supporting input
+ *  drivers (lead counts, estimating activity, etc.) flow underneath.
+ *
+ *  Source of truth for both the dashboard layout (WeeklyDashboard reads
+ *  this set to decide which tiles get the tall treatment) and the
+ *  Settings → Active KPIs star marker (so the coach can see at a glance
+ *  which KPIs the dashboard will feature). */
+export const PRIMARY_KPI_IDS: ReadonlySet<string> = new Set<string>([
+  'revenue',
+  'grossProfit',
+  'newClients',
+  'estimatesWonDollars',
+  'contractsWonDollars',
+  'jobsCompleted',
+])
+
+/** True when the given KPI id is rendered as a primary tile on the
+ *  Weekly Dashboard. Used by setup surfaces to call out which KPIs the
+ *  coach should pay the most attention to. */
+export function isPrimaryKpi(id: string): boolean {
+  return PRIMARY_KPI_IDS.has(id)
+}
+
 /** Lookup helper. */
 export function findKpi(id: string): KpiDef | undefined {
   return KPIS.find((k) => k.id === id)

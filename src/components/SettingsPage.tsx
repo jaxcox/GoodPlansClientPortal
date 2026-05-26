@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { KPIS, emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
+import {
+  KPIS,
+  emptyKpiDefaults,
+  isPrimaryKpi,
+  toggleableByCategory,
+} from '../lib/kpis'
 import { InfoIcon } from './InfoIcon'
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type {
@@ -649,6 +654,9 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
               />
             </div>
           )}
+          <div className="text-xs text-white italic mt-4 pt-3 border-t border-line">
+            <PrimaryStar /> marks primary Key Performance Indicators.
+          </div>
         </Card>
         {canEditAll && (
           <Card title="Custom KPIs" fit>
@@ -812,9 +820,17 @@ function FinancialsSection({
         Financials
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
-        <AlwaysOnItem label="Income" tooltip={kpiDesc('revenue')} />
+        <AlwaysOnItem
+          label="Income"
+          tooltip={kpiDesc('revenue')}
+          primary={isPrimaryKpi('revenue')}
+        />
         <AlwaysOnItem label="COGS" tooltip={kpiDesc('cogs')} />
-        <AlwaysOnItem label="Gross Profit" tooltip={kpiDesc('grossProfit')} />
+        <AlwaysOnItem
+          label="Gross Profit"
+          tooltip={kpiDesc('grossProfit')}
+          primary={isPrimaryKpi('grossProfit')}
+        />
         <AlwaysOnItem label="Gross Profit Margin" tooltip={kpiDesc('grossMargin')} />
         <Toggle
           checked={tracksYtd}
@@ -828,6 +844,7 @@ function FinancialsSection({
               onChange={(on) => onToggle(k.id, on)}
               label={k.label}
             />
+            {isPrimaryKpi(k.id) && <PrimaryStar />}
             {k.desc && <InfoIcon text={k.desc} />}
           </div>
         ))}
@@ -838,16 +855,41 @@ function FinancialsSection({
 
 /** Visual sibling of the Toggle component for items that can't be turned off.
  *  The 28px-wide checkmark slot mirrors the Toggle pill so labels align in
- *  the same column. */
-function AlwaysOnItem({ label, tooltip }: { label: string; tooltip?: string }) {
+ *  the same column. Optional primary flag adds a star so the coach can
+ *  see which always-on KPIs the dashboard features (Income, GP). */
+function AlwaysOnItem({
+  label,
+  tooltip,
+  primary = false,
+}: {
+  label: string
+  tooltip?: string
+  primary?: boolean
+}) {
   return (
     <div className="flex items-center gap-2">
       <span className="inline-flex justify-center w-7 text-accent text-sm font-bold">
         ✓
       </span>
       <span className="text-white text-sm">{label}</span>
+      {primary && <PrimaryStar />}
       {tooltip && <InfoIcon text={tooltip} />}
     </div>
+  )
+}
+
+/** Small yellow ★ used to flag KPIs that render as primary tiles on the
+ *  Performance Dashboard. Set tracking lives in lib/kpis.ts so both this
+ *  surface and the dashboard pull from the same list. */
+function PrimaryStar() {
+  return (
+    <span
+      aria-label="Primary Key Performance Indicator"
+      title="Primary Key Performance Indicator"
+      className="text-accent text-sm leading-none"
+    >
+      ★
+    </span>
   )
 }
 
@@ -896,6 +938,7 @@ function KpiTogglesGrouped({
         onChange={(on) => onToggle(k.id, on)}
         label={k.label}
       />
+      {isPrimaryKpi(k.id) && <PrimaryStar />}
       {k.desc && <InfoIcon text={k.desc} />}
     </div>
   )
@@ -974,26 +1017,48 @@ function FinancialsReadOnly({ kpis }: { kpis: Record<string, number> }) {
         Financials
       </div>
       <ul className="text-sm text-white space-y-1">
-        <ReadOnlyItem label="Income" tooltip={kpiDesc('revenue')} />
+        <ReadOnlyItem
+          label="Income"
+          tooltip={kpiDesc('revenue')}
+          primary={isPrimaryKpi('revenue')}
+        />
         <ReadOnlyItem label="COGS" tooltip={kpiDesc('cogs')} />
-        <ReadOnlyItem label="Gross Profit" tooltip={kpiDesc('grossProfit')} />
+        <ReadOnlyItem
+          label="Gross Profit"
+          tooltip={kpiDesc('grossProfit')}
+          primary={isPrimaryKpi('grossProfit')}
+        />
         <ReadOnlyItem
           label="Gross Profit Margin"
           tooltip={kpiDesc('grossMargin')}
         />
         {enabledToggleable.map((k) => (
-          <ReadOnlyItem key={k.id} label={k.label} tooltip={k.desc} />
+          <ReadOnlyItem
+            key={k.id}
+            label={k.label}
+            tooltip={k.desc}
+            primary={isPrimaryKpi(k.id)}
+          />
         ))}
       </ul>
     </div>
   )
 }
 
-function ReadOnlyItem({ label, tooltip }: { label: string; tooltip?: string }) {
+function ReadOnlyItem({
+  label,
+  tooltip,
+  primary = false,
+}: {
+  label: string
+  tooltip?: string
+  primary?: boolean
+}) {
   return (
     <li className="flex items-center gap-2">
       <span className="text-accent font-bold">✓</span>
       <span>{label}</span>
+      {primary && <PrimaryStar />}
       {tooltip && <InfoIcon text={tooltip} />}
     </li>
   )
@@ -1021,6 +1086,7 @@ function KpiTogglesReadOnly({
                 <li key={k.id} className="flex items-center gap-2">
                   <span className="text-accent font-bold">✓</span>
                   <span>{k.label}</span>
+                  {isPrimaryKpi(k.id) && <PrimaryStar />}
                   {k.desc && <InfoIcon text={k.desc} />}
                 </li>
               ))}
