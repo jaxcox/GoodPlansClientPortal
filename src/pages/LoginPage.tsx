@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { PasswordField } from '../components/PasswordField'
+import { LogoMark } from '../components/LogoMark'
 
 type ClientSubTab = 'existing' | 'firstTime'
 
@@ -22,6 +23,15 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#dad7c5]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
+          {/* Brand logo above the wordmark + subtitle on both login
+              surfaces (the login screen is the one client-facing place
+              that carries the brand mark — everything else inside the
+              ClientPortal stays text-only). <img> hides itself when
+              /logo.png is missing so the wordmark stands alone as a
+              graceful fallback. */}
+          <div className="flex justify-center mb-3">
+            <LogoMark size="lg" />
+          </div>
           <div className="font-brand text-2xl font-bold text-ink">
             The Good Plans Co
           </div>

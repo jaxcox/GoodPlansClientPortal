@@ -9,6 +9,7 @@ import {
 import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
+import { LogoMark } from '../components/LogoMark'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
 import { CoachAccountPage } from './CoachAccountPage'
 import { useDirtyConfirm } from '../lib/dirtyGuard'
@@ -91,9 +92,10 @@ export function CoachAdmin({ onViewPortal }: Props) {
     <div className="min-h-screen bg-[#dad7c5]">
       <div className="sticky top-0 z-30">
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
-        <div>
+        <div className="flex items-center gap-3">
+          <LogoMark size="sm" />
           <span className="font-brand text-lg font-bold text-ink">{brandName}</span>
-          <span className="text-sm text-black ml-3">Admin Panel</span>
+          <span className="text-sm text-black">Admin Panel</span>
         </div>
         {/* ml-auto keeps the name + Logout pinned to the right even
             when the header wraps to a second line on narrow phones —
