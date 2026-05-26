@@ -264,39 +264,44 @@ function PasswordSignInForm({
     if (err) setError(err)
   }
 
+  // Modal renders OUTSIDE the sign-in <form> — nesting forms causes the
+  // modal's submit to bubble to the outer form and do a vanilla page
+  // reload instead of running the React handler. Keep them as siblings.
   return (
-    <form onSubmit={handle} className="space-y-3">
-      <Field label="Email" type="email" value={email} onChange={setEmail} required />
-      <PasswordField
-        label="Password"
-        value={password}
-        onChange={setPassword}
-        required
-        autoComplete="current-password"
-      />
-      <div className="-mt-1 flex justify-end">
+    <>
+      <form onSubmit={handle} className="space-y-3">
+        <Field label="Email" type="email" value={email} onChange={setEmail} required />
+        <PasswordField
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          required
+          autoComplete="current-password"
+        />
+        <div className="-mt-1 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setForgotOpen(true)}
+            className="text-white text-xs underline hover:opacity-80"
+          >
+            Forgot password?
+          </button>
+        </div>
+        {error && <ErrorBox>{error}</ErrorBox>}
         <button
-          type="button"
-          onClick={() => setForgotOpen(true)}
-          className="text-white text-xs underline hover:opacity-80"
+          type="submit"
+          disabled={submitting}
+          className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
         >
-          Forgot password?
+          {submitting ? 'Signing in…' : submitLabel}
         </button>
-      </div>
-      {error && <ErrorBox>{error}</ErrorBox>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full bg-accent text-black font-bold text-sm py-2 rounded hover:brightness-95 disabled:opacity-50"
-      >
-        {submitting ? 'Signing in…' : submitLabel}
-      </button>
+      </form>
       <ForgotPasswordModal
         open={forgotOpen}
         defaultEmail={email}
         onClose={() => setForgotOpen(false)}
       />
-    </form>
+    </>
   )
 }
 
@@ -385,14 +390,15 @@ function ForgotPasswordModal({
         {sent ? (
           <div className="space-y-4">
             <div className="text-white bg-good/10 border border-good/40 rounded px-3 py-2 text-sm">
-              ✓ Reset email sent. Check your inbox for{' '}
-              <strong className="text-white">{email}</strong> and follow
-              the link to set a new password.
+              ✓ Reset email sent to{' '}
+              <strong className="text-white">{email}</strong>. The email
+              can take a few minutes to arrive. Follow the link inside
+              to set a new password.
             </div>
             <p className="text-white text-xs">
-              Didn't get it? Wait a minute, check your spam folder, then
-              try again. Make sure the email matches the one your coach
-              has on file.
+              Didn't get it after 5 minutes? Check your spam folder,
+              then try again. Make sure the email matches the one your
+              coach has on file.
             </p>
             <div className="flex justify-end">
               <button
