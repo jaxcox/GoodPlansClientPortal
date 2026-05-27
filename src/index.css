@@ -46,20 +46,27 @@ body {
 /* A11y baseline: every focusable element gets a clear visual focus
  * indicator on keyboard navigation. focus-visible (vs plain :focus)
  * means mouse-click users don't see rings — only keyboard-tab users
- * who actually need the cue. 2px ink outline with 2px offset reads
- * cleanly on every background we use (white, beige, yellow, dark).
+ * who actually need the cue.
  *
- * Two layers: a universal `*:focus-visible` rule catches links and
- * other custom elements. The explicit element-list rule below
- * targets inputs/selects/textareas/buttons with class-level
- * specificity to outrank Tailwind's `focus:outline-none` utility
- * (which has specificity 0,1,1 from .class + :focus and would
- * otherwise win the cascade). Both use !important as a backstop
- * for any future per-component focus-style overrides — a11y floor
- * trumps "no outline" preferences. */
+ * Two-layer ring (the standard a11y "barber pole" trick) so the
+ * indicator is visible on every background in the portal:
+ *   - inner 2px ink ring (box-shadow) — visible on white inputs,
+ *     beige page, yellow buttons
+ *   - outer 2px accent ring (outline + 2px offset) — visible on
+ *     dark cards (where most form fields live)
+ * One color or the other contrasts no matter what the focused
+ * element sits on.
+ *
+ * Two layers of selectors: universal `*:focus-visible` catches links
+ * and custom elements; the element-list rule below targets inputs/
+ * buttons/selects/textareas with class-level specificity so this
+ * outranks Tailwind's `focus:outline-none` (specificity 0,1,1) in
+ * the cascade. Both use !important as a backstop — a11y floor wins
+ * over per-component "no outline" preferences. */
 *:focus-visible {
-  outline: 2px solid var(--color-ink) !important;
+  outline: 2px solid var(--color-accent) !important;
   outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px var(--color-ink) !important;
 }
 
 input:focus-visible,
@@ -69,8 +76,9 @@ button:focus-visible,
 a:focus-visible,
 [role='button']:focus-visible,
 [tabindex='0']:focus-visible {
-  outline: 2px solid var(--color-ink) !important;
+  outline: 2px solid var(--color-accent) !important;
   outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px var(--color-ink) !important;
 }
 
 /* Selects: appearance-none strips the native chrome that was clipping the
