@@ -43,6 +43,22 @@ body {
   }
 }
 
+/* A11y baseline: every focusable element gets a clear visual focus
+ * indicator on keyboard navigation. focus-visible (vs plain :focus)
+ * means mouse-click users don't see rings — only keyboard-tab users
+ * who actually need the cue. 2px ink outline with 2px offset reads
+ * cleanly on every background we use (white, beige, yellow, dark).
+ *
+ * !important needed because many input components use Tailwind's
+ * `focus:outline-none` to suppress the browser default ring — that
+ * rule lives in the utilities layer and would otherwise outrank
+ * this baseline. Accessibility floor wins over per-component
+ * "no outline" preferences. */
+*:focus-visible {
+  outline: 2px solid var(--color-ink) !important;
+  outline-offset: 2px !important;
+}
+
 /* Selects: appearance-none strips the native chrome that was clipping the
  * inset black ring on inputs of the same className. We re-add a black
  * chevron via background-image so the dropdown still reads as a select. */
