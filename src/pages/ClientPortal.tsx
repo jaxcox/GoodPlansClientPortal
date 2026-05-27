@@ -10,6 +10,7 @@ import { WeeklyDashboard } from '../components/WeeklyDashboard'
 import { HistoryPage } from '../components/HistoryPage'
 import { ResourcesPage } from '../components/ResourcesPage'
 import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
+import { MessageModal } from '../components/MessageModal'
 
 type Props = {
   clientId: string
@@ -37,6 +38,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
    *  off Weekly Entry so a subsequent natural visit lands on the default
    *  (most recent completed week). */
   const [entryInitialWeek, setEntryInitialWeek] = useState<Date | null>(null)
+  const [messageOpen, setMessageOpen] = useState(false)
 
   const reloadClient = async () => {
     const { data, error } = await supabase
@@ -156,6 +158,16 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
               <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
               <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+              {/* Message button — same nav slot, label flips by viewer
+                  role. Action button (not a tab) since it opens a modal
+                  rather than navigating. */}
+              <button
+                type="button"
+                onClick={() => setMessageOpen(true)}
+                className="text-ink text-sm font-semibold underline-offset-4 hover:underline px-2 py-1"
+              >
+                {coachView ? 'Message Client' : 'Message Coach'}
+              </button>
             </>
           )}
           {client.shared_folder_link && (
@@ -256,6 +268,21 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           {coach?.brand_name ?? 'The Good Plans Co'}
         </span>
       </footer>
+
+      {/* Message modal — shared between client→coach and coach→client
+          modes. Label, recipient, and target Edge Function flip based
+          on coachView. */}
+      <MessageModal
+        open={messageOpen}
+        mode={coachView ? 'coach-to-client' : 'client-to-coach'}
+        recipientLabel={
+          coachView
+            ? client.contact_name || client.company_name
+            : coach?.brand_name ?? 'your coach'
+        }
+        clientId={coachView ? clientId : undefined}
+        onClose={() => setMessageOpen(false)}
+      />
     </div>
   )
 }
