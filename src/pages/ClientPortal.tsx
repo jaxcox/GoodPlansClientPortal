@@ -159,12 +159,13 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
               <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
               {/* Message button — same nav slot, label flips by viewer
-                  role. Action button (not a tab) since it opens a modal
-                  rather than navigating. */}
+                  role. Styled as a button (yellow accent, matches the
+                  Shared Drive ↗ button alongside) since it triggers an
+                  action rather than navigating to a tab. */}
               <button
                 type="button"
                 onClick={() => setMessageOpen(true)}
-                className="text-ink text-sm font-semibold underline-offset-4 hover:underline px-2 py-1"
+                className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
               >
                 {coachView ? 'Message Client' : 'Message Coach'}
               </button>

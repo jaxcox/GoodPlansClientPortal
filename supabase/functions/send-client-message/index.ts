@@ -203,9 +203,7 @@ function buildCoachToClientHtml({
       Hi ${safeRecipient},
     </p>
 
-    <div style="background-color: #F5F2E5; border-left: 3px solid #FFF200; padding: 12px 16px; border-radius: 4px; margin: 0 0 24px 0;">
-      <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0; white-space: pre-wrap;">${safeMsg}</p>
-    </div>
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0; white-space: pre-wrap;">${safeMsg}</p>
 
     <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0;">
       Sincerely,<br>
