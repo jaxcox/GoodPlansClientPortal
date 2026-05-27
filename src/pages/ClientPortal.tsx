@@ -11,6 +11,8 @@ import { HistoryPage } from '../components/HistoryPage'
 import { ResourcesPage } from '../components/ResourcesPage'
 import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 import { MessageModal } from '../components/MessageModal'
+import { ClientWelcomeCard } from '../components/ClientWelcomeCard'
+import { hasSeenClientTour } from '../lib/clientTour'
 
 type Props = {
   clientId: string
@@ -39,6 +41,14 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
    *  (most recent completed week). */
   const [entryInitialWeek, setEntryInitialWeek] = useState<Date | null>(null)
   const [messageOpen, setMessageOpen] = useState(false)
+  // Welcome card visibility: shown when the client hasn't completed the
+  // tour yet (per localStorage flag) AND is in client view (not coach
+  // view — coaches don't need their own clients' onboarding card on
+  // their screen). Initialized from storage on mount; flipping it off
+  // also writes the flag via the tour module.
+  const [showWelcome, setShowWelcome] = useState(
+    () => !coachView && !hasSeenClientTour(clientId)
+  )
 
   const reloadClient = async () => {
     const { data, error } = await supabase
@@ -152,11 +162,19 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
         <div className="flex items-center gap-1 text-base sm:text-sm flex-wrap">
           {!(client.must_change_password && !coachView) && (
             <>
-              <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
-              <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
+              <span data-tour="dashboard">
+                <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
+              </span>
+              <span data-tour="entry">
+                <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
+              </span>
               <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
-              <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
-              <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
+              <span data-tour="history">
+                <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
+              </span>
+              <span data-tour="resources">
+                <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
+              </span>
               <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
               {/* Message button — same nav slot, label flips by viewer
                   role. Styled as a button (yellow accent, matches the
@@ -164,6 +182,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
                   action rather than navigating to a tab. */}
               <button
                 type="button"
+                data-tour="message"
                 onClick={() => setMessageOpen(true)}
                 className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
               >
@@ -248,11 +267,23 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             }}
           />
         ) : tab === 'dashboard' ? (
-          <WeeklyDashboard
-            clientId={clientId}
-            coachView={coachView}
-            onGoToMissedWeek={goToMissedWeek}
-          />
+          <>
+            {/* Welcome card — first-time clients only. Sits above the
+                dashboard until "Take the tour" or "Skip" is clicked
+                (either action marks the tour as seen). */}
+            {showWelcome && (
+              <ClientWelcomeCard
+                clientId={clientId}
+                coachBrandName={coach?.brand_name}
+                onDismiss={() => setShowWelcome(false)}
+              />
+            )}
+            <WeeklyDashboard
+              clientId={clientId}
+              coachView={coachView}
+              onGoToMissedWeek={goToMissedWeek}
+            />
+          </>
         ) : tab === 'history' ? (
           <HistoryPage clientId={clientId} />
         ) : tab === 'resources' ? (

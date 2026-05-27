@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { CATEGORIES, KPIS } from '../lib/kpis'
 import type { KpiCategory, KpiDef } from '../lib/kpis'
+import { runClientTour } from '../lib/clientTour'
 
 // =============================================================================
 // Resources — coach-curated reference content surfaced inside the portal.
@@ -35,7 +36,7 @@ const ARTICLES: Article[] = [
   },
 ]
 
-export function ResourcesPage(_props: Props) {
+export function ResourcesPage({ clientId }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const active = activeId ? ARTICLES.find((a) => a.id === activeId) : null
 
@@ -60,7 +61,9 @@ export function ResourcesPage(_props: Props) {
     )
   }
 
-  // Index view — list of articles as clickable cards.
+  // Index view — list of articles as clickable cards, plus a special
+  // "Take a tour" card that fires the Driver.js walkthrough instead of
+  // opening article content.
   return (
     <section className="space-y-4">
       <h1 className="text-lg font-bold text-ink">Resources</h1>
@@ -76,6 +79,19 @@ export function ResourcesPage(_props: Props) {
             <div className="text-sm text-black">{a.description}</div>
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => runClientTour(clientId)}
+          className="text-left bg-white border border-gray-200 rounded-lg p-4 hover:border-accent hover:shadow-sm transition-all"
+        >
+          <div className="text-base font-bold text-ink mb-1">
+            Take a tour
+          </div>
+          <div className="text-sm text-black">
+            A one-minute walk-through of the portal's main pages. Skip
+            it the first time? Replay anytime here.
+          </div>
+        </button>
       </div>
     </section>
   )
