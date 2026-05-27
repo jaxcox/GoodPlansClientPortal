@@ -125,8 +125,15 @@ Deno.serve(async (req) => {
     return jsonError(400, 'Client has no email on file')
   }
 
-  // 4. Build + send the email via Resend's REST API
+  // 4. Build + send the email via Resend's REST API. Sending both
+  // `html` (pretty version) and `text` (plain-text fallback) materially
+  // improves deliverability — spam filters get suspicious of HTML-only
+  // mail since legit transactional senders almost always include both.
   const html = buildInviteHtml({
+    contactName: client.contact_name ?? null,
+    inviteCode: client.invite_code,
+  })
+  const text = buildInviteText({
     contactName: client.contact_name ?? null,
     inviteCode: client.invite_code,
   })
@@ -140,8 +147,9 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       from: FROM_ADDRESS,
       to: client.email,
-      subject: 'Welcome to The Good Plans Co Client Portal',
+      subject: 'Activate your Good Plans Co account',
       html,
+      text,
     }),
   })
 
@@ -218,6 +226,34 @@ function buildInviteHtml({
 
   </div>
 </div>`
+}
+
+/** Plain-text fallback. Same information as the HTML version, no
+ *  markup. Email clients that can't render HTML (text-only readers,
+ *  some accessibility tools) show this; spam filters score it
+ *  alongside the HTML and reward the presence of a balanced pair. */
+function buildInviteText({
+  contactName,
+  inviteCode,
+}: {
+  contactName: string | null
+  inviteCode: string
+}): string {
+  const greeting = contactName ? `Hi ${contactName},` : 'Hi there,'
+  return `${greeting}
+
+Your Client Portal is ready. To get started:
+
+1. Go to ${PORTAL_URL}/client
+2. Choose "First Time? Use Invite Code" on the sign-in page
+3. Enter the code below along with your email
+4. Choose a password. You'll use it on future visits
+
+Your invite code: ${inviteCode}
+
+Sincerely,
+The Good Plans Co team
+`
 }
 
 /** Minimal HTML escape for the values interpolated into the template
