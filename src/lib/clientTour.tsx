@@ -73,6 +73,16 @@ export function runClientTour(clientId: string): void {
         },
       },
       {
+        element: '[data-tour="budget"]',
+        popover: {
+          title: 'Budget & Goals',
+          description:
+            "Your annual targets and how they break down across the year. Your coach sets these with you. Review anytime to see what you're working toward.",
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
         element: '[data-tour="history"]',
         popover: {
           title: 'History',
@@ -88,6 +98,16 @@ export function runClientTour(clientId: string): void {
           title: 'Resources',
           description:
             "KPI glossary, reference docs, and the place to replay this tour. Visit when something isn't clear.",
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '[data-tour="settings"]',
+        popover: {
+          title: 'Settings',
+          description:
+            "Manage your password, contact info, weekly reminder emails, and other account preferences.",
           side: 'bottom',
           align: 'start',
         },

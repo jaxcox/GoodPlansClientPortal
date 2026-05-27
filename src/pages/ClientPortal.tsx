@@ -168,14 +168,18 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               <span data-tour="entry">
                 <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
               </span>
-              <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
+              <span data-tour="budget">
+                <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
+              </span>
               <span data-tour="history">
                 <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
               </span>
               <span data-tour="resources">
                 <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
               </span>
-              <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+              <span data-tour="settings">
+                <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+              </span>
               {/* Message button — same nav slot, label flips by viewer
                   role. Styled as a button (yellow accent, matches the
                   Shared Drive ↗ button alongside) since it triggers an
