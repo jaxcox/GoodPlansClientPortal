@@ -150,6 +150,15 @@ Deno.serve(async (req) => {
       subject: 'Activate your Good Plans Co account',
       html,
       text,
+      // List-Unsubscribe header signals "good-citizen sender" to spam
+      // filters (Gmail / Outlook reward its presence). For invite mail
+      // the recipient has no portal account yet, so the unsubscribe
+      // target is a mailto: to Jackie. The subject pre-fill helps her
+      // triage incoming opt-out requests in her inbox.
+      headers: {
+        'List-Unsubscribe':
+          '<mailto:jackie@thegoodplansco.com?subject=Unsubscribe>',
+      },
     }),
   })
 

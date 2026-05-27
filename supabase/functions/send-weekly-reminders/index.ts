@@ -49,13 +49,25 @@ Deno.serve(async (req) => {
 
   // 1. Verify the caller has the CRON_SECRET. Cron jobs pass it in
   // the Authorization header; anyone else hitting this endpoint without
-  // it gets bounced.
+  // it gets bounced. Both sides are .trim()'d to tolerate stray
+  // whitespace (a trailing newline on the saved secret is a common
+  // paste-into-dashboard artifact that otherwise breaks the compare).
   const cronSecret = Deno.env.get('CRON_SECRET')
   if (!cronSecret) {
     return jsonError(500, 'CRON_SECRET not configured')
   }
-  const auth = req.headers.get('Authorization') ?? ''
-  if (auth !== `Bearer ${cronSecret}`) {
+  const auth = (req.headers.get('Authorization') ?? '').trim()
+  const expected = `Bearer ${cronSecret.trim()}`
+  if (auth !== expected) {
+    // Logs let us diagnose mismatches without exposing the full secret.
+    console.warn('CRON_SECRET mismatch', {
+      authLength: auth.length,
+      expectedLength: expected.length,
+      authPrefix: auth.slice(0, 14),
+      expectedPrefix: expected.slice(0, 14),
+      authSuffix: auth.slice(-6),
+      expectedSuffix: expected.slice(-6),
+    })
     return jsonError(401, 'Unauthorized')
   }
 
@@ -146,6 +158,16 @@ Deno.serve(async (req) => {
         subject: 'Your weekly entry is open',
         html,
         text,
+        // List-Unsubscribe header improves spam-filter scoring. Client
+        // has portal access, so first target is the in-portal Settings
+        // page where the reminder toggle lives; mailto: fallback lets
+        // recipients opt out by email too. Per CAN-SPAM, transactional
+        // emails don't strictly require unsubscribe — this is purely
+        // for deliverability.
+        headers: {
+          'List-Unsubscribe':
+            '<https://portal.thegoodplansco.com/>, <mailto:jackie@thegoodplansco.com?subject=Unsubscribe>',
+        },
       }),
     })
 
