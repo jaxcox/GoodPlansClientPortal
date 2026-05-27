@@ -130,7 +130,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
     let cancelled = false
     ;(async () => {
       const [clientRes, indRes, budgetRes] = await Promise.all([
-        supabase.from('clients').select('*').eq('id', clientId).maybeSingle(),
+        supabase.from('clients_safe').select('*').eq('id', clientId).maybeSingle(),
         supabase.from('industries').select('*').order('name'),
         supabase
           .from('budgets')

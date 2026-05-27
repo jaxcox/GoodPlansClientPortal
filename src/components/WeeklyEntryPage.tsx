@@ -263,7 +263,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     ;(async () => {
       const [clientRes, entriesRes] = await Promise.all([
         supabase
-          .from('clients')
+          .from('clients_safe')
           .select('*')
           .eq('id', clientId)
           .maybeSingle(),

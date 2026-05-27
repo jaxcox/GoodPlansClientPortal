@@ -101,7 +101,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       // Load client first — we need coach_id for the budget if we have to
       // INSERT a fresh row.
       const { data: clientData, error: clientErr } = await supabase
-        .from('clients')
+        .from('clients_safe')
         .select('*')
         .eq('id', clientId)
         .maybeSingle()

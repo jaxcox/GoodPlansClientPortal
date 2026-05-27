@@ -76,7 +76,7 @@ export function HistoryPage({ clientId }: Props) {
     ;(async () => {
       const year = new Date().getFullYear()
       const [clientRes, budgetRes] = await Promise.all([
-        supabase.from('clients').select('*').eq('id', clientId).maybeSingle(),
+        supabase.from('clients_safe').select('*').eq('id', clientId).maybeSingle(),
         supabase
           .from('budgets')
           .select('*')

@@ -42,7 +42,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
   const reloadClient = async () => {
     const { data, error } = await supabase
-      .from('clients')
+      .from('clients_safe')
       .select('*')
       .eq('id', clientId)
       .maybeSingle()
@@ -88,7 +88,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
     let cancelled = false
     ;(async () => {
       const { data, error } = await supabase
-        .from('clients')
+        .from('clients_safe')
         .select('*')
         .eq('id', clientId)
         .maybeSingle()

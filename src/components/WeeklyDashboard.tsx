@@ -148,7 +148,7 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
     setError(null)
     const year = new Date().getFullYear()
     const [cRes, bRes, eRes, allDatesRes] = await Promise.all([
-      supabase.from('clients').select('*').eq('id', clientId).maybeSingle(),
+      supabase.from('clients_safe').select('*').eq('id', clientId).maybeSingle(),
       supabase
         .from('budgets')
         .select('*')
