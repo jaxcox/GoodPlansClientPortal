@@ -19,6 +19,14 @@ export function InfoIcon({ text, className = '' }: Props) {
       <button
         type="button"
         aria-label="More info"
+        // tabIndex=-1 keeps the icon out of the keyboard tab order.
+        // Without this, keyboard users would tab through every InfoIcon
+        // between every form field, which is friction without payoff —
+        // the same tooltip content is also available to screen readers
+        // via the parent component's aria-describedby / aria-label
+        // pattern in most places. Mouse hover and click still surface
+        // the tooltip the normal way.
+        tabIndex={-1}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}

@@ -49,12 +49,26 @@ body {
  * who actually need the cue. 2px ink outline with 2px offset reads
  * cleanly on every background we use (white, beige, yellow, dark).
  *
- * !important needed because many input components use Tailwind's
- * `focus:outline-none` to suppress the browser default ring — that
- * rule lives in the utilities layer and would otherwise outrank
- * this baseline. Accessibility floor wins over per-component
- * "no outline" preferences. */
+ * Two layers: a universal `*:focus-visible` rule catches links and
+ * other custom elements. The explicit element-list rule below
+ * targets inputs/selects/textareas/buttons with class-level
+ * specificity to outrank Tailwind's `focus:outline-none` utility
+ * (which has specificity 0,1,1 from .class + :focus and would
+ * otherwise win the cascade). Both use !important as a backstop
+ * for any future per-component focus-style overrides — a11y floor
+ * trumps "no outline" preferences. */
 *:focus-visible {
+  outline: 2px solid var(--color-ink) !important;
+  outline-offset: 2px !important;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+[tabindex='0']:focus-visible {
   outline: 2px solid var(--color-ink) !important;
   outline-offset: 2px !important;
 }
