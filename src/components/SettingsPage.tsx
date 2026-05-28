@@ -697,7 +697,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                   No custom KPIs yet
                 </div>
                 <div className="text-white text-xs">
-                  Add one to track something specific to this client's business that the standard registry doesn't cover.
+                  Add one to track something specific to this client's business.
                 </div>
                 <button
                   type="button"
