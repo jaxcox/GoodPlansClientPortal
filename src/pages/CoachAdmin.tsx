@@ -10,11 +10,13 @@ import type { Client, Industry } from '../lib/types'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
 import { LogoMark } from '../components/LogoMark'
+import { ReassignClientModal } from '../components/ReassignClientModal'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
+import { TeamPage } from '../components/TeamPage'
 import { CoachAccountPage } from './CoachAccountPage'
 import { useDirtyConfirm } from '../lib/dirtyGuard'
 
-type Tab = 'clients' | 'industries' | 'account'
+type Tab = 'clients' | 'industries' | 'team' | 'account'
 type ClientFilter = 'active' | 'pending' | 'archived'
 type ClientSort = 'alpha-asc' | 'alpha-desc' | 'newest' | 'oldest'
 
@@ -122,6 +124,9 @@ export function CoachAdmin({ onViewPortal }: Props) {
         <TabButton active={tab === 'industries'} onClick={() => guardedSetTab('industries')}>
           Industries
         </TabButton>
+        <TabButton active={tab === 'team'} onClick={() => guardedSetTab('team')}>
+          Team
+        </TabButton>
         <TabButton active={tab === 'account'} onClick={() => guardedSetTab('account')}>
           Account
         </TabButton>
@@ -140,6 +145,8 @@ export function CoachAdmin({ onViewPortal }: Props) {
           />
         ) : tab === 'industries' ? (
           <IndustriesPage />
+        ) : tab === 'team' ? (
+          <TeamPage />
         ) : (
           <CoachAccountPage onLeave={() => setTab('clients')} />
         )}
@@ -562,7 +569,9 @@ function ClientCard({
   onEdit: () => void
   onResetPassword: () => void
 }) {
+  const { coach } = useAuth()
   const [busy, setBusy] = useState(false)
+  const [reassignOpen, setReassignOpen] = useState(false)
 
   const setArchived = async (archived: boolean) => {
     if (busy) return
@@ -704,6 +713,16 @@ function ClientCard({
             Reset Password
           </button>
         )}
+        {!client.archived && (
+          <button
+            type="button"
+            onClick={() => setReassignOpen(true)}
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
+            title="Move this client to another coach on your team"
+          >
+            Reassign
+          </button>
+        )}
         {!client.activated && !client.archived && (
           <button
             type="button"
@@ -746,6 +765,20 @@ function ClientCard({
           </button>
         )}
       </div>
+      {coach && (
+        <ReassignClientModal
+          open={reassignOpen}
+          clientId={client.id}
+          clientName={client.company_name}
+          brandName={coach.brand_name}
+          currentCoachId={coach.id}
+          onClose={() => setReassignOpen(false)}
+          onReassigned={() => {
+            setReassignOpen(false)
+            onChange()
+          }}
+        />
+      )}
     </li>
   )
 }
