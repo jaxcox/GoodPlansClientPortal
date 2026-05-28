@@ -5,41 +5,38 @@ import { useFocusTrap } from '../lib/useFocusTrap'
 type Props = {
   open: boolean
   coachId: string
-  initialDisplayName: string
-  initialFromEmail: string | null
-  initialSupportEmail: string | null
+  initialFullName: string
+  initialPhone: string | null
   onClose: () => void
   onSaved: () => void
 }
 
-/** Manager-only edit panel for a direct report's editable fields:
- *  display_name (on the report's profile) and from_email + support_email
- *  (on the report's coaches row). Posts to update-coach Edge Function
- *  which validates the manager relationship server-side. */
+/** Edit modal for a coach record (used for both report edits — admin
+ *  edits a teammate — and self edits — anyone edits their own card).
+ *  Phase C scope: Full Name + Phone only. From/support emails are
+ *  auto-locked to the coach's login email; admins can override via DB
+ *  if ever needed but not from the UI. */
 export function EditCoachModal({
   open,
   coachId,
-  initialDisplayName,
-  initialFromEmail,
-  initialSupportEmail,
+  initialFullName,
+  initialPhone,
   onClose,
   onSaved,
 }: Props) {
-  const [displayName, setDisplayName] = useState(initialDisplayName)
-  const [fromEmail, setFromEmail] = useState(initialFromEmail ?? '')
-  const [supportEmail, setSupportEmail] = useState(initialSupportEmail ?? '')
+  const [fullName, setFullName] = useState(initialFullName)
+  const [phone, setPhone] = useState(initialPhone ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
-      setDisplayName(initialDisplayName)
-      setFromEmail(initialFromEmail ?? '')
-      setSupportEmail(initialSupportEmail ?? '')
+      setFullName(initialFullName)
+      setPhone(initialPhone ?? '')
       setSubmitting(false)
       setError(null)
     }
-  }, [open, initialDisplayName, initialFromEmail, initialSupportEmail])
+  }, [open, initialFullName, initialPhone])
 
   useEffect(() => {
     if (!open) return
@@ -64,11 +61,8 @@ export function EditCoachModal({
     }>('update-coach', {
       body: {
         targetCoachId: coachId,
-        displayName: displayName.trim(),
-        // null = clear; undefined = leave alone. Pass the trimmed string
-        // so empty is treated as clear.
-        fromEmail: fromEmail.trim() || null,
-        supportEmail: supportEmail.trim() || null,
+        displayName: fullName.trim(),
+        phone: phone.trim() || null,
       },
     })
     setSubmitting(false)
@@ -120,25 +114,16 @@ export function EditCoachModal({
 
         <form onSubmit={onSubmit} className="space-y-3">
           <Field
-            label="Display Name"
-            value={displayName}
-            onChange={setDisplayName}
+            label="Full Name"
+            value={fullName}
+            onChange={setFullName}
             required
-            hint="How clients see them in email signatures (e.g. 'Steve Cox')."
           />
           <Field
-            label="From Email"
-            type="email"
-            value={fromEmail}
-            onChange={setFromEmail}
-            hint="Address their coach-to-client messages come FROM. Leave blank to fall back to noreply@thegoodplansco.com."
-          />
-          <Field
-            label="Reply-to (Support) Email"
-            type="email"
-            value={supportEmail}
-            onChange={setSupportEmail}
-            hint="Where client replies should land. Blank = same as From."
+            label="Phone"
+            type="tel"
+            value={phone}
+            onChange={setPhone}
           />
           {error && (
             <div
@@ -177,14 +162,12 @@ function Field({
   onChange,
   type = 'text',
   required,
-  hint,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   type?: string
   required?: boolean
-  hint?: string
 }) {
   return (
     <label className="block">
@@ -199,7 +182,6 @@ function Field({
         required={required}
         className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black text-black rounded text-sm px-3 py-2 focus:outline-none focus:border-accent"
       />
-      {hint && <div className="text-white text-xs italic mt-1">{hint}</div>}
     </label>
   )
 }

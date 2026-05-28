@@ -8,8 +8,7 @@ import { RemoveCoachConfirm } from './RemoveCoachConfirm'
 type Coach = {
   id: string
   display_name: string | null
-  from_email: string | null
-  support_email: string | null
+  phone: string | null
   created_at: string
   client_count: number
   /** All clients owned by this coach, including pending + archived.
@@ -32,7 +31,7 @@ type Props = {
  *  because RLS doesn't expose them). Clicking a card jumps to the
  *  Clients tab filtered to that coach. */
 export function TeamPage({ onSelectCoach }: Props) {
-  const { coach } = useAuth()
+  const { coach, refreshProfile } = useAuth()
   const [coaches, setCoaches] = useState<Coach[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
@@ -54,9 +53,7 @@ export function TeamPage({ onSelectCoach }: Props) {
     // themselves).
     const { data: coachRows, error: coachErr } = await supabase
       .from('coaches')
-      .select(
-        'id, created_at, manager_coach_id, from_email, support_email'
-      )
+      .select('id, created_at, manager_coach_id, phone')
       .or(`id.eq.${coach.id},manager_coach_id.eq.${coach.id}`)
       .order('created_at', { ascending: true })
     if (coachErr) {
@@ -98,8 +95,7 @@ export function TeamPage({ onSelectCoach }: Props) {
       const row = c as {
         id: string
         created_at: string
-        from_email: string | null
-        support_email: string | null
+        phone: string | null
       }
       const profile = (profiles ?? []).find(
         (p) => (p as { coach_id: string | null }).coach_id === row.id
@@ -107,8 +103,7 @@ export function TeamPage({ onSelectCoach }: Props) {
       return {
         id: row.id,
         display_name: profile?.display_name ?? null,
-        from_email: row.from_email,
-        support_email: row.support_email,
+        phone: row.phone,
         created_at: row.created_at,
         client_count: countByCoach[row.id] ?? 0,
         total_client_count: totalByCoach[row.id] ?? 0,
@@ -182,11 +177,12 @@ export function TeamPage({ onSelectCoach }: Props) {
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {coaches.map((c) => {
-            // Admin-only Edit/Remove on other coaches' cards. The
-            // caller's own card never shows them here — self-edit comes
-            // in Phase C via a dedicated button. Admin can't remove
-            // themselves (server-side enforced too).
-            const showManagerActions = isAdmin && !c.is_current
+            // Phase C self-edit: everyone gets Edit on their own card
+            // (Full Name + Phone). Admins also get Edit on other
+            // coaches' cards plus Remove. Remove is never on the own
+            // card (self-removal is blocked server-side too).
+            const canEdit = c.is_current || isAdmin
+            const canRemove = isAdmin && !c.is_current
             return (
               <li
                 key={c.id}
@@ -199,7 +195,7 @@ export function TeamPage({ onSelectCoach }: Props) {
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div className="text-white font-bold text-base">
-                      {c.display_name || '— no display name set —'}
+                      {c.display_name || '— no full name set —'}
                     </div>
                     {c.is_current && (
                       <span className="bg-accent text-black text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
@@ -208,6 +204,7 @@ export function TeamPage({ onSelectCoach }: Props) {
                     )}
                   </div>
                   <div className="text-white text-xs mt-2 space-y-0.5">
+                    {c.phone && <div>{c.phone}</div>}
                     <div>
                       {c.client_count} active{' '}
                       {c.client_count === 1 ? 'client' : 'clients'}
@@ -222,28 +219,32 @@ export function TeamPage({ onSelectCoach }: Props) {
                     </div>
                   </div>
                 </button>
-                {showManagerActions && (
+                {(canEdit || canRemove) && (
                   <div className="flex gap-2 px-4 pb-3 -mt-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditTarget(c)
-                      }}
-                      className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setRemoveTarget(c)
-                      }}
-                      className="bg-transparent text-white border border-bad/60 px-3 py-1 rounded text-xs font-semibold hover:bg-bad/20"
-                    >
-                      Remove
-                    </button>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditTarget(c)
+                        }}
+                        className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {canRemove && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setRemoveTarget(c)
+                        }}
+                        className="bg-transparent text-white border border-bad/60 px-3 py-1 rounded text-xs font-semibold hover:bg-bad/20"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 )}
               </li>
@@ -265,13 +266,17 @@ export function TeamPage({ onSelectCoach }: Props) {
         <EditCoachModal
           open={true}
           coachId={editTarget.id}
-          initialDisplayName={editTarget.display_name ?? ''}
-          initialFromEmail={editTarget.from_email}
-          initialSupportEmail={editTarget.support_email}
+          initialFullName={editTarget.display_name ?? ''}
+          initialPhone={editTarget.phone}
           onClose={() => setEditTarget(null)}
           onSaved={() => {
+            const wasSelf = editTarget.is_current
             setEditTarget(null)
             refresh()
+            // Self-edit: also refresh the AuthContext so the header
+            // chrome (which shows the signed-in coach's display_name)
+            // updates without a page reload.
+            if (wasSelf) refreshProfile()
           }}
         />
       )}
