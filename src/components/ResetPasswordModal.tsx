@@ -39,6 +39,11 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // Focus trap hook MUST be above the early return so the hook order
+  // stays stable across renders (Rules of Hooks). Same fix as 11f65cc
+  // for the 4 other modals.
+  const trapRef = useFocusTrap(open)
+
   if (!open || !client) return null
 
   const longEnough = password.length >= 8
@@ -89,7 +94,6 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
   }
 
   const visibility = { show, toggle: () => setShow((s) => !s) }
-  const trapRef = useFocusTrap(true)
 
   return (
     <div
