@@ -30,8 +30,16 @@ Think of Vercel as the building your website lives in. When someone types `porta
 ### Supabase — the back office
 Three things in one:
 - **Database**: every client, weekly entry, budget number, and message lives here.
-- **Authentication**: handles all logins (coach + clients). When you reset a password, Supabase generates the link.
-- **Edge Functions**: tiny server-side programs the portal calls for special tasks (activating new clients, sending invite emails, the weekly-reminder cron). You don't interact with them directly; they run when needed.
+- **Authentication**: handles all logins (coach + clients). When someone clicks Forgot Password, Supabase generates the reset link.
+- **Edge Functions**: tiny server-side programs the portal calls for special tasks. The full list:
+  - `activate-client` — flips a pending client to active after they enter their invite code
+  - `send-client-invite` — sends the invite-code email when you click Send Invite
+  - `send-client-message` / `send-coach-message` — the in-portal Message Coach / Message Client flow
+  - `send-weekly-reminders` — the Sunday cron that emails clients whose entry is overdue
+  - `add-coach` / `update-coach` / `remove-coach` — coach team management (admin-only)
+  - `reassign-client` — moves a client between coaches in the brand (admin or manager)
+  - `resend-coach-welcome` — re-sends a teammate's password-setup link if the first one expired
+  - You don't interact with these directly; they run when the portal calls them.
 
 ### Resend — the mail room
 Every email your portal sends — password reset, client invite, weekly reminder, Message Coach — goes through Resend. They route it from `noreply@thegoodplansco.com` (or `jackie@thegoodplansco.com` for personal messages) to the recipient.
@@ -99,12 +107,55 @@ Most changes ship in under 5 minutes from when you describe them.
 - Whatever you can describe
 
 ### Common things you do directly (no Claude needed)
-- Adding new clients → Coach Admin → + Add Client
-- Resending invite codes → Send Invite button on the client card
+- Adding new clients → Coach Admin → + Add Client (admin only)
+- Editing or archiving a client → Edit / Archive buttons on the client card (admin only)
+- Resending invite codes → Send Invite button on the client card (admin only)
+- Reassigning a client to another coach → Reassign button on the client card (admin or manager). Multi-select + a bulk reassign bar at the bottom of Clients tab works too.
 - Setting client budgets → Budget & Goals page
-- Resetting a client's password → Reset Password on the client card
+- Adding a teammate → Coach Admin → Team → + Add Coach (admin only). They get a welcome email with a password-setup link.
+- Resending a teammate's welcome email → Resend Welcome on their Team card
+- Promoting/demoting roles → Edit on their Team card → Role dropdown + Admin checkbox
+- Editing your own name + phone → Edit on your own card under Team
+- Editing brand or company info → Account tab (admin only)
+- Editing the brand's industries → Industries tab (admin only). One list, shared across all coaches in the brand.
 - Sending a message to a client → Coach view of their portal → Message Client
-- Changing your own password → Coach Account page
+- Changing anyone's password (yours or a client's) → Forgot Password link on the sign-in screen
+
+---
+
+## Roles & permissions
+
+The portal has three permission tiers. Anyone who signs in is a coach record under the hood; what they can do depends on two flags on that record.
+
+### Admin (a flag, can apply to anyone)
+The boss role. Admins can:
+- Add new clients, archive them, edit them
+- Add / remove / edit other coaches (Team tab)
+- Promote or demote roles (including their own Admin flag, as long as they're not the only admin)
+- Edit brand info (name, logo, primary color, footer)
+- Edit company info (address, phone, website)
+- Edit the brand's industry list
+- Everything Manager + Coach can do
+
+Multiple admins per brand are allowed. The system blocks removing the last admin — promote someone else first.
+
+### Manager (a role)
+Sees their direct reports' clients in addition to their own. Can reassign clients within their team. Updates client KPIs. Edits their own profile. Doesn't see Industries or Account tabs unless they're also Admin.
+
+### Coach (the default role)
+Sees only their own clients. Updates KPIs for those clients. Edits their own name + phone via the Team card. Doesn't see Industries, Account, or any other coaches' clients.
+
+### How to assign
+- New coaches start as **Coach** / not Admin.
+- Promote from Coach → Manager → Admin via Edit on their Team card. Both Role + Admin are independent checkboxes/dropdowns.
+- A non-Admin Manager can see their team's clients but can't add/remove coaches or edit company info.
+- A Coach + Admin (role=Coach, is_admin=true) skips the team-visibility layer but still has full editing rights.
+
+### Important guardrails
+- You can't remove yourself.
+- You can't remove the only admin in the brand.
+- A coach who still owns clients can't be removed — reassign their clients first.
+- Login emails are not editable from the portal. If a coach typed their email wrong on creation, ask Claude to fix it directly in the DB.
 
 ---
 
@@ -158,8 +209,13 @@ Do these once a month, takes 2 minutes total:
 ### "A client can't sign in"
 1. Coach Admin → find them in the Clients list. Are they Active or Pending?
    - **Pending**: they haven't activated yet. Click Send Invite to re-send the code.
-   - **Active**: their account is good. Try Reset Password to give them a fresh temporary one.
+   - **Active**: their account is good. Tell them to use the Forgot Password link on the sign-in screen — they'll get an email with a reset link. (If their email address is wrong on the card, fix it via Edit Client first, then they hit Forgot Password.)
 2. Check the email address on their card matches what they're typing.
+
+### "A coach teammate can't sign in"
+1. Team tab → find them. If you don't see them, they may not exist yet (Add Coach hasn't been used) or they're in a different brand (shouldn't happen).
+2. If they're listed but haven't logged in, click **Resend Welcome** on their card — sends a fresh password-setup link.
+3. If they've signed in before but forgot their password, they use **Forgot Password** on the sign-in screen, same as clients.
 
 ### "Emails aren't arriving"
 1. Check spam folders (delivery from `noreply@thegoodplansco.com` should be reliable but new senders sometimes land in spam).
@@ -323,4 +379,4 @@ If the marketing site ends up being built in **Webflow / Squarespace / Carrd / e
 
 ---
 
-*Last updated: 2026-05-28. If big architectural changes happen, ask me to refresh this doc.*
+*Last updated: 2026-05-28 (post role-overhaul: Admin/Manager/Coach permission tiers + brand-shared industries + Edge Function team management). If big architectural changes happen, ask me to refresh this doc.*
