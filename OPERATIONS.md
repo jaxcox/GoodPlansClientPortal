@@ -211,8 +211,8 @@ Backed up on GitHub. Even if your laptop dies, the code is recoverable from ther
 **Realistic risk at 5–10 real clients**: losing months of weekly entries from multiple businesses is a genuine business problem. Hard to explain.
 
 #### Free mitigations (no upgrade)
-1. **Manual monthly dump** (5 min). Supabase → SQL Editor → run an export query → save the CSV file somewhere safe (Dropbox / iCloud). Ask me to write the query when ready.
-2. **Automated weekly dump via Edge Function** (~1 hr setup). Runs on a cron, exports the database to JSON, emails it to you via Resend. Rolling archive in your inbox.
+1. **Manual monthly dump (already set up)** (5 min). The query lives at [`supabase/backups/full-backup.sql`](supabase/backups/full-backup.sql) and step-by-step instructions are in [`supabase/backups/README.md`](supabase/backups/README.md). Paste the query into Supabase SQL Editor, click Run, click Download CSV, save the file somewhere safe. Once a month.
+2. **Automated weekly dump via Edge Function** (~1 hr setup). Runs on a cron, exports the database to JSON, emails it to you via Resend. Rolling archive in your inbox. Ask me to build this when you want it.
 3. **Supabase CLI local dump** (~30 min setup, run monthly). Run `supabase db dump` from your laptop → saves a SQL file → back it up like any document.
 
 #### Paid option
