@@ -1005,16 +1005,26 @@ export function WeeklyDashboard({
             being shown */}
       {mode === 'weekly' && !displayedEntry && (
         <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
-          {entries.length === 0 ? (
-            <>
-              No entries yet. Go to <strong>Weekly Entry</strong> to log
-              your first week.
-            </>
-          ) : (
-            <>
-              No entry saved for <strong>{formatWeekShort(selectedWeekStart)}</strong>.
-              Go to <strong>Weekly Entry</strong> to add it.
-            </>
+          <div>
+            {entries.length === 0 ? (
+              <>No entries yet.</>
+            ) : (
+              <>
+                No entry saved for{' '}
+                <strong>{formatWeekShort(selectedWeekStart)}</strong>.
+              </>
+            )}
+          </div>
+          {onGoToEntry && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={onGoToEntry}
+                className="underline underline-offset-4 hover:opacity-70"
+              >
+                Log a weekly entry
+              </button>
+            </div>
           )}
         </div>
       )}
