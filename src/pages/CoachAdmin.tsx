@@ -300,10 +300,27 @@ function ClientsTab({
     }
   }, [filtered, sort])
 
+  // Heading reflects the active coach filter. When viewing yours: "My
+  // Clients". Viewing a teammate: "Steve's Clients". "All" or none:
+  // "All Clients" (multi-coach team) or "My Clients" (solo coach).
+  const heading = (() => {
+    if (!coachFilter) {
+      return teamCoaches.length > 1 ? 'All Clients' : 'My Clients'
+    }
+    if (coachFilter === coach?.id) return 'My Clients'
+    const name =
+      teamCoaches.find((c) => c.id === coachFilter)?.display_name ?? null
+    if (!name) return 'Clients'
+    // Apostrophe-S possessive — handles names ending in s ("Steve" → "Steve's";
+    // "Chris" → "Chris's") consistently. Coach Cox's spouse Steve qualifies for
+    // the standard form.
+    return `${name}'s Clients`
+  })()
+
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-ink text-lg font-bold">My Clients</h1>
+        <h1 className="text-ink text-lg font-bold">{heading}</h1>
         <button
           type="button"
           onClick={() => setModalState({ kind: 'create' })}
