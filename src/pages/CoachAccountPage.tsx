@@ -5,13 +5,13 @@ import { useDirtyGuard } from '../lib/dirtyGuard'
 import { Card } from '../components/Card'
 import { SaveBar } from '../components/SaveBar'
 import { DarkField } from '../components/DarkField'
-import { ChangePasswordForm } from '../components/ChangePasswordForm'
 
 // =============================================================================
-// Coach Account page — third tab in Coach Admin (Clients / Industries / Account).
-// Lets the coach manage their own profile (display name), brand info shown to
-// clients (brand name, footer, primary color, support/from emails), and
-// password. Email is read-only (login key, same rule as activated clients).
+// Account page — admin-only (Phase B gating). Company-level information only:
+// brand (what clients see) + company (internal business info: address, phone,
+// website). Personal profile and password live elsewhere:
+//   - Full Name + Phone → edited from the coach's own card on the Team tab
+//   - Password         → Forgot Password on the sign-in screen
 // =============================================================================
 
 type Props = {
@@ -19,98 +19,70 @@ type Props = {
 }
 
 export function CoachAccountPage({ onLeave }: Props) {
-  const { session, profile, coach, refreshProfile } = useAuth()
+  const { profile, coach, refreshProfile } = useAuth()
 
-  const [displayName, setDisplayName] = useState('')
   const [brandName, setBrandName] = useState('')
   const [brandFooter, setBrandFooter] = useState('')
   const [brandColor, setBrandColor] = useState('')
-  const [supportEmail, setSupportEmail] = useState('')
-  const [fromEmail, setFromEmail] = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
+  const [companyPhone, setCompanyPhone] = useState('')
+  const [companyWebsite, setCompanyWebsite] = useState('')
 
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
-    setDisplayName(profile?.display_name ?? '')
-  }, [profile])
-
-  useEffect(() => {
     setBrandName(coach?.brand_name ?? '')
     setBrandFooter(coach?.brand_footer_text ?? '')
     setBrandColor(coach?.brand_primary_color ?? '')
-    setSupportEmail(coach?.support_email ?? '')
-    setFromEmail(coach?.from_email ?? '')
+    setCompanyAddress(coach?.brand_address ?? '')
+    setCompanyPhone(coach?.brand_phone ?? '')
+    setCompanyWebsite(coach?.brand_website ?? '')
   }, [coach])
 
   const initial = useMemo(
     () => ({
-      displayName: profile?.display_name ?? '',
       brandName: coach?.brand_name ?? '',
       brandFooter: coach?.brand_footer_text ?? '',
       brandColor: coach?.brand_primary_color ?? '',
-      supportEmail: coach?.support_email ?? '',
-      fromEmail: coach?.from_email ?? '',
+      companyAddress: coach?.brand_address ?? '',
+      companyPhone: coach?.brand_phone ?? '',
+      companyWebsite: coach?.brand_website ?? '',
     }),
-    [profile, coach]
+    [coach]
   )
 
-  const profileDirty = displayName !== initial.displayName
-  const coachDirty =
+  const isDirty =
     brandName !== initial.brandName ||
     brandFooter !== initial.brandFooter ||
     brandColor !== initial.brandColor ||
-    supportEmail !== initial.supportEmail ||
-    fromEmail !== initial.fromEmail
-  const isDirty = profileDirty || coachDirty
+    companyAddress !== initial.companyAddress ||
+    companyPhone !== initial.companyPhone ||
+    companyWebsite !== initial.companyWebsite
 
   const setGuardDirty = useDirtyGuard(isDirty)
 
   const onSave = async () => {
-    if (!profile || !coach) return
+    if (!coach) return
     setSaving(true)
     setSaveError(null)
 
-    // Sequential — profile first, then coach. Only update the dirty
-    // half so we don't write fields the user didn't touch. If profile
-    // fails we bail before touching coaches; if coaches fails after a
-    // successful profile write, the page reports which half committed
-    // so the user knows what to retry.
-    if (profileDirty) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ display_name: displayName.trim() || null })
-        .eq('id', profile.id)
-      if (error) {
-        setSaving(false)
-        setSaveError(`Profile: ${error.message}`)
-        return
-      }
-    }
-
-    if (coachDirty) {
-      const { error } = await supabase
-        .from('coaches')
-        .update({
-          brand_name: brandName.trim(),
-          brand_footer_text: brandFooter.trim() || null,
-          brand_primary_color: brandColor.trim() || null,
-          support_email: supportEmail.trim() || null,
-          from_email: fromEmail.trim() || null,
-        })
-        .eq('id', coach.id)
-      if (error) {
-        setSaving(false)
-        // Profile already committed at this point if it was dirty —
-        // tell the user explicitly so the retry is clean.
-        const prefix = profileDirty
-          ? 'Profile saved, but brand: '
-          : 'Brand: '
-        setSaveError(prefix + error.message)
-        await refreshProfile()
-        return
-      }
+    const { error } = await supabase
+      .from('coaches')
+      .update({
+        brand_name: brandName.trim(),
+        brand_footer_text: brandFooter.trim() || null,
+        brand_primary_color: brandColor.trim() || null,
+        brand_address: companyAddress.trim() || null,
+        brand_phone: companyPhone.trim() || null,
+        brand_website: companyWebsite.trim() || null,
+      })
+      .eq('id', coach.id)
+    if (error) {
+      setSaving(false)
+      setSaveError(error.message)
+      return
     }
 
     setSaving(false)
@@ -127,12 +99,12 @@ export function CoachAccountPage({ onLeave }: Props) {
       )
     )
       return
-    setDisplayName(initial.displayName)
     setBrandName(initial.brandName)
     setBrandFooter(initial.brandFooter)
     setBrandColor(initial.brandColor)
-    setSupportEmail(initial.supportEmail)
-    setFromEmail(initial.fromEmail)
+    setCompanyAddress(initial.companyAddress)
+    setCompanyPhone(initial.companyPhone)
+    setCompanyWebsite(initial.companyWebsite)
     setSavedAt(null)
     setSaveError(null)
     setGuardDirty(false)
@@ -142,8 +114,6 @@ export function CoachAccountPage({ onLeave }: Props) {
   if (!profile || !coach) {
     return <div className="text-black text-sm">Loading…</div>
   }
-
-  const email = session?.user.email ?? ''
 
   return (
     <section className="space-y-4">
@@ -164,66 +134,48 @@ export function CoachAccountPage({ onLeave }: Props) {
         </div>
       )}
 
-      {/* Row 1: Profile + Brand */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Profile">
-          <DarkField
-            label="Display Name"
-            value={displayName}
-            onChange={setDisplayName}
-            placeholder="Jackie Ferrier"
-          />
-          <DarkField
-            label="Email (login)"
-            value={email}
-            onChange={() => {}}
-            disabled
-            hint="Email is the login key and can't be changed here."
-          />
-        </Card>
-
         <Card title="Brand">
           <DarkField
             label="Brand Name"
             value={brandName}
             onChange={setBrandName}
             placeholder="The Good Plans Co"
-            hint="Shown at the top of every client's portal and in admin headers."
+            info="Shown at the top of every client's portal and in admin headers."
           />
           <DarkField
             label="Brand Footer Text"
             value={brandFooter}
             onChange={setBrandFooter}
             placeholder="© The Good Plans Co"
-            hint="Optional. Shown in the footer of every client portal."
+            info="Optional. Shown in the footer of every client portal."
           />
           <BrandColorRow value={brandColor} onChange={setBrandColor} />
+        </Card>
+
+        <Card title="Company">
           <DarkField
-            label="Support Email"
-            type="email"
-            value={supportEmail}
-            onChange={setSupportEmail}
-            placeholder="support@thegoodplansco.com"
-            hint="Optional. Used as the contact email shown to clients."
+            label="Company Address"
+            value={companyAddress}
+            onChange={setCompanyAddress}
+            placeholder="123 Main St, Suite 4, City, ST 00000"
           />
           <DarkField
-            label="From Email"
-            type="email"
-            value={fromEmail}
-            onChange={setFromEmail}
-            placeholder="noreply@thegoodplansco.com"
-            hint="Optional. Used as the from address on system emails (deploy-time config required)."
+            label="Company Phone"
+            type="tel"
+            value={companyPhone}
+            onChange={setCompanyPhone}
+            placeholder="(555) 555-0100"
+          />
+          <DarkField
+            label="Company Website"
+            type="url"
+            value={companyWebsite}
+            onChange={setCompanyWebsite}
+            placeholder="https://thegoodplansco.com"
           />
         </Card>
       </div>
-
-      {/* Row 2: Change Password */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Change Password">
-          <ChangePasswordForm email={email} />
-        </Card>
-      </div>
-
     </section>
   )
 }
@@ -256,9 +208,6 @@ function BrandColorRow({
           }}
           aria-hidden
         />
-      </div>
-      <div className="text-xs text-white mt-1">
-        Optional hex (e.g. #f2c94c). Preview shows next to the input.
       </div>
     </div>
   )
