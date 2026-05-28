@@ -660,16 +660,21 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         </Card>
         {canEditAll && (
           <Card title="Custom KPIs" fit>
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={addCustomKpi}
-                className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
-              >
-                + Add Custom KPI
-              </button>
-            </div>
+            {/* Top button hides when the list is empty — the empty
+                state below carries the primary action so coaches
+                don't have to hunt for the top + Add. */}
             {customKpis.length > 0 && (
+              <div className="flex justify-start">
+                <button
+                  type="button"
+                  onClick={addCustomKpi}
+                  className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
+                >
+                  + Add Custom KPI
+                </button>
+              </div>
+            )}
+            {customKpis.length > 0 ? (
               <div
                 className={`grid gap-3 items-start ${
                   customKpis.length === 1
@@ -685,6 +690,22 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
                     onRemove={() => removeCustomKpi(k.id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="bg-ink border border-dashed border-line rounded p-8 text-center">
+                <div className="text-white font-bold text-sm mb-1">
+                  No custom KPIs yet
+                </div>
+                <div className="text-white text-xs">
+                  Add one to track something specific to this client's business that the standard registry doesn't cover.
+                </div>
+                <button
+                  type="button"
+                  onClick={addCustomKpi}
+                  className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 mt-4 whitespace-nowrap"
+                >
+                  + Add Custom KPI
+                </button>
               </div>
             )}
           </Card>

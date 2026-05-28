@@ -61,19 +61,36 @@ export function CapacityGroupsCard({
 
   return (
     <Card title="Utilization" info={UTILIZATION_DESC} id="settings:utilization" fit>
-      <div className="flex justify-start">
-        <button
-          type="button"
-          onClick={addGroup}
-          className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
-        >
-          + Add Group
-        </button>
-      </div>
+      {/* Top + Add Group button hides when empty — the empty state
+          below carries the primary action so users don't have to hunt
+          for it. */}
+      {groups.length > 0 && (
+        <div className="flex justify-start">
+          <button
+            type="button"
+            onClick={addGroup}
+            className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 whitespace-nowrap"
+          >
+            + Add Group
+          </button>
+        </div>
+      )}
 
       {groups.length === 0 ? (
-        <div className="text-white text-xs">
-          No capacity groups yet. Click <strong>+ Add Group</strong> to start.
+        <div className="bg-ink border border-dashed border-line rounded p-8 text-center">
+          <div className="text-white font-bold text-sm mb-1">
+            No capacity groups yet
+          </div>
+          <div className="text-white text-xs">
+            Add one to start tracking team capacity and utilization.
+          </div>
+          <button
+            type="button"
+            onClick={addGroup}
+            className="bg-accent text-black font-bold px-3 py-1.5 rounded text-xs hover:brightness-95 mt-4 whitespace-nowrap"
+          >
+            + Add Group
+          </button>
         </div>
       ) : (
         <div

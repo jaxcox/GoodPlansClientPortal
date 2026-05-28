@@ -137,7 +137,7 @@ export function IndustriesPage() {
         {industries === null ? (
           <Loading />
         ) : industries.length === 0 ? (
-          <Empty />
+          <Empty onAdd={() => setMode({ kind: 'edit', industry: null })} />
         ) : visible && visible.length === 0 ? (
           <NoMatches />
         ) : (
@@ -166,7 +166,7 @@ function Loading() {
   )
 }
 
-function Empty() {
+function Empty({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="bg-ink border border-dashed border-line rounded p-10 text-center">
       <div className="text-2xl mb-2">🏭</div>
@@ -176,6 +176,13 @@ function Empty() {
       <div className="text-white text-xs">
         Add one to set default KPIs for new clients in that industry.
       </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="bg-accent text-black px-4 py-1.5 rounded text-xs font-bold hover:brightness-95 mt-4"
+      >
+        + Add Industry
+      </button>
     </div>
   )
 }

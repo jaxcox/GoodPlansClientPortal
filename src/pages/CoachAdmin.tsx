@@ -294,7 +294,11 @@ function ClientsTab({
           Loading…
         </div>
       ) : visible.length === 0 ? (
-        <EmptyState filter={filter} hasSearch={q.length > 0} />
+        <EmptyState
+          filter={filter}
+          hasSearch={q.length > 0}
+          onAddClient={() => setModalState({ kind: 'create' })}
+        />
       ) : (
         <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {visible.map((c) => (
@@ -490,9 +494,11 @@ function FilterButton({
 function EmptyState({
   filter,
   hasSearch,
+  onAddClient,
 }: {
   filter: ClientFilter
   hasSearch: boolean
+  onAddClient: () => void
 }) {
   if (hasSearch) {
     return (
@@ -509,7 +515,7 @@ function EmptyState({
   const copy: Record<ClientFilter, { title: string; sub: string }> = {
     active: {
       title: 'No active clients yet',
-      sub: 'Click + Add Client to create your first.',
+      sub: 'Add your first to get started.',
     },
     pending: {
       title: 'No pending clients',
@@ -526,6 +532,15 @@ function EmptyState({
         {copy[filter].title}
       </div>
       <div className="text-white text-xs">{copy[filter].sub}</div>
+      {filter === 'active' && (
+        <button
+          type="button"
+          onClick={onAddClient}
+          className="bg-accent text-black px-4 py-2 sm:py-1.5 rounded text-xs font-bold hover:brightness-95 mt-4"
+        >
+          + Add Client
+        </button>
+      )}
     </div>
   )
 }
