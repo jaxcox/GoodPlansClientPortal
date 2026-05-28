@@ -1020,7 +1020,7 @@ export function WeeklyDashboard({
               <button
                 type="button"
                 onClick={onGoToEntry}
-                className="underline underline-offset-4 hover:opacity-70"
+                className="text-base font-bold underline underline-offset-4 hover:opacity-70"
               >
                 Log a weekly entry
               </button>
