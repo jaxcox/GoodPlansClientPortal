@@ -65,6 +65,8 @@ Deno.serve(async (req) => {
     fromEmail?: string | null
     supportEmail?: string | null
     phone?: string | null
+    role?: 'coach' | 'manager'
+    isAdmin?: boolean
   }
   try {
     body = await req.json()
@@ -95,6 +97,13 @@ Deno.serve(async (req) => {
       : typeof body.phone === 'string'
         ? body.phone.trim() || null
         : undefined
+  // role + isAdmin: only admins can change these (gate enforced below).
+  // Undefined here means "leave as-is"; supplying invalid values
+  // is rejected.
+  const newRole =
+    body.role === 'coach' || body.role === 'manager' ? body.role : undefined
+  const newIsAdmin =
+    typeof body.isAdmin === 'boolean' ? body.isAdmin : undefined
 
   // Service-role admin for DB writes
   const admin = createClient(
@@ -131,7 +140,7 @@ Deno.serve(async (req) => {
 
   const { data: targetCoach, error: targetCoachErr } = await admin
     .from('coaches')
-    .select('id')
+    .select('id, is_admin, manager_coach_id')
     .eq('id', targetCoachId)
     .maybeSingle()
   if (targetCoachErr) return jsonError(500, targetCoachErr.message)
@@ -153,9 +162,31 @@ Deno.serve(async (req) => {
   // Self-edit field restriction: a non-admin editing themselves can only
   // change display_name + phone. from/support emails are auto-locked to
   // login email (per the role-overhaul spec); admins can still override.
-  const allowEmailEdits = callerCoach.is_admin
-  const finalFromEmail = allowEmailEdits ? fromEmail : undefined
-  const finalSupportEmail = allowEmailEdits ? supportEmail : undefined
+  // Role + admin flag are admin-only and silently dropped for non-admin
+  // self-edits (the UI doesn't expose them either, so this is belt +
+  // suspenders).
+  const allowAdminFields = callerCoach.is_admin
+  const finalFromEmail = allowAdminFields ? fromEmail : undefined
+  const finalSupportEmail = allowAdminFields ? supportEmail : undefined
+  const finalRole = allowAdminFields ? newRole : undefined
+  const finalIsAdmin = allowAdminFields ? newIsAdmin : undefined
+
+  // Last-admin lockout: if this update would demote the only admin in
+  // the brand, refuse. Same protection as remove-coach. Only relevant
+  // when finalIsAdmin === false AND target was previously an admin.
+  if (finalIsAdmin === false && targetCoach.is_admin) {
+    const brandOwnerId = await resolveBrandOwner(admin, targetCoach.id)
+    if (brandOwnerId) {
+      const inBrand = await collectBrandCoaches(admin, brandOwnerId)
+      const adminCount = inBrand.filter((c) => c.is_admin).length
+      if (adminCount <= 1) {
+        return jsonError(
+          400,
+          "Can't remove admin rights — they're the only admin in your brand. Promote another coach to admin first."
+        )
+      }
+    }
+  }
 
   // Apply the coaches-table updates
   const coachUpdates: Record<string, unknown> = {}
@@ -163,6 +194,8 @@ Deno.serve(async (req) => {
   if (finalSupportEmail !== undefined)
     coachUpdates.support_email = finalSupportEmail
   if (phone !== undefined) coachUpdates.phone = phone
+  if (finalRole !== undefined) coachUpdates.role = finalRole
+  if (finalIsAdmin !== undefined) coachUpdates.is_admin = finalIsAdmin
   if (Object.keys(coachUpdates).length > 0) {
     const { error: coachUpdErr } = await admin
       .from('coaches')
@@ -211,4 +244,41 @@ async function resolveBrandOwner(adminClient: any, coachId: string) {
     cursor = data.manager_coach_id as string
   }
   return null
+}
+
+// BFS down from the brand owner to collect every coach in the brand.
+// Used by the last-admin lockout check.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function collectBrandCoaches(adminClient: any, brandOwnerId: string) {
+  const { data: all } = await adminClient
+    .from('coaches')
+    .select('id, manager_coach_id, is_admin')
+  const inBrand = new Map<
+    string,
+    { id: string; manager_coach_id: string | null; is_admin: boolean }
+  >()
+  const owner = (all ?? []).find(
+    (r: { id: string }) => r.id === brandOwnerId
+  )
+  if (owner) inBrand.set(owner.id, owner)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const c of all ?? []) {
+      const row = c as {
+        id: string
+        manager_coach_id: string | null
+        is_admin: boolean
+      }
+      if (
+        !inBrand.has(row.id) &&
+        row.manager_coach_id &&
+        inBrand.has(row.manager_coach_id)
+      ) {
+        inBrand.set(row.id, row)
+        changed = true
+      }
+    }
+  }
+  return Array.from(inBrand.values())
 }

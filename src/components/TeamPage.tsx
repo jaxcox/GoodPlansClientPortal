@@ -9,6 +9,8 @@ type Coach = {
   id: string
   display_name: string | null
   phone: string | null
+  role: 'coach' | 'manager'
+  is_admin: boolean
   created_at: string
   client_count: number
   /** All clients owned by this coach, including pending + archived.
@@ -63,7 +65,9 @@ export function TeamPage({ onSelectCoach }: Props) {
     // themselves).
     const { data: coachRows, error: coachErr } = await supabase
       .from('coaches')
-      .select('id, created_at, manager_coach_id, phone')
+      .select(
+        'id, created_at, manager_coach_id, phone, role, is_admin'
+      )
       .or(`id.eq.${coach.id},manager_coach_id.eq.${coach.id}`)
       .order('created_at', { ascending: true })
     if (coachErr) {
@@ -106,6 +110,8 @@ export function TeamPage({ onSelectCoach }: Props) {
         id: string
         created_at: string
         phone: string | null
+        role: 'coach' | 'manager'
+        is_admin: boolean
       }
       const profile = (profiles ?? []).find(
         (p) => (p as { coach_id: string | null }).coach_id === row.id
@@ -114,6 +120,8 @@ export function TeamPage({ onSelectCoach }: Props) {
         id: row.id,
         display_name: profile?.display_name ?? null,
         phone: row.phone,
+        role: row.role,
+        is_admin: row.is_admin,
         created_at: row.created_at,
         client_count: countByCoach[row.id] ?? 0,
         total_client_count: totalByCoach[row.id] ?? 0,
@@ -260,6 +268,23 @@ export function TeamPage({ onSelectCoach }: Props) {
                       </span>
                     )}
                   </div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {c.is_admin && (
+                      <span className="bg-accent text-black text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                        Admin
+                      </span>
+                    )}
+                    {c.role === 'manager' && (
+                      <span className="bg-ink text-white border border-mute text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                        Manager
+                      </span>
+                    )}
+                    {!c.is_admin && c.role === 'coach' && (
+                      <span className="bg-ink text-white border border-mute text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                        Coach
+                      </span>
+                    )}
+                  </div>
                   <div className="text-white text-xs mt-2 space-y-0.5">
                     {c.phone && <div>{c.phone}</div>}
                     <div>
@@ -354,6 +379,18 @@ export function TeamPage({ onSelectCoach }: Props) {
           coachId={editTarget.id}
           initialFullName={editTarget.display_name ?? ''}
           initialPhone={editTarget.phone}
+          initialRole={editTarget.role}
+          initialIsAdmin={editTarget.is_admin}
+          viewerIsAdmin={isAdmin}
+          isSelf={editTarget.is_current}
+          brandAdminCount={
+            // Count of admins in the visible team. For a 2-level
+            // hierarchy this is the full brand admin count; deeper
+            // trees would need a separate query. The server enforces
+            // last-admin lockout anyway, so this is just for the
+            // friendlier disabled-checkbox state.
+            (coaches ?? []).filter((x) => x.is_admin).length
+          }
           onClose={() => setEditTarget(null)}
           onSaved={() => {
             const wasSelf = editTarget.is_current
@@ -361,7 +398,9 @@ export function TeamPage({ onSelectCoach }: Props) {
             refresh()
             // Self-edit: also refresh the AuthContext so the header
             // chrome (which shows the signed-in coach's display_name)
-            // updates without a page reload.
+            // updates without a page reload. Important when changing
+            // own role/admin too — the chrome reflects whether you
+            // see Industries + Account tabs.
             if (wasSelf) refreshProfile()
           }}
         />

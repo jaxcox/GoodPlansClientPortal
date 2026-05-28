@@ -7,6 +7,22 @@ type Props = {
   coachId: string
   initialFullName: string
   initialPhone: string | null
+  /** Current role of the coach being edited. Admin viewers can change
+   *  it; non-admin viewers don't see the field. */
+  initialRole: 'coach' | 'manager'
+  initialIsAdmin: boolean
+  /** True when the SIGNED-IN viewer is an admin. Drives whether the
+   *  Role + Admin controls render. Non-admins can only edit Full Name
+   *  + Phone (their own row). */
+  viewerIsAdmin: boolean
+  /** True when the coach being edited is the viewer themselves. Used
+   *  to soft-warn about demoting the last admin in the brand (server
+   *  enforces the actual lockout, but a hint is friendlier). */
+  isSelf: boolean
+  /** Count of admins in the brand. Used to warn / disable the Admin
+   *  checkbox when the target is the only admin and demoting them
+   *  would lock the brand out of management. */
+  brandAdminCount: number
   onClose: () => void
   onSaved: () => void
 }
@@ -21,11 +37,18 @@ export function EditCoachModal({
   coachId,
   initialFullName,
   initialPhone,
+  initialRole,
+  initialIsAdmin,
+  viewerIsAdmin,
+  isSelf,
+  brandAdminCount,
   onClose,
   onSaved,
 }: Props) {
   const [fullName, setFullName] = useState(initialFullName)
   const [phone, setPhone] = useState(initialPhone ?? '')
+  const [role, setRole] = useState<'coach' | 'manager'>(initialRole)
+  const [isAdmin, setIsAdmin] = useState(initialIsAdmin)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,10 +56,19 @@ export function EditCoachModal({
     if (open) {
       setFullName(initialFullName)
       setPhone(initialPhone ?? '')
+      setRole(initialRole)
+      setIsAdmin(initialIsAdmin)
       setSubmitting(false)
       setError(null)
     }
-  }, [open, initialFullName, initialPhone])
+  }, [open, initialFullName, initialPhone, initialRole, initialIsAdmin])
+
+  // Last-admin guard: if this coach is currently the only admin in the
+  // brand AND they're an admin, prevent unchecking. Server enforces too;
+  // this is just the friendly version so the click doesn't get swallowed
+  // with a generic error.
+  const isLastAdmin = initialIsAdmin && brandAdminCount <= 1
+  const adminCheckboxDisabled = !viewerIsAdmin || isLastAdmin
 
   useEffect(() => {
     if (!open) return
@@ -63,6 +95,13 @@ export function EditCoachModal({
         targetCoachId: coachId,
         displayName: fullName.trim(),
         phone: phone.trim() || null,
+        // Only send role + isAdmin when the viewer is an admin — these
+        // fields are server-rejected for non-admins anyway, but skipping
+        // them keeps the body clean and avoids spurious "permission
+        // denied" errors when a coach edits their own name.
+        ...(viewerIsAdmin
+          ? { role, isAdmin: isAdmin }
+          : {}),
       },
     })
     setSubmitting(false)
@@ -125,6 +164,44 @@ export function EditCoachModal({
             value={phone}
             onChange={setPhone}
           />
+          {viewerIsAdmin && (
+            <>
+              <label className="block">
+                <div className="text-white text-xs font-semibold mb-1 uppercase tracking-wider">
+                  Role
+                </div>
+                <select
+                  value={role}
+                  onChange={(e) =>
+                    setRole(e.target.value as 'coach' | 'manager')
+                  }
+                  className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black text-black rounded text-sm px-3 py-2 focus:outline-none"
+                >
+                  <option value="coach">Coach</option>
+                  <option value="manager">Manager</option>
+                </select>
+              </label>
+              <label className="flex items-start gap-2 text-white text-sm">
+                <input
+                  type="checkbox"
+                  checked={isAdmin}
+                  disabled={adminCheckboxDisabled}
+                  onChange={(e) => setIsAdmin(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-accent disabled:opacity-50"
+                />
+                <span>
+                  Admin
+                  {isLastAdmin && (
+                    <span className="block text-xs italic mt-0.5">
+                      {isSelf
+                        ? "You're the only admin in this brand. Promote another coach to admin before removing your own admin rights."
+                        : "They're the only admin in this brand. Promote another coach to admin first."}
+                    </span>
+                  )}
+                </span>
+              </label>
+            </>
+          )}
           {error && (
             <div
               role="alert"
