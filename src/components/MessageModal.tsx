@@ -56,6 +56,10 @@ export function MessageModal({
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // Keep useFocusTrap above the early return so hook order stays
+  // stable when open flips. The hook is a no-op when active=false.
+  const trapRef = useFocusTrap(open)
+
   if (!open) return null
 
   const trimmed = message.trim()
@@ -110,8 +114,6 @@ export function MessageModal({
     mode === 'client-to-coach'
       ? "What's on your mind?"
       : `Write a message to ${recipientLabel}...`
-
-  const trapRef = useFocusTrap(open)
 
   return (
     <div

@@ -50,6 +50,10 @@ export function IndustryQuickAddModal({
     (v) => Number(v) === 1
   ).length
 
+  // Keep useFocusTrap above the early return so hook order stays
+  // stable when open flips. The hook is a no-op when active=false.
+  const trapRef = useFocusTrap(open)
+
   if (!open) return null
 
   const onSave = async (e: React.FormEvent) => {
@@ -72,8 +76,6 @@ export function IndustryQuickAddModal({
     }
     onCreated(data as Industry)
   }
-
-  const trapRef = useFocusTrap(true)
 
   return (
     // z-60 sits above ClientFormModal's z-50 so this stacks cleanly on top.

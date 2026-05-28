@@ -344,6 +344,11 @@ function ForgotPasswordModal({
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // useFocusTrap MUST be called above the early return so the hook
+  // order stays stable across "open" flips. The hook is no-op when
+  // active=false, so calling it when the modal is closed is fine.
+  const trapRef = useFocusTrap(open)
+
   if (!open) return null
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -366,8 +371,6 @@ function ForgotPasswordModal({
     }
     setSent(true)
   }
-
-  const trapRef = useFocusTrap(open)
 
   return (
     <div

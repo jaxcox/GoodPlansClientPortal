@@ -140,6 +140,10 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
     setKpis
   )
 
+  // Keep useFocusTrap above the early return so hook order stays
+  // stable when open flips. The hook is a no-op when active=false.
+  const trapRef = useFocusTrap(open)
+
   if (!open) return null
 
   const noIndustries = industries !== null && industries.length === 0
@@ -245,7 +249,6 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
     onClose()
   }
 
-  const trapRef = useFocusTrap(true)
   const titleText = isEdit
     ? `Edit ${editing?.company_name ?? 'Client'}`
     : 'Create New Client'
