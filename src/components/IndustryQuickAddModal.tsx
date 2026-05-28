@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { emptyKpiDefaults, toggleableByCategory } from '../lib/kpis'
 import { useKpiToggle } from '../lib/useKpiToggle'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import type { Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 
@@ -72,6 +73,8 @@ export function IndustryQuickAddModal({
     onCreated(data as Industry)
   }
 
+  const trapRef = useFocusTrap(true)
+
   return (
     // z-60 sits above ClientFormModal's z-50 so this stacks cleanly on top.
     <div
@@ -79,6 +82,10 @@ export function IndustryQuickAddModal({
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Quick add industry"
         className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-lg my-8"
         onClick={(e) => e.stopPropagation()}
       >
@@ -147,7 +154,7 @@ export function IndustryQuickAddModal({
           </div>
 
           {error && (
-            <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+            <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
               {error}
             </div>
           )}

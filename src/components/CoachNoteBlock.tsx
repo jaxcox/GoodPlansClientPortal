@@ -142,7 +142,7 @@ export function CoachNoteBlock({
           className="w-full bg-white border-2 border-accent ring-1 ring-inset ring-black text-black rounded text-sm px-3 py-2 focus:outline-none"
         />
         {error && (
-          <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+          <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
             {error}
           </div>
         )}

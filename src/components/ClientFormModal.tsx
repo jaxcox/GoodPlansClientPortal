@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { generateInviteCode } from '../lib/inviteCode'
 import { useAuth } from '../lib/auth'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import {
   emptyKpiDefaults,
   toggleableByCategory,
@@ -244,19 +245,26 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
     onClose()
   }
 
+  const trapRef = useFocusTrap(true)
+  const titleText = isEdit
+    ? `Edit ${editing?.company_name ?? 'Client'}`
+    : 'Create New Client'
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={titleText}
         className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-lg my-8"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-white text-base font-bold">
-            {isEdit ? `Edit ${editing?.company_name ?? 'Client'}` : 'Create New Client'}
-          </h2>
+          <h2 className="text-white text-base font-bold">{titleText}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -380,7 +388,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           )}
 
           {error && (
-            <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+            <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
               {error}
             </div>
           )}

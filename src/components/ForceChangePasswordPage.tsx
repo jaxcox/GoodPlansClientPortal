@@ -113,7 +113,7 @@ export function ForceChangePasswordPage({ clientId, email, onChanged }: Props) {
           )}
 
           {error && (
-            <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+            <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
               {error}
             </div>
           )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import { PasswordField } from '../components/PasswordField'
 import { LogoMark } from '../components/LogoMark'
 
@@ -366,12 +367,18 @@ function ForgotPasswordModal({
     setSent(true)
   }
 
+  const trapRef = useFocusTrap(open)
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Forgot password"
         className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-sm my-8"
         onClick={(e) => e.stopPropagation()}
       >
@@ -506,8 +513,14 @@ function PasswordRequirement({ value }: { value: string }) {
 }
 
 function ErrorBox({ children }: { children: React.ReactNode }) {
+  // role="alert" + aria-live=assertive so screen readers announce the
+  // error the moment it appears (not when focus eventually lands on it).
   return (
-    <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2"
+    >
       {children}
     </div>
   )

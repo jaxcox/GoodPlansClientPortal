@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 type Mode = 'client-to-coach' | 'coach-to-client'
 
@@ -110,12 +111,18 @@ export function MessageModal({
       ? "What's on your mind?"
       : `Write a message to ${recipientLabel}...`
 
+  const trapRef = useFocusTrap(open)
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-md my-8"
         onClick={(e) => e.stopPropagation()}
       >
@@ -157,7 +164,7 @@ export function MessageModal({
               </span>
             </div>
             {error && (
-              <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2 mt-3">
+              <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2 mt-3">
                 {error}
               </div>
             )}

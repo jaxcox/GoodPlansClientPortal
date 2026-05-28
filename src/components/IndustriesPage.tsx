@@ -105,7 +105,11 @@ export function IndustriesPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3 my-3">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3 my-3"
+        >
           {error}
         </div>
       )}
@@ -416,7 +420,7 @@ function IndustryEditor({
         </div>
 
         {error && (
-          <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+          <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
             {error}
           </div>
         )}

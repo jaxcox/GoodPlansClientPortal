@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import type { Client } from '../lib/types'
 import { PasswordField } from './PasswordField'
 
@@ -88,6 +89,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
   }
 
   const visibility = { show, toggle: () => setShow((s) => !s) }
+  const trapRef = useFocusTrap(true)
 
   return (
     <div
@@ -95,6 +97,10 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Reset password"
         className="bg-surface-1 border border-line rounded-xl p-5 w-full max-w-sm my-8"
         onClick={(e) => e.stopPropagation()}
       >
@@ -175,7 +181,7 @@ export function ResetPasswordModal({ open, client, onClose, onReset }: Props) {
             )}
 
             {error && (
-              <div className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
+              <div role="alert" aria-live="assertive" className="text-xs text-white bg-bad/10 border border-bad/40 rounded px-3 py-2">
                 {error}
               </div>
             )}
