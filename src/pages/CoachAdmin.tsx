@@ -254,6 +254,17 @@ function ClientsTab({
     | { kind: 'edit'; client: Client }
   >({ kind: 'closed' })
   const [resetClient, setResetClient] = useState<Client | null>(null)
+  /** Bulk reassign selection — only meaningful when teamCoaches.length > 1.
+   *  Reset whenever the visible bucket changes (filter / coach filter
+   *  switch) so stale selections don't carry across views. */
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTarget, setBulkTarget] = useState<string>('')
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkResult, setBulkResult] = useState<string | null>(null)
+  useEffect(() => {
+    setSelectedIds(new Set())
+    setBulkResult(null)
+  }, [filter, coachFilter])
 
   // First narrow by coach filter (null = "All" = every client the
   // current caller can see; specific id = only that coach's clients).
@@ -330,6 +341,51 @@ function ClientsTab({
         </button>
       </div>
 
+      {/* Select-all helper for bulk reassign — only when multi-coach team
+          AND the current bucket has selectable (non-archived) cards. */}
+      {teamCoaches.length > 1 &&
+        filter !== 'archived' &&
+        visible.length > 0 && (
+          <div className="flex items-center gap-2 mb-2">
+            <label className="inline-flex items-center gap-2 text-xs text-black cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={
+                  visible.every((c) => selectedIds.has(c.id)) &&
+                  visible.length > 0
+                }
+                ref={(el) => {
+                  if (el) {
+                    const someSelected = visible.some((c) =>
+                      selectedIds.has(c.id)
+                    )
+                    const allSelected = visible.every((c) =>
+                      selectedIds.has(c.id)
+                    )
+                    el.indeterminate = someSelected && !allSelected
+                  }
+                }}
+                onChange={(e) => {
+                  setBulkResult(null)
+                  if (e.target.checked) {
+                    setSelectedIds(
+                      (prev) =>
+                        new Set([...prev, ...visible.map((c) => c.id)])
+                    )
+                  } else {
+                    setSelectedIds((prev) => {
+                      const next = new Set(prev)
+                      for (const c of visible) next.delete(c.id)
+                      return next
+                    })
+                  }
+                }}
+                className="w-4 h-4 accent-accent cursor-pointer"
+              />
+              Select all on this page ({visible.length})
+            </label>
+          </div>
+        )}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="inline-flex border border-gray-300 rounded overflow-hidden text-xs">
           <FilterButton
@@ -428,6 +484,17 @@ function ClientsTab({
                 showCoachOnCards ? coachNameById.get(c.coach_id) ?? null : null
               }
               canReassign={teamCoaches.length > 1}
+              selectable={teamCoaches.length > 1 && !c.archived}
+              selected={selectedIds.has(c.id)}
+              onToggleSelect={() => {
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  if (next.has(c.id)) next.delete(c.id)
+                  else next.add(c.id)
+                  return next
+                })
+                setBulkResult(null)
+              }}
             />
           ))}
         </ul>
@@ -449,6 +516,145 @@ function ClientsTab({
         onClose={() => setResetClient(null)}
         onReset={() => onChange()}
       />
+
+      {/* Bulk reassign action bar — fixed at viewport bottom whenever the
+          manager has selected at least one client. Posts to reassign-client
+          once per selected id; reports per-client outcome in a summary. */}
+      {teamCoaches.length > 1 && selectedIds.size > 0 && (
+        <div
+          role="region"
+          aria-label="Bulk reassign"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-ink border-t border-line shadow-2xl p-3"
+        >
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-3">
+            <div className="text-white text-sm font-bold">
+              {selectedIds.size} selected
+            </div>
+            <label className="inline-flex items-center gap-2 text-xs text-white">
+              Reassign to:
+              <select
+                value={bulkTarget}
+                onChange={(e) => setBulkTarget(e.target.value)}
+                disabled={bulkBusy}
+                className="select-yellow bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
+              >
+                <option value="">Pick a coach…</option>
+                {teamCoaches.map((tc) => (
+                  <option key={tc.id} value={tc.id}>
+                    {tc.display_name ?? '— no name —'}
+                    {tc.id === coach?.id ? ' (You)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={!bulkTarget || bulkBusy}
+              onClick={async () => {
+                if (!bulkTarget) return
+                setBulkBusy(true)
+                setBulkResult(null)
+                const ids = Array.from(selectedIds)
+                // Run reassigns in parallel. Each call validates target +
+                // industry-copies as needed. Clients already on the target
+                // come back as a 400 we silently fold into "skipped".
+                const results = await Promise.all(
+                  ids.map(async (clientId) => {
+                    const { data, error: invokeErr } =
+                      await supabase.functions.invoke<{
+                        ok?: boolean
+                        error?: string
+                      }>('reassign-client', {
+                        body: { clientId, targetCoachId: bulkTarget },
+                      })
+                    if (invokeErr) {
+                      let msg = invokeErr.message
+                      const ctx = (
+                        invokeErr as { context?: Response }
+                      ).context
+                      if (ctx && typeof ctx.json === 'function') {
+                        try {
+                          const body = await ctx.json()
+                          if (body?.error) msg = body.error
+                        } catch {
+                          /* keep generic */
+                        }
+                      }
+                      return { clientId, ok: false, error: msg }
+                    }
+                    if (!data?.ok) {
+                      return {
+                        clientId,
+                        ok: false,
+                        error: data?.error ?? 'Failed',
+                      }
+                    }
+                    return { clientId, ok: true }
+                  })
+                )
+                const moved = results.filter((r) => r.ok).length
+                const skipped = results.filter(
+                  (r) =>
+                    !r.ok && r.error?.includes('already assigned to that coach')
+                ).length
+                const failed = results.length - moved - skipped
+                const targetName =
+                  teamCoaches.find((tc) => tc.id === bulkTarget)
+                    ?.display_name ?? 'that coach'
+                const parts: string[] = []
+                if (moved > 0)
+                  parts.push(
+                    `Moved ${moved} ${moved === 1 ? 'client' : 'clients'} to ${targetName}`
+                  )
+                if (skipped > 0)
+                  parts.push(
+                    `${skipped} already on ${targetName} (skipped)`
+                  )
+                if (failed > 0)
+                  parts.push(
+                    `${failed} failed: ${results
+                      .filter(
+                        (r) =>
+                          !r.ok &&
+                          !r.error?.includes(
+                            'already assigned to that coach'
+                          )
+                      )
+                      .map((r) => r.error)
+                      .join('; ')}`
+                  )
+                setBulkResult(parts.join(' · '))
+                setBulkBusy(false)
+                if (moved > 0) {
+                  setSelectedIds(new Set())
+                  setBulkTarget('')
+                  onChange()
+                }
+              }}
+              className="bg-accent text-black px-4 py-2 sm:py-1.5 rounded text-xs font-bold hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {bulkBusy ? 'Reassigning…' : 'Reassign'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIds(new Set())
+                setBulkResult(null)
+                setBulkTarget('')
+              }}
+              disabled={bulkBusy}
+              className="bg-transparent text-white border border-mute px-3 py-1.5 rounded text-xs font-semibold hover:bg-white/10 disabled:opacity-50"
+            >
+              Clear
+            </button>
+            {bulkResult && (
+              <div className="text-xs text-white basis-full sm:basis-auto sm:ml-auto">
+                {bulkResult}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -670,6 +876,9 @@ function ClientCard({
   onResetPassword,
   ownedByCoachName,
   canReassign,
+  selectable,
+  selected,
+  onToggleSelect,
 }: {
   client: Client
   industryName: string | null
@@ -686,6 +895,12 @@ function ClientCard({
    *  whether the Reassign button is shown. Reports never see Reassign;
    *  if they somehow trigger it the server-side function rejects. */
   canReassign: boolean
+  /** Bulk-reassign mode: when true, a checkbox renders to the left of
+   *  the company name and the parent controls multi-select. Mirrors the
+   *  per-card Reassign button but lets the manager move many at once. */
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const { coach } = useAuth()
   const [busy, setBusy] = useState(false)
@@ -764,8 +979,19 @@ function ClientCard({
     <li className="bg-ink border border-line rounded-lg p-4 flex flex-col gap-3">
       <div className="min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <div className="text-white font-bold text-base truncate flex-1 min-w-0">
-            {client.company_name}
+          <div className="flex items-start gap-2 flex-1 min-w-0">
+            {selectable && (
+              <input
+                type="checkbox"
+                checked={!!selected}
+                onChange={onToggleSelect}
+                aria-label={`Select ${client.company_name} for bulk reassign`}
+                className="mt-1 w-4 h-4 accent-accent cursor-pointer flex-shrink-0"
+              />
+            )}
+            <div className="text-white font-bold text-base truncate flex-1 min-w-0">
+              {client.company_name}
+            </div>
           </div>
           {/* Entry status pill — only on Active clients. Pending = no entry
               workflow yet; Archived = irrelevant. */}
