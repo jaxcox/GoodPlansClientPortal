@@ -1,16 +1,20 @@
 // Edge Function: remove-coach
-// Manager-only removal of a direct report. Blocked if the report still
-// owns any clients (active / pending / archived) — reassign them first.
+// Admin-only removal of any coach in the same brand. Blocked if the
+// target still owns any clients (active / pending / archived) — reassign
+// them first. Also blocked if removing them would leave the brand with
+// no admins (lockout protection).
 // On success, deletes:
-//   1. The report's profile row
-//   2. The report's coaches row
-//   3. The report's auth user (they lose the ability to sign in)
+//   1. The target's profile row
+//   2. The target's coaches row
+//   3. The target's auth user (they lose the ability to sign in)
 //
-// Authorization: caller must be the manager of the target coach
-// (manager_coach_id on target == caller's coach_id).
+// Authorization model (Phase B of the role overhaul):
+//   - Caller must be an Admin (coaches.is_admin = true)
+//   - Caller + target must be in the same brand (share a brand owner
+//     after walking up the manager_coach_id chain)
+//   - Caller cannot remove themselves
 //
-// Deploy: Edge Functions → New function → name `remove-coach` → paste →
-// Deploy. Toggle Verify JWT OFF.
+// Deploy: Edge Functions → re-deploy `remove-coach`. Toggle Verify JWT OFF.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -75,15 +79,38 @@ Deno.serve(async (req) => {
     return jsonError(400, "You can't remove yourself")
   }
 
+  // Resolve caller's coach record + admin flag
+  const { data: callerCoach, error: callerCoachErr } = await admin
+    .from('coaches')
+    .select('id, is_admin, manager_coach_id')
+    .eq('id', callerProfile.coach_id)
+    .maybeSingle()
+  if (callerCoachErr) return jsonError(500, callerCoachErr.message)
+  if (!callerCoach) return jsonError(500, 'Caller coach record not found')
+  if (!callerCoach.is_admin) {
+    return jsonError(403, 'Only admins can remove coaches')
+  }
+
   const { data: targetCoach, error: targetCoachErr } = await admin
     .from('coaches')
-    .select('id, manager_coach_id')
+    .select('id, manager_coach_id, is_admin')
     .eq('id', targetCoachId)
     .maybeSingle()
   if (targetCoachErr) return jsonError(500, targetCoachErr.message)
   if (!targetCoach) return jsonError(404, 'Coach not found')
-  if (targetCoach.manager_coach_id !== callerProfile.coach_id) {
-    return jsonError(403, 'You can only remove your own direct reports')
+
+  // Same-brand check: walk both caller + target up the manager_coach_id
+  // chain and verify they share a root. For the current 2-level
+  // hierarchy that's "either we share a manager, or one of us is the
+  // manager of the other, or we have the same root."
+  const callerBrandOwnerId = await resolveBrandOwner(admin, callerCoach.id)
+  const targetBrandOwnerId = await resolveBrandOwner(admin, targetCoach.id)
+  if (
+    !callerBrandOwnerId ||
+    !targetBrandOwnerId ||
+    callerBrandOwnerId !== targetBrandOwnerId
+  ) {
+    return jsonError(403, 'That coach is not in your brand')
   }
 
   // Block if any clients are still owned by them (active, pending, OR
@@ -101,6 +128,25 @@ Deno.serve(async (req) => {
         clientCount === 1 ? 'client' : 'clients'
       }. Reassign them first.`
     )
+  }
+
+  // Lockout protection: if the target is an admin and removing them
+  // would leave the brand with zero admins, refuse. (We already
+  // verified they're in the caller's brand, so we just count brand
+  // admins.) Without this guard, a sole admin could be removed by
+  // another admin and the brand would lose all management ability.
+  // Note: the caller is themselves an admin (verified above), so a
+  // brand can only enter this state via a race or a deeper hierarchy.
+  // Still cheap to check.
+  if (targetCoach.is_admin) {
+    const inBrand = await collectBrandCoaches(admin, callerBrandOwnerId)
+    const adminCount = inBrand.filter((c) => c.is_admin).length
+    if (adminCount <= 1) {
+      return jsonError(
+        400,
+        "Can't remove — they're the only admin in your brand. Promote another coach to admin first."
+      )
+    }
   }
 
   // Find the auth user id for this coach. We need it to call
@@ -155,4 +201,62 @@ function jsonError(status: number, message: string) {
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },
   })
+}
+
+// Walk from coachId up the manager_coach_id chain to find the brand
+// owner (the row where manager_coach_id is null). Returns the owner id
+// or null if not resolvable. 10-step cap as a sanity bound.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveBrandOwner(adminClient: any, coachId: string) {
+  let cursor: string | null = coachId
+  for (let i = 0; i < 10; i++) {
+    if (!cursor) return null
+    const { data, error } = await adminClient
+      .from('coaches')
+      .select('id, manager_coach_id')
+      .eq('id', cursor)
+      .maybeSingle()
+    if (error || !data) return null
+    if (!data.manager_coach_id) return data.id as string
+    cursor = data.manager_coach_id as string
+  }
+  return null
+}
+
+// Collect every coach in the brand rooted at brandOwnerId. For the
+// current 2-level hierarchy this is just owner + direct reports, but
+// the BFS form handles deeper trees if we add levels later.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function collectBrandCoaches(adminClient: any, brandOwnerId: string) {
+  const { data: all } = await adminClient
+    .from('coaches')
+    .select('id, manager_coach_id, is_admin')
+  const inBrand = new Map<
+    string,
+    { id: string; manager_coach_id: string | null; is_admin: boolean }
+  >()
+  const owner = (all ?? []).find(
+    (r: { id: string }) => r.id === brandOwnerId
+  )
+  if (owner) inBrand.set(owner.id, owner)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const c of all ?? []) {
+      const row = c as {
+        id: string
+        manager_coach_id: string | null
+        is_admin: boolean
+      }
+      if (
+        !inBrand.has(row.id) &&
+        row.manager_coach_id &&
+        inBrand.has(row.manager_coach_id)
+      ) {
+        inBrand.set(row.id, row)
+        changed = true
+      }
+    }
+  }
+  return Array.from(inBrand.values())
 }

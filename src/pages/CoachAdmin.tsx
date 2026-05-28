@@ -29,6 +29,19 @@ export function CoachAdmin({ onViewPortal }: Props) {
   const confirmLeave = useDirtyConfirm()
   const [tab, setTab] = useState<Tab>('clients')
 
+  /** Role gates (Phase B of the role overhaul). Admins see every tab +
+   *  every admin action. Managers + Coaches see Clients + Team only;
+   *  Industries and Account live behind the admin flag. */
+  const isAdmin = coach?.is_admin === true
+
+  // Snap back to Clients if the active tab gets hidden (e.g., user
+  // refreshes the page on an admin-only tab after admin was revoked).
+  useEffect(() => {
+    if (!isAdmin && (tab === 'industries' || tab === 'account')) {
+      setTab('clients')
+    }
+  }, [isAdmin, tab])
+
   /** Guarded tab change — prompts if the current page has unsaved edits. */
   const guardedSetTab = (next: Tab) => {
     if (tab === next) return
@@ -155,15 +168,25 @@ export function CoachAdmin({ onViewPortal }: Props) {
         <TabButton active={tab === 'clients'} onClick={() => guardedSetTab('clients')}>
           Clients
         </TabButton>
-        <TabButton active={tab === 'industries'} onClick={() => guardedSetTab('industries')}>
-          Industries
-        </TabButton>
+        {isAdmin && (
+          <TabButton
+            active={tab === 'industries'}
+            onClick={() => guardedSetTab('industries')}
+          >
+            Industries
+          </TabButton>
+        )}
         <TabButton active={tab === 'team'} onClick={() => guardedSetTab('team')}>
           Team
         </TabButton>
-        <TabButton active={tab === 'account'} onClick={() => guardedSetTab('account')}>
-          Account
-        </TabButton>
+        {isAdmin && (
+          <TabButton
+            active={tab === 'account'}
+            onClick={() => guardedSetTab('account')}
+          >
+            Account
+          </TabButton>
+        )}
       </nav>
       </div>
 
@@ -179,8 +202,9 @@ export function CoachAdmin({ onViewPortal }: Props) {
             teamCoaches={teamCoaches}
             coachFilter={clientsCoachFilter}
             onCoachFilterChange={setClientsCoachFilter}
+            isAdmin={isAdmin}
           />
-        ) : tab === 'industries' ? (
+        ) : tab === 'industries' && isAdmin ? (
           <IndustriesPage />
         ) : tab === 'team' ? (
           <TeamPage
@@ -189,9 +213,9 @@ export function CoachAdmin({ onViewPortal }: Props) {
               setTab('clients')
             }}
           />
-        ) : (
+        ) : tab === 'account' && isAdmin ? (
           <CoachAccountPage onLeave={() => setTab('clients')} />
-        )}
+        ) : null}
       </main>
     </div>
   )
@@ -233,6 +257,7 @@ function ClientsTab({
   teamCoaches,
   coachFilter,
   onCoachFilterChange,
+  isAdmin,
 }: {
   clients: Client[] | null
   industryById: Map<string, string>
@@ -243,6 +268,10 @@ function ClientsTab({
   teamCoaches: Array<{ id: string; display_name: string | null }>
   coachFilter: string | null
   onCoachFilterChange: (id: string | null) => void
+  /** Admin sees + Add Client, Edit, Archive, Reset Password, Send Invite.
+   *  Non-admin coaches only see View Portal + (Manager) Reassign + the
+   *  KPI workflow inside the portal. */
+  isAdmin: boolean
 }) {
   const { coach } = useAuth()
   const [filter, setFilter] = useState<ClientFilter>('active')
@@ -332,13 +361,15 @@ function ClientsTab({
     <section>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-ink text-lg font-bold">{heading}</h1>
-        <button
-          type="button"
-          onClick={() => setModalState({ kind: 'create' })}
-          className="bg-accent text-black px-4 py-2 sm:py-1.5 rounded text-xs font-bold hover:brightness-95"
-        >
-          + Add Client
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setModalState({ kind: 'create' })}
+            className="bg-accent text-black px-4 py-2 sm:py-1.5 rounded text-xs font-bold hover:brightness-95"
+          >
+            + Add Client
+          </button>
+        )}
       </div>
 
       {/* Select-all helper for bulk reassign — only when multi-coach team
@@ -464,7 +495,9 @@ function ClientsTab({
         <EmptyState
           filter={filter}
           hasSearch={q.length > 0}
-          onAddClient={() => setModalState({ kind: 'create' })}
+          onAddClient={
+            isAdmin ? () => setModalState({ kind: 'create' }) : null
+          }
         />
       ) : (
         <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2">
@@ -484,6 +517,7 @@ function ClientsTab({
                 showCoachOnCards ? coachNameById.get(c.coach_id) ?? null : null
               }
               canReassign={teamCoaches.length > 1}
+              isAdmin={isAdmin}
               selectable={teamCoaches.length > 1 && !c.archived}
               selected={selectedIds.has(c.id)}
               onToggleSelect={() => {
@@ -819,7 +853,9 @@ function EmptyState({
 }: {
   filter: ClientFilter
   hasSearch: boolean
-  onAddClient: () => void
+  /** Null when the viewer can't add clients (non-admin) — button is
+   *  hidden. Otherwise the Add Client CTA is offered. */
+  onAddClient: (() => void) | null
 }) {
   if (hasSearch) {
     return (
@@ -853,7 +889,7 @@ function EmptyState({
         {copy[filter].title}
       </div>
       <div className="text-white text-xs">{copy[filter].sub}</div>
-      {filter === 'active' && (
+      {filter === 'active' && onAddClient && (
         <button
           type="button"
           onClick={onAddClient}
@@ -876,6 +912,7 @@ function ClientCard({
   onResetPassword,
   ownedByCoachName,
   canReassign,
+  isAdmin,
   selectable,
   selected,
   onToggleSelect,
@@ -891,10 +928,14 @@ function ClientCard({
    *  the manager can tell whose client this is at a glance. Hidden
    *  when the list is filtered to a single coach (redundant). */
   ownedByCoachName: string | null
-  /** True when the signed-in coach is a manager (has reports). Drives
-   *  whether the Reassign button is shown. Reports never see Reassign;
-   *  if they somehow trigger it the server-side function rejects. */
+  /** True when the signed-in coach has at least one teammate, so
+   *  Reassign makes sense. Final gate is canReassign && (isAdmin ||
+   *  isManager); server-side enforces both. */
   canReassign: boolean
+  /** Admin gates the client-management buttons: Edit, Archive/Restore,
+   *  Reset Password, Send Invite. Non-admins see only View Portal +
+   *  (where applicable) Reassign. */
+  isAdmin: boolean
   /** Bulk-reassign mode: when true, a checkbox renders to the left of
    *  the company name and the parent controls multi-select. Mirrors the
    *  per-card Reassign button but lets the manager move many at once. */
@@ -1050,14 +1091,16 @@ function ClientCard({
         )}
       </div>
       <div className="flex flex-wrap justify-center sm:justify-start gap-1.5">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
-        >
-          Edit
-        </button>
-        {client.activated && !client.archived && (
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
+          >
+            Edit
+          </button>
+        )}
+        {isAdmin && client.activated && !client.archived && (
           <button
             type="button"
             onClick={onResetPassword}
@@ -1077,7 +1120,7 @@ function ClientCard({
             Reassign
           </button>
         )}
-        {!client.activated && !client.archived && (
+        {isAdmin && !client.activated && !client.archived && (
           <button
             type="button"
             onClick={sendInvite}
@@ -1098,25 +1141,29 @@ function ClientCard({
         {/* Mobile-only row break — pushes Archive/Restore to its own row
             below the action cluster (Edit / Reset / View Portal). On
             desktop (sm+) this is hidden so all buttons sit on one row. */}
-        <div className="basis-full h-0 sm:hidden" aria-hidden />
-        {client.archived ? (
-          <button
-            type="button"
-            onClick={() => setArchived(false)}
-            disabled={busy}
-            className="bg-transparent text-white border border-good text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
-          >
-            Restore
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setArchived(true)}
-            disabled={busy}
-            className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
-          >
-            Archive
-          </button>
+        {isAdmin && (
+          <>
+            <div className="basis-full h-0 sm:hidden" aria-hidden />
+            {client.archived ? (
+              <button
+                type="button"
+                onClick={() => setArchived(false)}
+                disabled={busy}
+                className="bg-transparent text-white border border-good text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-good/10 disabled:opacity-50"
+              >
+                Restore
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setArchived(true)}
+                disabled={busy}
+                className="bg-transparent text-white border border-bad-soft text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-bad/10 disabled:opacity-50"
+              >
+                Archive
+              </button>
+            )}
+          </>
         )}
       </div>
       {coach && (

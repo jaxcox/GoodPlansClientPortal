@@ -93,32 +93,73 @@ Deno.serve(async (req) => {
 
   const { data: callerCoach, error: callerCoachErr } = await admin
     .from('coaches')
-    .select('id, brand_name, manager_coach_id')
+    .select('id, brand_name, manager_coach_id, role, is_admin')
     .eq('id', callerProfile.coach_id)
     .maybeSingle()
   if (callerCoachErr) return jsonError(500, callerCoachErr.message)
   if (!callerCoach) return jsonError(500, 'Caller coach record not found')
 
-  // Manager-only control: only top-of-hierarchy coaches (those without
-  // a manager themselves) can reassign clients.
-  if (callerCoach.manager_coach_id !== null) {
+  // Reassign is Admin OR Manager. Plain coaches can't reassign.
+  // (Admin's scope = whole brand; Manager's scope = own team.)
+  if (!callerCoach.is_admin && callerCoach.role !== 'manager') {
     return jsonError(
       403,
-      'Only managers can reassign clients. Ask your manager.'
+      'Only admins or managers can reassign clients.'
     )
   }
 
-  // 4. Resolve the caller's hierarchy: their own id + the ids of their
-  // direct reports. Source + target must be within this set.
-  const { data: reports, error: reportsErr } = await admin
-    .from('coaches')
-    .select('id')
-    .eq('manager_coach_id', callerCoach.id)
-  if (reportsErr) return jsonError(500, reportsErr.message)
-  const hierarchyIds = new Set<string>([
-    callerCoach.id,
-    ...(reports ?? []).map((r) => (r as { id: string }).id),
-  ])
+  // 4. Resolve the caller's hierarchy: source + target must be inside
+  //    it. Admins can reassign anywhere in the brand (every coach in
+  //    the brand). Managers can reassign within their own team only
+  //    (self + direct reports).
+  let hierarchyIds: Set<string>
+  if (callerCoach.is_admin) {
+    // Walk to brand owner, then collect every coach rooted there.
+    let brandOwnerId = callerCoach.id
+    let cursor: string | null = callerCoach.manager_coach_id
+    for (let i = 0; i < 10; i++) {
+      if (!cursor) break
+      const { data: hop } = await admin
+        .from('coaches')
+        .select('id, manager_coach_id')
+        .eq('id', cursor)
+        .maybeSingle()
+      if (!hop) break
+      brandOwnerId = hop.id
+      cursor = hop.manager_coach_id
+    }
+    const { data: allCoaches, error: allErr } = await admin
+      .from('coaches')
+      .select('id, manager_coach_id')
+    if (allErr) return jsonError(500, allErr.message)
+    hierarchyIds = new Set<string>([brandOwnerId])
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const c of allCoaches ?? []) {
+        const row = c as { id: string; manager_coach_id: string | null }
+        if (
+          !hierarchyIds.has(row.id) &&
+          row.manager_coach_id &&
+          hierarchyIds.has(row.manager_coach_id)
+        ) {
+          hierarchyIds.add(row.id)
+          changed = true
+        }
+      }
+    }
+  } else {
+    // Manager: self + direct reports.
+    const { data: reports, error: reportsErr } = await admin
+      .from('coaches')
+      .select('id')
+      .eq('manager_coach_id', callerCoach.id)
+    if (reportsErr) return jsonError(500, reportsErr.message)
+    hierarchyIds = new Set<string>([
+      callerCoach.id,
+      ...(reports ?? []).map((r) => (r as { id: string }).id),
+    ])
+  }
 
   // 5. Look up the client + verify ownership within the hierarchy
   const { data: client, error: clientErr } = await admin

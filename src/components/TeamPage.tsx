@@ -36,25 +36,18 @@ export function TeamPage({ onSelectCoach }: Props) {
   const [coaches, setCoaches] = useState<Coach[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
-  const [isManager, setIsManager] = useState<boolean>(false)
+  const [isAdmin, setIsAdmin] = useState<boolean>(false)
   const [editTarget, setEditTarget] = useState<Coach | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Coach | null>(null)
 
   const refresh = async () => {
     if (!coach) return
 
-    // Determine if the caller is a manager (manager_coach_id IS NULL).
-    // Only managers see + edit the team — reports just see their own card.
-    const { data: selfRow } = await supabase
-      .from('coaches')
-      .select('manager_coach_id')
-      .eq('id', coach.id)
-      .maybeSingle()
-    const callerIsManager =
-      !!selfRow &&
-      (selfRow as { manager_coach_id: string | null }).manager_coach_id ===
-        null
-    setIsManager(callerIsManager)
+    // Admin sees + edits the team (add / edit / remove). Non-admins
+    // just see their own card (plus reports' cards if they're a
+    // Manager, but no edit/remove buttons). Phase B of the role
+    // overhaul: admin status comes off coaches.is_admin directly.
+    setIsAdmin(coach.is_admin === true)
 
     // Fetch self + direct reports (RLS scopes this to what the caller
     // can see; for managers that's all reports, for reports it's just
@@ -137,7 +130,7 @@ export function TeamPage({ onSelectCoach }: Props) {
     <section>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h1 className="text-ink text-lg font-bold">Team</h1>
-        {isManager && (
+        {isAdmin && (
           <button
             type="button"
             onClick={() => setAddOpen(true)}
@@ -159,7 +152,7 @@ export function TeamPage({ onSelectCoach }: Props) {
       )}
 
       <p className="text-sm text-black mb-4">
-        {isManager
+        {isAdmin
           ? "Your team. Click any card to view that coach's clients."
           : "You're listed here as a coach. Click your card to view your clients."}
       </p>
@@ -176,7 +169,7 @@ export function TeamPage({ onSelectCoach }: Props) {
           <div className="text-white text-xs">
             Add your first team member to get started.
           </div>
-          {isManager && (
+          {isAdmin && (
             <button
               type="button"
               onClick={() => setAddOpen(true)}
@@ -189,10 +182,11 @@ export function TeamPage({ onSelectCoach }: Props) {
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {coaches.map((c) => {
-            // Manager-only Edit/Remove on report cards. The caller's own
-            // card never shows them — they edit themselves on Account and
-            // can't remove themselves.
-            const showManagerActions = isManager && !c.is_current
+            // Admin-only Edit/Remove on other coaches' cards. The
+            // caller's own card never shows them here — self-edit comes
+            // in Phase C via a dedicated button. Admin can't remove
+            // themselves (server-side enforced too).
+            const showManagerActions = isAdmin && !c.is_current
             return (
               <li
                 key={c.id}

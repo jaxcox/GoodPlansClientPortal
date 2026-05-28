@@ -101,6 +101,27 @@ export type Coach = {
   brand_footer_text: string | null
   support_email: string | null
   from_email: string | null
+  /** Per-coach personal contact info. Independent of brand-level company
+   *  fields. Shown on Team card; never exposed in client portals. */
+  phone: string | null
+  /** Manager: sees team + reassigns clients within their hierarchy.
+   *  Coach: sees only their own clients. Independent of is_admin
+   *  (someone can be Admin + Coach, or Manager + Admin, etc.). */
+  role: 'coach' | 'manager'
+  /** Admin flag — orthogonal to role. Admins can add/remove coaches,
+   *  edit company + brand info, archive clients, create industries,
+   *  + all Manager rights + all Coach rights. Multiple admins per
+   *  brand allowed. */
+  is_admin: boolean
+  /** Reporting line. NULL = top of the brand (the brand owner).
+   *  Reports point at the manager they belong to. */
+  manager_coach_id: string | null
+  /** Brand-level company info — lives only on the brand owner's row
+   *  in practice (Phase E enforces this). Other rows leave these
+   *  NULL and read the owner's values at render time. */
+  brand_address: string | null
+  brand_phone: string | null
+  brand_website: string | null
   created_at: string
   updated_at: string
 }

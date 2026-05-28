@@ -105,12 +105,37 @@ Deno.serve(async (req) => {
   const { data: callerCoach, error: callerCoachErr } = await admin
     .from('coaches')
     .select(
-      'id, brand_name, brand_logo_url, brand_primary_color, brand_footer_text, support_email, from_email'
+      'id, brand_name, brand_logo_url, brand_primary_color, brand_footer_text, support_email, from_email, is_admin, manager_coach_id'
     )
     .eq('id', callerProfile.coach_id)
     .maybeSingle()
   if (callerCoachErr) return jsonError(500, callerCoachErr.message)
   if (!callerCoach) return jsonError(500, 'Caller coach record not found')
+
+  // Admin-only authorization (Phase B of the role overhaul)
+  if (!callerCoach.is_admin) {
+    return jsonError(403, 'Only admins can add coaches')
+  }
+
+  // The new coach reports to the brand owner (top of the caller's
+  // manager_coach_id chain). For a 2-level hierarchy this is just the
+  // brand owner; deeper trees would walk up. An admin coach who is also
+  // a report would still add new coaches under the BRAND owner, not
+  // under themselves — keeps the org chart flat for now and avoids
+  // accidental sub-teams.
+  let brandOwnerId = callerCoach.id
+  let cursor: string | null = callerCoach.manager_coach_id
+  for (let i = 0; i < 10; i++) {
+    if (!cursor) break
+    const { data: hop } = await admin
+      .from('coaches')
+      .select('id, manager_coach_id')
+      .eq('id', cursor)
+      .maybeSingle()
+    if (!hop) break
+    brandOwnerId = hop.id
+    cursor = hop.manager_coach_id
+  }
 
   // 4. Create the auth user
   const { data: created, error: createErr } =
@@ -131,12 +156,13 @@ Deno.serve(async (req) => {
   }
   const newAuthUserId = created.user.id
 
-  // 5. Create the coaches row inheriting brand fields. support_email and
-  //    from_email start null — each coach manages their own personal reply-to
-  //    via Coach Account once they're in. manager_coach_id is set to the
-  //    CALLER's coach id so the new coach automatically reports to whoever
-  //    added them (per migration 0015's hierarchy model — Jackie adds Steve,
-  //    Steve becomes her report).
+  // 5. Create the coaches row inheriting brand fields. from_email +
+  //    support_email auto-default to the new coach's login email per
+  //    the role-overhaul spec (Phase B): clients see emails FROM them
+  //    and replies route back to them. manager_coach_id = the brand
+  //    owner so the new coach lives in the brand without an arbitrary
+  //    sub-team. Role + admin flag start as plain coach / not-admin;
+  //    promotion comes later via Edit Coach (Phase C).
   const { data: newCoachRow, error: newCoachErr } = await admin
     .from('coaches')
     .insert({
@@ -144,8 +170,11 @@ Deno.serve(async (req) => {
       brand_logo_url: callerCoach.brand_logo_url,
       brand_primary_color: callerCoach.brand_primary_color,
       brand_footer_text: callerCoach.brand_footer_text,
-      manager_coach_id: callerCoach.id,
-      // support_email + from_email stay null — new coach sets via Coach Account
+      manager_coach_id: brandOwnerId,
+      from_email: email,
+      support_email: email,
+      role: 'coach',
+      is_admin: false,
     })
     .select('id')
     .single()

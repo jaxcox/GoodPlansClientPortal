@@ -1,24 +1,27 @@
 // Edge Function: update-coach
-// Manager-only update for a direct report's profile + coach record.
-// Lets the manager fix typos in display_name, or set from_email /
-// support_email on the report's behalf (useful if the report isn't
-// technical).
+// Admin-only update for any coach in the same brand (Phase B of the role
+// overhaul). Coaches can also call this to update their OWN row (limited
+// fields) — Phase C self-edit from Team card.
 //
 // Fields editable here:
-//   - display_name → profiles.display_name (the report's coach profile)
-//   - from_email   → coaches.from_email   (their personal sending address)
-//   - support_email → coaches.support_email (their reply-to address)
+//   - display_name → profiles.display_name (the target's coach profile)
+//   - from_email   → coaches.from_email
+//   - support_email → coaches.support_email
+//   - phone        → coaches.phone (Phase A column)
 //
 // Notable fields NOT editable here:
-//   - The report's auth email (login address) — separate flow, not in V1
-//   - The report's password — they own that
-//   - brand_name / brand_logo_url — inherited from the manager, shared
+//   - The target's auth email (login address) — separate flow, not in V1
+//   - The target's password — they own that
+//   - brand_* fields — those belong on the brand owner; Phase E
+//   - role / is_admin — handled in Phase C via a dedicated promote
+//     endpoint or extended payload (TBD)
 //
-// Authorization: caller must be the manager of the target coach
-// (manager_coach_id on target == caller's coach_id).
+// Authorization model:
+//   - Admin: can update any coach in the same brand
+//   - Self: any coach can update their own row, but is limited to
+//     display_name + phone (from/support are auto-locked to login email)
 //
-// Deploy: Edge Functions → New function → name `update-coach` → paste →
-// Deploy. Toggle Verify JWT OFF.
+// Deploy: Edge Functions → re-deploy `update-coach`. Toggle Verify JWT OFF.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -61,6 +64,7 @@ Deno.serve(async (req) => {
     displayName?: string
     fromEmail?: string | null
     supportEmail?: string | null
+    phone?: string | null
   }
   try {
     body = await req.json()
@@ -69,8 +73,8 @@ Deno.serve(async (req) => {
   }
   const targetCoachId = String(body.targetCoachId ?? '').trim()
   if (!targetCoachId) return jsonError(400, 'targetCoachId is required')
-  // Normalize empty strings to null on the email fields so the coach
-  // can clear them by submitting blank values.
+  // Normalize empty strings to null on the email/phone fields so the
+  // coach can clear them by submitting blank values.
   const displayName =
     typeof body.displayName === 'string' ? body.displayName.trim() : undefined
   const fromEmail =
@@ -85,6 +89,12 @@ Deno.serve(async (req) => {
       : typeof body.supportEmail === 'string'
         ? body.supportEmail.trim() || null
         : undefined
+  const phone =
+    body.phone === null
+      ? null
+      : typeof body.phone === 'string'
+        ? body.phone.trim() || null
+        : undefined
 
   // Service-role admin for DB writes
   const admin = createClient(
@@ -93,7 +103,7 @@ Deno.serve(async (req) => {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Validate caller is the manager of the target
+  // Resolve caller
   const { data: callerProfile, error: callerProfileErr } = await admin
     .from('profiles')
     .select('role, coach_id')
@@ -104,22 +114,55 @@ Deno.serve(async (req) => {
     return jsonError(403, 'Only coaches can update team members')
   }
 
+  const { data: callerCoach, error: callerCoachErr } = await admin
+    .from('coaches')
+    .select('id, is_admin')
+    .eq('id', callerProfile.coach_id)
+    .maybeSingle()
+  if (callerCoachErr) return jsonError(500, callerCoachErr.message)
+  if (!callerCoach) return jsonError(500, 'Caller coach record not found')
+
+  const isSelf = callerProfile.coach_id === targetCoachId
+
+  // Authorization: admin OR self
+  if (!callerCoach.is_admin && !isSelf) {
+    return jsonError(403, 'Only admins can edit other coaches')
+  }
+
   const { data: targetCoach, error: targetCoachErr } = await admin
     .from('coaches')
-    .select('id, manager_coach_id')
+    .select('id')
     .eq('id', targetCoachId)
     .maybeSingle()
   if (targetCoachErr) return jsonError(500, targetCoachErr.message)
   if (!targetCoach) return jsonError(404, 'Coach not found')
-  if (targetCoach.manager_coach_id !== callerProfile.coach_id) {
-    return jsonError(403, 'You can only edit your own direct reports')
+
+  // Same-brand check for admin-edits (self-edit doesn't need it).
+  if (!isSelf) {
+    const callerBrandOwner = await resolveBrandOwner(admin, callerCoach.id)
+    const targetBrandOwner = await resolveBrandOwner(admin, targetCoach.id)
+    if (
+      !callerBrandOwner ||
+      !targetBrandOwner ||
+      callerBrandOwner !== targetBrandOwner
+    ) {
+      return jsonError(403, 'That coach is not in your brand')
+    }
   }
 
-  // Apply the coaches-table updates (only if at least one of from/support
-  // was supplied)
+  // Self-edit field restriction: a non-admin editing themselves can only
+  // change display_name + phone. from/support emails are auto-locked to
+  // login email (per the role-overhaul spec); admins can still override.
+  const allowEmailEdits = callerCoach.is_admin
+  const finalFromEmail = allowEmailEdits ? fromEmail : undefined
+  const finalSupportEmail = allowEmailEdits ? supportEmail : undefined
+
+  // Apply the coaches-table updates
   const coachUpdates: Record<string, unknown> = {}
-  if (fromEmail !== undefined) coachUpdates.from_email = fromEmail
-  if (supportEmail !== undefined) coachUpdates.support_email = supportEmail
+  if (finalFromEmail !== undefined) coachUpdates.from_email = finalFromEmail
+  if (finalSupportEmail !== undefined)
+    coachUpdates.support_email = finalSupportEmail
+  if (phone !== undefined) coachUpdates.phone = phone
   if (Object.keys(coachUpdates).length > 0) {
     const { error: coachUpdErr } = await admin
       .from('coaches')
@@ -128,7 +171,7 @@ Deno.serve(async (req) => {
     if (coachUpdErr) return jsonError(500, coachUpdErr.message)
   }
 
-  // Apply the display_name update on the report's profile (if supplied)
+  // Apply the display_name update on the target's profile (if supplied)
   if (displayName !== undefined) {
     const { error: profileUpdErr } = await admin
       .from('profiles')
@@ -149,4 +192,23 @@ function jsonError(status: number, message: string) {
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },
   })
+}
+
+// Walk up the manager_coach_id chain to find the brand owner. Returns
+// null if not resolvable. 10-step cap for sanity.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveBrandOwner(adminClient: any, coachId: string) {
+  let cursor: string | null = coachId
+  for (let i = 0; i < 10; i++) {
+    if (!cursor) return null
+    const { data, error } = await adminClient
+      .from('coaches')
+      .select('id, manager_coach_id')
+      .eq('id', cursor)
+      .maybeSingle()
+    if (error || !data) return null
+    if (!data.manager_coach_id) return data.id as string
+    cursor = data.manager_coach_id as string
+  }
+  return null
 }
