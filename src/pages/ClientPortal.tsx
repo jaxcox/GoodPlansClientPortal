@@ -280,6 +280,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
                 clientId={clientId}
                 coachBrandName={coach?.brand_name}
                 onDismiss={() => setShowWelcome(false)}
+                onGoToWeeklyEntry={() => guardedSetTab('entry')}
               />
             )}
             <WeeklyDashboard

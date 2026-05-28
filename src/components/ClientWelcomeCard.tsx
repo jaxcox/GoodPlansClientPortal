@@ -9,6 +9,12 @@ type Props = {
    *  the parent can re-render without it. The clientTour module also
    *  writes a localStorage flag so future sessions stay dismissed. */
   onDismiss: () => void
+  /** Called when the client clicks the "Log your first weekly entry"
+   *  checklist item — parent navigates to the Weekly Entry tab. The
+   *  card also marks the tour as seen so it doesn't reappear next
+   *  visit (client jumped right into the action, no walkthrough
+   *  needed). */
+  onGoToWeeklyEntry: () => void
 }
 
 /** First-time-client welcome card. Renders on the ClientPortal when
@@ -19,7 +25,12 @@ type Props = {
  *  Either action marks the tour as seen (localStorage), so this card
  *  doesn't render on subsequent sign-ins. Clients can replay the tour
  *  from the Resources page. */
-export function ClientWelcomeCard({ clientId, coachBrandName, onDismiss }: Props) {
+export function ClientWelcomeCard({
+  clientId,
+  coachBrandName,
+  onDismiss,
+  onGoToWeeklyEntry,
+}: Props) {
   const onTake = () => {
     runClientTour(clientId)
     onDismiss()
@@ -27,6 +38,11 @@ export function ClientWelcomeCard({ clientId, coachBrandName, onDismiss }: Props
   const onSkip = () => {
     markClientTourSeen(clientId)
     onDismiss()
+  }
+  const onLogEntry = () => {
+    markClientTourSeen(clientId)
+    onDismiss()
+    onGoToWeeklyEntry()
   }
 
   const brand = coachBrandName?.trim() || 'your coach'
@@ -59,7 +75,13 @@ export function ClientWelcomeCard({ clientId, coachBrandName, onDismiss }: Props
               <span className="inline-flex justify-center w-4 text-mute">
                 ◯
               </span>
-              <span>Log your first weekly entry</span>
+              <button
+                type="button"
+                onClick={onLogEntry}
+                className="text-white underline underline-offset-4 hover:text-accent text-left"
+              >
+                Log your first weekly entry
+              </button>
             </li>
           </ul>
 
