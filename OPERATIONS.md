@@ -200,10 +200,67 @@ You don't need to open these, but in case you ever do:
 
 ## Backups and "what if I lose everything"
 
-- **Code**: backed up on GitHub. Even if your laptop dies, the code is recoverable.
-- **Database**: Supabase free tier doesn't include automatic backups, but the data is replicated within Supabase's own infrastructure. For real safety, the paid plan ($25/month) adds daily backups. Worth considering once you have real clients on the system.
-- **Email history**: Resend keeps a log of sent emails for 30 days.
-- **DNS records**: at Hover; visible on their dashboard.
+### Code
+Backed up on GitHub. Even if your laptop dies, the code is recoverable from there in 1 minute.
+
+### Database (Supabase) — the gap that matters
+**Supabase free tier doesn't include automatic backups.** The data is replicated within Supabase's own infrastructure so total platform loss is very rare, but you have **no protection against accidental deletion** (a mistaken SQL command, a bad migration, a hacked credential).
+
+**Realistic risk today**: you have one real client + a few demos. A wipe would be annoying but recoverable (recreate demos in 30 min; real client re-enters recent weeks from notes/memory).
+
+**Realistic risk at 5–10 real clients**: losing months of weekly entries from multiple businesses is a genuine business problem. Hard to explain.
+
+#### Free mitigations (no upgrade)
+1. **Manual monthly dump** (5 min). Supabase → SQL Editor → run an export query → save the CSV file somewhere safe (Dropbox / iCloud). Ask me to write the query when ready.
+2. **Automated weekly dump via Edge Function** (~1 hr setup). Runs on a cron, exports the database to JSON, emails it to you via Resend. Rolling archive in your inbox.
+3. **Supabase CLI local dump** (~30 min setup, run monthly). Run `supabase db dump` from your laptop → saves a SQL file → back it up like any document.
+
+#### Paid option
+**Supabase Pro at $25/month** adds daily automatic backups, 30 days of restorable history, and point-in-time recovery. Recommended when:
+- You have 5+ paying clients on the portal, OR
+- You're charging clients money and they expect their data to be safe, OR
+- You ever do a database migration that scares you (the safety net is worth $25 that month alone)
+
+**My recommendation today**: stay on free, set up the manual monthly dump when convenient. Upgrade to Pro when you have real client trust on the line.
+
+### Email history
+Resend keeps a log of sent emails for 30 days. Useful for debugging "did the email actually go out?" — but not a backup of message content beyond the 30-day window.
+
+### DNS records
+Stored at Hover; visible on their dashboard. If anything ever goes weird with DNS, you can see/edit the records there.
+
+---
+
+## When you add a marketing site at the apex domain
+
+When the marketing site at `thegoodplansco.com` (the apex, no `portal.` prefix) is ready:
+
+### What changes
+- The **portal** stays exactly where it is at `portal.thegoodplansco.com` — no changes to it, no risk to existing data.
+- A **new Vercel project** gets created for the marketing site code (separate repo, separate deploys).
+- New DNS records at Hover point the apex (`thegoodplansco.com`) and `www.thegoodplansco.com` at the new Vercel project.
+
+### The setup workflow
+1. The marketing site code goes into its own GitHub repo (whoever builds the site sets this up).
+2. In Vercel: **Add New Project** → import that repo (same flow as the portal).
+3. In the new Vercel project: **Settings → Domains** → add `thegoodplansco.com` and `www.thegoodplansco.com`.
+4. Vercel shows the **exact DNS records** to add (usually an A record or "ALIAS" for the apex, plus a CNAME for `www`).
+5. At Hover, add those records to the DNS page (same place where you added `portal`).
+6. Wait ~10 minutes for DNS to propagate. Vercel auto-issues SSL.
+
+### Important: don't touch the existing portal CNAME
+The DNS record you added for `portal` (CNAME → Vercel) stays. Apex and subdomain records are independent. After adding the marketing site, the Hover DNS page should have:
+- A record (or ALIAS) for the apex `@`
+- CNAME for `www`
+- CNAME for `portal` (unchanged from today)
+
+### If you're building the marketing site in a no-code tool
+If the marketing site ends up being built in **Webflow / Squarespace / Carrd / etc.**, those platforms host the site themselves. In that case skip the Vercel steps above and follow their DNS instructions instead — point `thegoodplansco.com` at their servers. The portal subdomain stays untouched on Vercel either way.
+
+### What this would cost
+- Vercel: still free (their Hobby plan handles two projects fine)
+- DNS: still free (Hover doesn't charge for DNS records)
+- No new accounts needed if you use Vercel for both
 
 ---
 
