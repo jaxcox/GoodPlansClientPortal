@@ -12,18 +12,25 @@
 //      so they're visually + functionally part of the same brand.
 //   4. Create a profiles row mapping the new auth user → new coach,
 //      role='coach'.
-//   5. Rolls back on any failure (delete auth user, delete coach row).
+//   5. Send a welcome email to the new coach via Resend with their
+//      sign-in URL + temp password so they can self-onboard.
+//   6. Rolls back the user + coach + profile on any DB failure (the
+//      email is best-effort — if it fails, the coach still exists and
+//      the caller can re-send credentials manually).
 //
-// Returns { ok, coach_id, auth_user_id } on success.
+// Returns { ok, coach_id, auth_user_id, email_sent } on success.
 //
 // Deploy: Edge Functions → New function → name `add-coach` → paste this →
 // Deploy. Toggle Verify JWT OFF on the function (we do our own auth
 // verification via the user-context client).
 //
 // Env vars (Supabase auto-injects): SUPABASE_URL, SUPABASE_ANON_KEY,
-// SUPABASE_SERVICE_ROLE_KEY.
+// SUPABASE_SERVICE_ROLE_KEY. Plus RESEND_API_KEY (already set for the
+// other Resend functions).
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+const PORTAL_URL = 'https://portal.thegoodplansco.com'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -126,7 +133,10 @@ Deno.serve(async (req) => {
 
   // 5. Create the coaches row inheriting brand fields. support_email and
   //    from_email start null — each coach manages their own personal reply-to
-  //    via Coach Account once they're in.
+  //    via Coach Account once they're in. manager_coach_id is set to the
+  //    CALLER's coach id so the new coach automatically reports to whoever
+  //    added them (per migration 0015's hierarchy model — Jackie adds Steve,
+  //    Steve becomes her report).
   const { data: newCoachRow, error: newCoachErr } = await admin
     .from('coaches')
     .insert({
@@ -134,6 +144,7 @@ Deno.serve(async (req) => {
       brand_logo_url: callerCoach.brand_logo_url,
       brand_primary_color: callerCoach.brand_primary_color,
       brand_footer_text: callerCoach.brand_footer_text,
+      manager_coach_id: callerCoach.id,
       // support_email + from_email stay null — new coach sets via Coach Account
     })
     .select('id')
@@ -158,15 +169,154 @@ Deno.serve(async (req) => {
     return jsonError(500, profileErr.message)
   }
 
+  // 7. Send the welcome email via Resend. Best-effort — the coach + auth
+  //    user already exist; an email send failure isn't worth tearing it
+  //    all down for. Caller is told via the response so they can re-send
+  //    credentials manually if needed.
+  const resendKey = Deno.env.get('RESEND_API_KEY')
+  let emailSent = false
+  if (resendKey) {
+    const fromAddress = `${callerCoach.brand_name} <noreply@thegoodplansco.com>`
+    const html = buildWelcomeHtml({
+      displayName,
+      email,
+      password,
+      brandName: callerCoach.brand_name,
+    })
+    const text = buildWelcomeText({
+      displayName,
+      email,
+      password,
+      brandName: callerCoach.brand_name,
+    })
+    try {
+      const sendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: email,
+          subject: `Welcome to ${callerCoach.brand_name}`,
+          html,
+          text,
+        }),
+      })
+      emailSent = sendRes.ok
+    } catch {
+      /* swallow — coach still exists, email is best-effort */
+    }
+  }
+
   return new Response(
     JSON.stringify({
       ok: true,
       coach_id: newCoachRow.id,
       auth_user_id: newAuthUserId,
+      email_sent: emailSent,
     }),
     { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
   )
 })
+
+// =============================================================================
+// Welcome email — same chrome as the client invite + reset emails for
+// consistency. Embeds the sign-in URL, the new coach's login email, and
+// the temp password so they can self-onboard. They change the password
+// from Coach Account on first sign-in.
+// =============================================================================
+
+function buildWelcomeHtml({
+  displayName,
+  email,
+  password,
+  brandName,
+}: {
+  displayName: string
+  email: string
+  password: string
+  brandName: string
+}): string {
+  const safeName = escapeHtml(displayName)
+  const safeEmail = escapeHtml(email)
+  const safePassword = escapeHtml(password)
+  const safeBrand = escapeHtml(brandName)
+  return `<div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #DAD7C5; padding: 32px 16px;">
+  <div style="max-width: 480px; margin: 0 auto; background-color: #ffffff; padding: 32px 24px; border-radius: 8px;">
+
+    <div style="text-align: center; margin-bottom: 24px;">
+      <img src="${PORTAL_URL}/logo.png" alt="${safeBrand}" style="height: 80px; width: auto;" />
+    </div>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 16px 0;">
+      Hi ${safeName},
+    </p>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
+      You've been added as a coach on the ${safeBrand} portal. Use the button below to sign in. We've set you up with a temporary password — change it after your first sign-in from Coach Account.
+    </p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${PORTAL_URL}/coach" style="display: inline-block; background-color: #FFF200; color: #0f0f0f; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 6px;">Sign in</a>
+    </div>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 4px 0;">
+      <strong>Email:</strong> ${safeEmail}
+    </p>
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
+      <strong>Temporary password:</strong> <span style="font-family: 'Courier New', monospace;">${safePassword}</span>
+    </p>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
+      Once signed in, head to <strong>Coach Account → Change Password</strong> and pick something you'll remember.
+    </p>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0;">
+      Sincerely,<br>
+      The ${safeBrand} team
+    </p>
+
+  </div>
+</div>`
+}
+
+function buildWelcomeText({
+  displayName,
+  email,
+  password,
+  brandName,
+}: {
+  displayName: string
+  email: string
+  password: string
+  brandName: string
+}): string {
+  return `Hi ${displayName},
+
+You've been added as a coach on the ${brandName} portal. Use the link below to sign in. We've set you up with a temporary password — change it after your first sign-in from Coach Account.
+
+Sign in: ${PORTAL_URL}/coach
+
+Email: ${email}
+Temporary password: ${password}
+
+Once signed in, head to Coach Account → Change Password and pick something you'll remember.
+
+Sincerely,
+The ${brandName} team
+`
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 function jsonError(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {

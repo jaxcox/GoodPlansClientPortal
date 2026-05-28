@@ -1,19 +1,21 @@
 // Edge Function: reassign-client
-// Moves a client from the caller's coach to another coach in the SAME
-// brand. Handles industries gracefully: if the target coach doesn't have
-// the client's industry yet (industries are coach-scoped), the function
-// auto-copies the industry's name + KPI defaults to the target coach and
-// rewires the client's industry_id to the new copy. The client's other
-// data (budgets, weekly_entries, custom_kpis, capacity_groups) all stay
-// keyed by client_id, so they follow the client implicitly with no extra
-// work.
+// Moves a client between coaches in the same hierarchy. Handles industries
+// gracefully: if the target coach doesn't have the client's industry yet
+// (industries are coach-scoped), the function auto-copies the industry's
+// name + KPI defaults to the target coach and rewires the client's
+// industry_id to the new copy. The client's other data (budgets,
+// weekly_entries, custom_kpis, capacity_groups) all stay keyed by
+// client_id, so they follow the client implicitly with no extra work.
 //
-// Authorization:
-//   - Caller must be an authenticated coach
-//   - Caller must currently own the client (clients.coach_id ==
-//     caller.coach_id) — coaches can't reassign other coaches' clients
-//   - Target coach must share brand_name with caller — prevents
-//     accidentally handing a client to an unrelated tenant
+// Authorization (manager-only control model):
+//   - Caller must be a "manager" (their own manager_coach_id IS NULL —
+//     i.e., they're at the top of the hierarchy)
+//   - Source: caller can reassign from herself OR from any of her direct
+//     reports
+//   - Target: caller can reassign to herself OR to any of her direct
+//     reports
+//   - Reports CANNOT reassign anything (the UI hides the button; this
+//     check is the server-side enforcement)
 //
 // Returns { ok, new_coach_id, industry_copied? } on success.
 //
@@ -91,13 +93,34 @@ Deno.serve(async (req) => {
 
   const { data: callerCoach, error: callerCoachErr } = await admin
     .from('coaches')
-    .select('id, brand_name')
+    .select('id, brand_name, manager_coach_id')
     .eq('id', callerProfile.coach_id)
     .maybeSingle()
   if (callerCoachErr) return jsonError(500, callerCoachErr.message)
   if (!callerCoach) return jsonError(500, 'Caller coach record not found')
 
-  // 4. Look up the client + verify ownership
+  // Manager-only control: only top-of-hierarchy coaches (those without
+  // a manager themselves) can reassign clients.
+  if (callerCoach.manager_coach_id !== null) {
+    return jsonError(
+      403,
+      'Only managers can reassign clients. Ask your manager.'
+    )
+  }
+
+  // 4. Resolve the caller's hierarchy: their own id + the ids of their
+  // direct reports. Source + target must be within this set.
+  const { data: reports, error: reportsErr } = await admin
+    .from('coaches')
+    .select('id')
+    .eq('manager_coach_id', callerCoach.id)
+  if (reportsErr) return jsonError(500, reportsErr.message)
+  const hierarchyIds = new Set<string>([
+    callerCoach.id,
+    ...(reports ?? []).map((r) => (r as { id: string }).id),
+  ])
+
+  // 5. Look up the client + verify ownership within the hierarchy
   const { data: client, error: clientErr } = await admin
     .from('clients')
     .select('id, coach_id, industry_id, company_name')
@@ -105,14 +128,14 @@ Deno.serve(async (req) => {
     .maybeSingle()
   if (clientErr) return jsonError(500, clientErr.message)
   if (!client) return jsonError(404, 'Client not found')
-  if (client.coach_id !== callerCoach.id) {
-    return jsonError(403, 'Not your client')
+  if (!hierarchyIds.has(client.coach_id)) {
+    return jsonError(403, 'Client is not in your team.')
   }
   if (client.coach_id === targetCoachId) {
     return jsonError(400, 'Client is already assigned to that coach')
   }
 
-  // 5. Look up the target coach + same-brand check
+  // 6. Look up the target coach + verify it's in the hierarchy
   const { data: targetCoach, error: targetCoachErr } = await admin
     .from('coaches')
     .select('id, brand_name')
@@ -120,10 +143,10 @@ Deno.serve(async (req) => {
     .maybeSingle()
   if (targetCoachErr) return jsonError(500, targetCoachErr.message)
   if (!targetCoach) return jsonError(404, 'Target coach not found')
-  if (targetCoach.brand_name !== callerCoach.brand_name) {
+  if (!hierarchyIds.has(targetCoach.id)) {
     return jsonError(
       403,
-      'Target coach is not in your team (different brand).'
+      'Target coach is not on your team.'
     )
   }
 

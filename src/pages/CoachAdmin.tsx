@@ -47,6 +47,17 @@ export function CoachAdmin({ onViewPortal }: Props) {
   const [lastWeekEntries, setLastWeekEntries] = useState<Set<string>>(
     () => new Set()
   )
+  /** Caller + their direct reports — populated by refresh(). Used to
+   *  power the Clients tab's coach-filter dropdown and to display
+   *  "Coach: X" on client cards when viewing a multi-coach list. */
+  const [teamCoaches, setTeamCoaches] = useState<
+    Array<{ id: string; display_name: string | null }>
+  >([])
+  /** Active coach filter on the Clients tab. null = "All". Set by
+   *  TeamPage card clicks (deep-link) or by the dropdown. */
+  const [clientsCoachFilter, setClientsCoachFilter] = useState<
+    string | null
+  >(null)
 
   const refresh = async () => {
     const lastWeekIso = isoDate(mostRecentCompletedWeekStart())
@@ -76,6 +87,29 @@ export function CoachAdmin({ onViewPortal }: Props) {
         )
       )
     )
+    // Load the team roster (self + direct reports per migration 0015).
+    // RLS already scopes this to who the caller can see, so the same query
+    // serves both managers (returns self + reports) and reports (returns
+    // just self).
+    if (coach) {
+      const { data: coachRows } = await supabase
+        .from('coaches')
+        .select('id')
+        .or(`id.eq.${coach.id},manager_coach_id.eq.${coach.id}`)
+      const ids = (coachRows ?? []).map((r) => (r as { id: string }).id)
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('coach_id, display_name, role')
+        .in('coach_id', ids)
+        .eq('role', 'coach')
+      const merged = ids.map((id) => {
+        const p = (profs ?? []).find(
+          (x) => (x as { coach_id: string | null }).coach_id === id
+        ) as { display_name: string | null } | undefined
+        return { id, display_name: p?.display_name ?? null }
+      })
+      setTeamCoaches(merged)
+    }
   }
 
   const industryById = useMemo(() => {
@@ -142,11 +176,19 @@ export function CoachAdmin({ onViewPortal }: Props) {
             error={loadError}
             onChange={refresh}
             onViewPortal={onViewPortal}
+            teamCoaches={teamCoaches}
+            coachFilter={clientsCoachFilter}
+            onCoachFilterChange={setClientsCoachFilter}
           />
         ) : tab === 'industries' ? (
           <IndustriesPage />
         ) : tab === 'team' ? (
-          <TeamPage />
+          <TeamPage
+            onSelectCoach={(coachId) => {
+              setClientsCoachFilter(coachId)
+              setTab('clients')
+            }}
+          />
         ) : (
           <CoachAccountPage onLeave={() => setTab('clients')} />
         )}
@@ -188,6 +230,9 @@ function ClientsTab({
   error,
   onChange,
   onViewPortal,
+  teamCoaches,
+  coachFilter,
+  onCoachFilterChange,
 }: {
   clients: Client[] | null
   industryById: Map<string, string>
@@ -195,7 +240,11 @@ function ClientsTab({
   error: string | null
   onChange: () => void
   onViewPortal: (clientId: string) => void
+  teamCoaches: Array<{ id: string; display_name: string | null }>
+  coachFilter: string | null
+  onCoachFilterChange: (id: string | null) => void
 }) {
+  const { coach } = useAuth()
   const [filter, setFilter] = useState<ClientFilter>('active')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<ClientSort>('alpha-asc')
@@ -206,15 +255,33 @@ function ClientsTab({
   >({ kind: 'closed' })
   const [resetClient, setResetClient] = useState<Client | null>(null)
 
-  const active = (clients ?? []).filter((c) => !c.archived && c.activated)
-  const pending = (clients ?? []).filter((c) => !c.archived && !c.activated)
-  const archived = (clients ?? []).filter((c) => c.archived)
+  // First narrow by coach filter (null = "All" = every client the
+  // current caller can see; specific id = only that coach's clients).
+  const coachScoped = coachFilter
+    ? (clients ?? []).filter((c) => c.coach_id === coachFilter)
+    : clients ?? []
+  const active = coachScoped.filter((c) => !c.archived && c.activated)
+  const pending = coachScoped.filter((c) => !c.archived && !c.activated)
+  const archived = coachScoped.filter((c) => c.archived)
   const bucket =
     filter === 'active' ? active : filter === 'pending' ? pending : archived
   const q = search.trim().toLowerCase()
   const filtered = q
     ? bucket.filter((c) => c.company_name.toLowerCase().startsWith(q))
     : bucket
+  /** Map coach_id → display name for the "Coach: X" badge on cards
+   *  when showing more than one coach's clients. */
+  const coachNameById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const tc of teamCoaches) {
+      m.set(tc.id, tc.display_name ?? '— no name —')
+    }
+    return m
+  }, [teamCoaches])
+  /** Show coach indicator on each card only when multiple coaches are
+   *  in the visible list (i.e., the filter isn't pinned to a single
+   *  coach AND the team has more than one coach in it). */
+  const showCoachOnCards = !coachFilter && teamCoaches.length > 1
   const visible = useMemo(() => {
     const list = [...filtered]
     switch (sort) {
@@ -288,6 +355,26 @@ function ClientsTab({
           <option value="newest">Sort: Newest first</option>
           <option value="oldest">Sort: Oldest first</option>
         </select>
+        {/* Coach filter — only renders when the caller has at least one
+            teammate. Single-coach setups don't need a filter. */}
+        {teamCoaches.length > 1 && (
+          <select
+            value={coachFilter ?? ''}
+            onChange={(e) =>
+              onCoachFilterChange(e.target.value === '' ? null : e.target.value)
+            }
+            aria-label="Filter clients by coach"
+            className="select-yellow bg-white border border-gray-300 rounded text-black text-xs px-3 py-1.5 focus:outline-none focus:border-gray-400"
+          >
+            <option value="">Coach: All</option>
+            {teamCoaches.map((tc) => (
+              <option key={tc.id} value={tc.id}>
+                Coach: {tc.display_name ?? '— no name —'}
+                {tc.id === coach?.id ? ' (You)' : ''}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {error && (
@@ -320,6 +407,10 @@ function ClientsTab({
               onViewPortal={() => onViewPortal(c.id)}
               onEdit={() => setModalState({ kind: 'edit', client: c })}
               onResetPassword={() => setResetClient(c)}
+              ownedByCoachName={
+                showCoachOnCards ? coachNameById.get(c.coach_id) ?? null : null
+              }
+              canReassign={teamCoaches.length > 1}
             />
           ))}
         </ul>
@@ -560,6 +651,8 @@ function ClientCard({
   onViewPortal,
   onEdit,
   onResetPassword,
+  ownedByCoachName,
+  canReassign,
 }: {
   client: Client
   industryName: string | null
@@ -568,6 +661,14 @@ function ClientCard({
   onViewPortal: () => void
   onEdit: () => void
   onResetPassword: () => void
+  /** When set (multi-coach view), shown as "Coach: X" on the card so
+   *  the manager can tell whose client this is at a glance. Hidden
+   *  when the list is filtered to a single coach (redundant). */
+  ownedByCoachName: string | null
+  /** True when the signed-in coach is a manager (has reports). Drives
+   *  whether the Reassign button is shown. Reports never see Reassign;
+   *  if they somehow trigger it the server-side function rejects. */
+  canReassign: boolean
 }) {
   const { coach } = useAuth()
   const [busy, setBusy] = useState(false)
@@ -655,6 +756,16 @@ function ClientCard({
             <EntryStatusPill entered={lastWeekEntered} />
           )}
         </div>
+        {/* Coach badge — shown when the parent passes a name (manager
+            viewing All clients in a multi-coach team). Distinguishes
+            "this is yours" from "this belongs to your report" at a
+            glance. Hidden when the list is filtered to a single coach. */}
+        {ownedByCoachName && (
+          <div className="text-xs text-white mt-1 italic">
+            Coach: {ownedByCoachName}
+            {client.coach_id === coach?.id ? ' (You)' : ''}
+          </div>
+        )}
         <div className="text-white text-sm mt-1 space-y-0.5">
           {client.contact_name && (
             <div>
@@ -713,7 +824,7 @@ function ClientCard({
             Reset Password
           </button>
         )}
-        {!client.archived && (
+        {!client.archived && canReassign && (
           <button
             type="button"
             onClick={() => setReassignOpen(true)}
