@@ -1,28 +1,27 @@
 // Edge Function: add-coach
 // Adds a new coach to the SAME brand as the caller. Used by Coach Admin's
-// "Team" tab to onboard a coworker without inviting them as a separate
-// tenant.
+// "Team" tab to onboard a coworker.
 //
-// Flow:
-//   1. Validate caller is an authenticated coach.
-//   2. Create a Supabase auth user with the provided email + password
-//      (email_confirm=true so they can sign in immediately).
-//   3. Create a coaches row inheriting brand_name / brand_logo_url /
-//      brand_primary_color / brand_footer_text from the caller's coach,
-//      so they're visually + functionally part of the same brand.
+// Phase C flow (the simpler / safer one):
+//   1. Validate caller is an authenticated coach + admin.
+//   2. Create a Supabase auth user with a random throwaway password
+//      (email_confirm=true so they can use the recovery link without
+//      a confirmation roundtrip).
+//   3. Create a coaches row inheriting the caller's brand fields,
+//      manager_coach_id = the brand owner, from_email + support_email
+//      = the new coach's login email, role='coach', is_admin=false,
+//      plus the new phone column (nullable).
 //   4. Create a profiles row mapping the new auth user → new coach,
-//      role='coach'.
-//   5. Send a welcome email to the new coach via Resend with their
-//      sign-in URL + temp password so they can self-onboard.
-//   6. Rolls back the user + coach + profile on any DB failure (the
-//      email is best-effort — if it fails, the coach still exists and
-//      the caller can re-send credentials manually).
+//      display_name = fullName.
+//   5. Generate a Supabase recovery link (admin.generateLink) and email
+//      it via Resend. New coach clicks → sets their password → done.
+//   6. Rolls back the user + coach + profile on any DB failure. The
+//      email is best-effort — if it fails, the admin can use the
+//      Resend Welcome button to retry.
 //
 // Returns { ok, coach_id, auth_user_id, email_sent } on success.
 //
-// Deploy: Edge Functions → New function → name `add-coach` → paste this →
-// Deploy. Toggle Verify JWT OFF on the function (we do our own auth
-// verification via the user-context client).
+// Deploy: Edge Functions → re-deploy `add-coach`. Toggle Verify JWT OFF.
 //
 // Env vars (Supabase auto-injects): SUPABASE_URL, SUPABASE_ANON_KEY,
 // SUPABASE_SERVICE_ROLE_KEY. Plus RESEND_API_KEY (already set for the
@@ -66,26 +65,32 @@ Deno.serve(async (req) => {
   }
 
   // 2. Parse + validate body
-  let body: { email?: string; password?: string; displayName?: string }
+  let body: {
+    email?: string
+    fullName?: string
+    phone?: string | null
+  }
   try {
     body = await req.json()
   } catch {
     return jsonError(400, 'Bad JSON')
   }
   const email = String(body.email ?? '').trim().toLowerCase()
-  const password = String(body.password ?? '')
-  const displayName = String(body.displayName ?? '').trim()
-  if (!email || !password) {
-    return jsonError(400, 'Email and password are required')
+  const fullName = String(body.fullName ?? '').trim()
+  const phone =
+    body.phone === null
+      ? null
+      : typeof body.phone === 'string'
+        ? body.phone.trim() || null
+        : null
+  if (!email) {
+    return jsonError(400, 'Email is required')
   }
-  if (password.length < 8) {
-    return jsonError(400, 'Password must be at least 8 characters')
-  }
-  if (!displayName) {
-    return jsonError(400, 'Display name is required')
+  if (!fullName) {
+    return jsonError(400, 'Full name is required')
   }
 
-  // 3. Look up caller's coach (for brand inheritance + same-brand check)
+  // 3. Look up caller's coach (admin check + brand inheritance + brand owner)
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -105,7 +110,7 @@ Deno.serve(async (req) => {
   const { data: callerCoach, error: callerCoachErr } = await admin
     .from('coaches')
     .select(
-      'id, brand_name, brand_logo_url, brand_primary_color, brand_footer_text, support_email, from_email, is_admin, manager_coach_id'
+      'id, brand_name, brand_logo_url, brand_primary_color, brand_footer_text, is_admin, manager_coach_id'
     )
     .eq('id', callerProfile.coach_id)
     .maybeSingle()
@@ -117,12 +122,7 @@ Deno.serve(async (req) => {
     return jsonError(403, 'Only admins can add coaches')
   }
 
-  // The new coach reports to the brand owner (top of the caller's
-  // manager_coach_id chain). For a 2-level hierarchy this is just the
-  // brand owner; deeper trees would walk up. An admin coach who is also
-  // a report would still add new coaches under the BRAND owner, not
-  // under themselves — keeps the org chart flat for now and avoids
-  // accidental sub-teams.
+  // Walk up the manager_coach_id chain to find the brand owner.
   let brandOwnerId = callerCoach.id
   let cursor: string | null = callerCoach.manager_coach_id
   for (let i = 0; i < 10; i++) {
@@ -137,11 +137,15 @@ Deno.serve(async (req) => {
     cursor = hop.manager_coach_id
   }
 
-  // 4. Create the auth user
+  // 4. Create the auth user with a throwaway password. The new coach
+  //    won't see this password — they'll receive a recovery link via
+  //    email and pick their own. email_confirm = true so the recovery
+  //    link works immediately (no confirmation roundtrip).
+  const throwawayPassword = generateThrowawayPassword()
   const { data: created, error: createErr } =
     await admin.auth.admin.createUser({
       email,
-      password,
+      password: throwawayPassword,
       email_confirm: true,
     })
   if (createErr || !created.user) {
@@ -156,13 +160,11 @@ Deno.serve(async (req) => {
   }
   const newAuthUserId = created.user.id
 
-  // 5. Create the coaches row inheriting brand fields. from_email +
-  //    support_email auto-default to the new coach's login email per
-  //    the role-overhaul spec (Phase B): clients see emails FROM them
-  //    and replies route back to them. manager_coach_id = the brand
-  //    owner so the new coach lives in the brand without an arbitrary
-  //    sub-team. Role + admin flag start as plain coach / not-admin;
-  //    promotion comes later via Edit Coach (Phase C).
+  // 5. Create the coaches row. from_email + support_email default to
+  //    the new coach's login email (per Jackie's email policy). Role
+  //    = coach, is_admin = false (admin promotes later via Edit Coach
+  //    if desired). manager_coach_id = brand owner so the new coach
+  //    lives in the brand without a sub-team.
   const { data: newCoachRow, error: newCoachErr } = await admin
     .from('coaches')
     .insert({
@@ -173,69 +175,73 @@ Deno.serve(async (req) => {
       manager_coach_id: brandOwnerId,
       from_email: email,
       support_email: email,
+      phone,
       role: 'coach',
       is_admin: false,
     })
     .select('id')
     .single()
   if (newCoachErr || !newCoachRow) {
-    // Rollback: delete the auth user we just created
     await admin.auth.admin.deleteUser(newAuthUserId)
     return jsonError(500, newCoachErr?.message ?? 'Failed to create coach row')
   }
 
-  // 6. Create the profile linking auth user → coach
+  // 6. Create the profile linking auth user → coach.
   const { error: profileErr } = await admin.from('profiles').insert({
     id: newAuthUserId,
     role: 'coach',
     coach_id: newCoachRow.id,
-    display_name: displayName,
+    display_name: fullName,
   })
   if (profileErr) {
-    // Rollback: delete the new coach row + auth user
     await admin.from('coaches').delete().eq('id', newCoachRow.id)
     await admin.auth.admin.deleteUser(newAuthUserId)
     return jsonError(500, profileErr.message)
   }
 
-  // 7. Send the welcome email via Resend. Best-effort — the coach + auth
-  //    user already exist; an email send failure isn't worth tearing it
-  //    all down for. Caller is told via the response so they can re-send
-  //    credentials manually if needed.
-  const resendKey = Deno.env.get('RESEND_API_KEY')
+  // 7. Generate a Supabase recovery link + email it via Resend. Best-
+  //    effort: if the email fails, the coach + auth user still exist
+  //    and the admin can hit Resend Welcome to retry.
   let emailSent = false
+  const resendKey = Deno.env.get('RESEND_API_KEY')
   if (resendKey) {
-    const fromAddress = `${callerCoach.brand_name} <noreply@thegoodplansco.com>`
-    const html = buildWelcomeHtml({
-      displayName,
-      email,
-      password,
-      brandName: callerCoach.brand_name,
-    })
-    const text = buildWelcomeText({
-      displayName,
-      email,
-      password,
-      brandName: callerCoach.brand_name,
-    })
-    try {
-      const sendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: fromAddress,
-          to: email,
-          subject: `Welcome to ${callerCoach.brand_name}`,
-          html,
-          text,
-        }),
+    const { data: linkData, error: linkErr } =
+      await admin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
       })
-      emailSent = sendRes.ok
-    } catch {
-      /* swallow — coach still exists, email is best-effort */
+    const actionLink = linkData?.properties?.action_link
+    if (!linkErr && actionLink) {
+      const fromAddress = `${callerCoach.brand_name} <noreply@thegoodplansco.com>`
+      const html = buildWelcomeHtml({
+        fullName,
+        brandName: callerCoach.brand_name,
+        actionLink,
+      })
+      const text = buildWelcomeText({
+        fullName,
+        brandName: callerCoach.brand_name,
+        actionLink,
+      })
+      try {
+        const sendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: fromAddress,
+            to: email,
+            subject: `Welcome to ${callerCoach.brand_name}`,
+            html,
+            text,
+          }),
+        })
+        emailSent = sendRes.ok
+      } catch {
+        /* swallow — coach still exists, email is best-effort */
+      }
     }
   }
 
@@ -251,27 +257,23 @@ Deno.serve(async (req) => {
 })
 
 // =============================================================================
-// Welcome email — same chrome as the client invite + reset emails for
-// consistency. Embeds the sign-in URL, the new coach's login email, and
-// the temp password so they can self-onboard. They change the password
-// from Coach Account on first sign-in.
+// Welcome email — points the new coach at a Supabase recovery link they
+// click to pick their own password. Same chrome as the client invite
+// emails for visual consistency.
 // =============================================================================
 
 function buildWelcomeHtml({
-  displayName,
-  email,
-  password,
+  fullName,
   brandName,
+  actionLink,
 }: {
-  displayName: string
-  email: string
-  password: string
+  fullName: string
   brandName: string
+  actionLink: string
 }): string {
-  const safeName = escapeHtml(displayName)
-  const safeEmail = escapeHtml(email)
-  const safePassword = escapeHtml(password)
+  const safeName = escapeHtml(fullName)
   const safeBrand = escapeHtml(brandName)
+  const safeLink = escapeHtml(actionLink)
   return `<div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #DAD7C5; padding: 32px 16px;">
   <div style="max-width: 480px; margin: 0 auto; background-color: #ffffff; padding: 32px 24px; border-radius: 8px;">
 
@@ -284,22 +286,15 @@ function buildWelcomeHtml({
     </p>
 
     <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
-      You've been added as a coach on the ${safeBrand} portal. Use the button below to sign in. We've set you up with a temporary password — change it after your first sign-in from Coach Account.
+      You've been added as a coach on the ${safeBrand} portal. Click the button below to set your password and sign in for the first time.
     </p>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="${PORTAL_URL}/coach" style="display: inline-block; background-color: #FFF200; color: #0f0f0f; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 6px;">Sign in</a>
+      <a href="${safeLink}" style="display: inline-block; background-color: #FFF200; color: #0f0f0f; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 6px;">Set your password</a>
     </div>
 
-    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 4px 0;">
-      <strong>Email:</strong> ${safeEmail}
-    </p>
-    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
-      <strong>Temporary password:</strong> <span style="font-family: 'Courier New', monospace;">${safePassword}</span>
-    </p>
-
-    <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
-      Once signed in, head to <strong>Coach Account → Change Password</strong> and pick something you'll remember.
+    <p style="font-size: 12px; line-height: 1.5; color: #0f0f0f; margin: 0 0 24px 0;">
+      This link is single-use and expires after one hour. If it expires, ask whoever added you to send a new one.
     </p>
 
     <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0;">
@@ -312,26 +307,21 @@ function buildWelcomeHtml({
 }
 
 function buildWelcomeText({
-  displayName,
-  email,
-  password,
+  fullName,
   brandName,
+  actionLink,
 }: {
-  displayName: string
-  email: string
-  password: string
+  fullName: string
   brandName: string
+  actionLink: string
 }): string {
-  return `Hi ${displayName},
+  return `Hi ${fullName},
 
-You've been added as a coach on the ${brandName} portal. Use the link below to sign in. We've set you up with a temporary password — change it after your first sign-in from Coach Account.
+You've been added as a coach on the ${brandName} portal. Click the link below to set your password and sign in for the first time.
 
-Sign in: ${PORTAL_URL}/coach
+Set your password: ${actionLink}
 
-Email: ${email}
-Temporary password: ${password}
-
-Once signed in, head to Coach Account → Change Password and pick something you'll remember.
+This link is single-use and expires after one hour. If it expires, ask whoever added you to send a new one.
 
 Sincerely,
 The ${brandName} team
@@ -345,6 +335,21 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+// Random 24-char password we never show anyone. The new coach replaces
+// it via the recovery link, so this just satisfies createUser's password
+// requirement.
+function generateThrowawayPassword(): string {
+  const charset =
+    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*'
+  let out = ''
+  const arr = new Uint32Array(24)
+  crypto.getRandomValues(arr)
+  for (let i = 0; i < 24; i++) {
+    out += charset[arr[i] % charset.length]
+  }
+  return out
 }
 
 function jsonError(status: number, message: string) {
