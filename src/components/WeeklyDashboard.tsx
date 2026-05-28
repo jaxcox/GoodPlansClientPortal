@@ -91,11 +91,20 @@ type Props = {
    *  links the entry form to that week. Optional — coach view may pass
    *  it through, client view always does. */
   onGoToMissedWeek?: (weekStart: Date) => void
+  /** Called from cumulative-mode empty states ("No entries for X yet.")
+   *  when a brand-new client wants to jump straight to logging. Lands
+   *  on the default (most-recent-completed) week. */
+  onGoToEntry?: () => void
 }
 
 type Mode = 'weekly' | 'mtd' | 'qtd' | 'ytd'
 
-export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props) {
+export function WeeklyDashboard({
+  clientId,
+  coachView,
+  onGoToMissedWeek,
+  onGoToEntry,
+}: Props) {
   const { coach } = useAuth()
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
@@ -1058,8 +1067,21 @@ export function WeeklyDashboard({ clientId, coachView, onGoToMissedWeek }: Props
           ytdActualsContribution(budget, mode, currentYear, activeMonth)
             .monthsCovered.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg p-10 text-center text-sm text-black">
-              No entries for {periodLabel(mode, currentYear, activeMonth)}
-              {isPastPeriod ? '.' : ' yet.'}
+              <div>
+                No entries for {periodLabel(mode, currentYear, activeMonth)}
+                {isPastPeriod ? '.' : ' yet.'}
+              </div>
+              {!isPastPeriod && onGoToEntry && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={onGoToEntry}
+                    className="underline underline-offset-4 hover:opacity-70"
+                  >
+                    Log a weekly entry
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <CumulativeKpiGrid

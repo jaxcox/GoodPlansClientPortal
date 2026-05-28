@@ -287,6 +287,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               clientId={clientId}
               coachView={coachView}
               onGoToMissedWeek={goToMissedWeek}
+              onGoToEntry={() => guardedSetTab('entry')}
             />
           </>
         ) : tab === 'history' ? (
