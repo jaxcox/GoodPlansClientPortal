@@ -23,6 +23,8 @@ import {
 import { Toggle } from './Toggle'
 import { useDirtyGuard } from '../lib/dirtyGuard'
 import { formatPhone } from '../lib/phone'
+import { getBrandOwnerId } from '../lib/brandOwner'
+import { useAuth } from '../lib/auth'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 import {
   CustomKpisListSection,
@@ -48,6 +50,9 @@ type Props = {
 }
 
 export function SettingsPage({ clientId, coachView, onLeave }: Props) {
+  // Signed-in viewer — only used in coachView for the industry quick-add
+  // brand scope. Clients reading their own settings never hit this.
+  const { coach: viewerCoach } = useAuth()
   // ---- Loaded state -------------------------------------------------------
   const [client, setClient] = useState<Client | null>(null)
   const [industries, setIndustries] = useState<Industry[] | null>(null)
@@ -742,10 +747,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
         </div>
       </div>
 
-      {coachView && (
+      {coachView && viewerCoach && (
         <IndustryQuickAddModal
           open={industryModalOpen}
-          coachId={client.coach_id}
+          brandOwnerId={getBrandOwnerId(viewerCoach)}
           onClose={() => setIndustryModalOpen(false)}
           onCreated={onIndustryCreated}
         />

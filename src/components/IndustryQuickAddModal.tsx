@@ -8,14 +8,17 @@ import { Toggle } from './Toggle'
 
 type Props = {
   open: boolean
-  coachId: string
+  /** Brand owner's coach id — the scope key the new industry rows
+   *  carry (Phase D: industries are brand-shared). Parent computes
+   *  via getBrandOwnerId(coach) from useAuth. */
+  brandOwnerId: string
   onClose: () => void
   onCreated: (industry: Industry) => void
 }
 
 export function IndustryQuickAddModal({
   open,
-  coachId,
+  brandOwnerId,
   onClose,
   onCreated,
 }: Props) {
@@ -66,7 +69,12 @@ export function IndustryQuickAddModal({
     setSubmitting(true)
     const { data, error: saveErr } = await supabase
       .from('industries')
-      .insert({ coach_id: coachId, name: name.trim(), kpi_defaults: defaults })
+      .insert({
+        coach_id: brandOwnerId,
+        brand_owner_coach_id: brandOwnerId,
+        name: name.trim(),
+        kpi_defaults: defaults,
+      })
       .select()
       .single()
     setSubmitting(false)

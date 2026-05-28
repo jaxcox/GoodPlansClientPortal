@@ -1,9 +1,8 @@
 // Edge Function: reassign-client
-// Moves a client between coaches in the same hierarchy. Handles industries
-// gracefully: if the target coach doesn't have the client's industry yet
-// (industries are coach-scoped), the function auto-copies the industry's
-// name + KPI defaults to the target coach and rewires the client's
-// industry_id to the new copy. The client's other data (budgets,
+// Moves a client between coaches in the same hierarchy. Phase D update:
+// industries are brand-shared now, so we no longer copy them on
+// reassign — the client's industry_id stays the same and any coach in
+// the brand can read the row. The client's other data (budgets,
 // weekly_entries, custom_kpis, capacity_groups) all stay keyed by
 // client_id, so they follow the client implicitly with no extra work.
 //
@@ -191,68 +190,18 @@ Deno.serve(async (req) => {
     )
   }
 
-  // 6. Industry continuity. If the client has an industry assigned, check
-  //    whether the target coach has a matching one by name. If not, copy.
-  let industryCopied = false
-  let newIndustryId: string | null = client.industry_id
-  if (client.industry_id) {
-    const { data: sourceIndustry, error: sourceIndErr } = await admin
-      .from('industries')
-      .select('id, coach_id, name, kpi_defaults')
-      .eq('id', client.industry_id)
-      .maybeSingle()
-    if (sourceIndErr) return jsonError(500, sourceIndErr.message)
-    if (sourceIndustry && sourceIndustry.coach_id !== targetCoachId) {
-      // Look for a matching industry name on the target coach
-      const { data: existing, error: existingErr } = await admin
-        .from('industries')
-        .select('id')
-        .eq('coach_id', targetCoachId)
-        .eq('name', sourceIndustry.name)
-        .maybeSingle()
-      if (existingErr) return jsonError(500, existingErr.message)
-      if (existing) {
-        newIndustryId = existing.id
-      } else {
-        // Copy the industry to the target coach
-        const { data: copied, error: copyErr } = await admin
-          .from('industries')
-          .insert({
-            coach_id: targetCoachId,
-            name: sourceIndustry.name,
-            kpi_defaults: sourceIndustry.kpi_defaults,
-          })
-          .select('id')
-          .single()
-        if (copyErr || !copied) {
-          return jsonError(
-            500,
-            copyErr?.message ?? 'Failed to copy industry to target coach'
-          )
-        }
-        newIndustryId = copied.id
-        industryCopied = true
-      }
-    }
-  }
-
-  // 7. Reassign. Service role bypasses the clients-immutability trigger
-  //    (migration 0013 bypasses on auth.uid() = null).
+  // 6. Reassign. industry_id stays the same — industries are brand-shared
+  //    now, so the target coach can read the row directly. Service role
+  //    bypasses the clients-immutability trigger (migration 0013 bypasses
+  //    on auth.uid() = null).
   const { error: reassignErr } = await admin
     .from('clients')
-    .update({
-      coach_id: targetCoachId,
-      industry_id: newIndustryId,
-    })
+    .update({ coach_id: targetCoachId })
     .eq('id', clientId)
   if (reassignErr) return jsonError(500, reassignErr.message)
 
   return new Response(
-    JSON.stringify({
-      ok: true,
-      new_coach_id: targetCoachId,
-      industry_copied: industryCopied,
-    }),
+    JSON.stringify({ ok: true, new_coach_id: targetCoachId }),
     { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
   )
 })

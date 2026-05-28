@@ -7,6 +7,7 @@ import {
   toggleableByCategory,
 } from '../lib/kpis'
 import { useKpiToggle } from '../lib/useKpiToggle'
+import { getBrandOwnerId } from '../lib/brandOwner'
 import type { Industry } from '../lib/types'
 import { Toggle } from './Toggle'
 
@@ -80,7 +81,7 @@ export function IndustriesPage() {
   if (mode.kind === 'edit') {
     return (
       <IndustryEditor
-        coachId={coach.id}
+        brandOwnerId={getBrandOwnerId(coach)}
         industry={mode.industry}
         onCancel={() => setMode({ kind: 'list' })}
         onSaved={() => {
@@ -300,12 +301,16 @@ function IndustryCard({
 }
 
 function IndustryEditor({
-  coachId,
+  brandOwnerId,
   industry,
   onCancel,
   onSaved,
 }: {
-  coachId: string
+  /** Brand owner's coach id — the scope key for the brand-shared
+   *  industries table (Phase D). Set on INSERT so RLS lets every coach
+   *  in the brand read the row. On UPDATE the existing scope is
+   *  preserved (we don't move industries between brands here). */
+  brandOwnerId: string
   industry: Industry | null
   onCancel: () => void
   onSaved: () => void
@@ -328,14 +333,24 @@ function IndustryEditor({
       return
     }
     setSubmitting(true)
-    const payload = {
-      coach_id: coachId,
+    // Insert: tag both legacy coach_id (= brand owner for new rows) and
+    // brand_owner_coach_id. Update: only the editable fields; never
+    // re-stamp the scope keys on an existing row.
+    const updatePayload = {
       name: name.trim(),
       kpi_defaults: defaults,
     }
+    const insertPayload = {
+      ...updatePayload,
+      coach_id: brandOwnerId,
+      brand_owner_coach_id: brandOwnerId,
+    }
     const op = industry
-      ? supabase.from('industries').update(payload).eq('id', industry.id)
-      : supabase.from('industries').insert(payload)
+      ? supabase
+          .from('industries')
+          .update(updatePayload)
+          .eq('id', industry.id)
+      : supabase.from('industries').insert(insertPayload)
     const { error: saveErr } = await op
     setSubmitting(false)
     if (saveErr) {

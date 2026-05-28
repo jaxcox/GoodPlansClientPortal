@@ -10,6 +10,7 @@ import {
 import { useKpiToggle } from '../lib/useKpiToggle'
 import type { Client, Industry } from '../lib/types'
 import { formatPhone } from '../lib/phone'
+import { getBrandOwnerId } from '../lib/brandOwner'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
 
@@ -418,7 +419,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
       {coach && (
         <IndustryQuickAddModal
           open={industryModalOpen}
-          coachId={coach.id}
+          brandOwnerId={getBrandOwnerId(coach)}
           onClose={() => setIndustryModalOpen(false)}
           onCreated={onIndustryCreated}
         />

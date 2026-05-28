@@ -167,7 +167,13 @@ export type Client = {
 
 export type Industry = {
   id: string
+  /** Legacy: the coach who originally created the row. Kept for
+   *  history; not used for scoping anymore. */
   coach_id: string
+  /** Brand-shared scope key (Phase D). All coaches in the brand read
+   *  every row whose brand_owner_coach_id matches their brand root.
+   *  Admins write; non-admin coaches read-only. */
+  brand_owner_coach_id: string
   name: string
   kpi_defaults: Record<string, number>
   created_at: string
