@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useFocusTrap } from '../lib/useFocusTrap'
+import { formatPhone } from '../lib/phone'
 
 type Props = {
   open: boolean
@@ -46,7 +47,7 @@ export function EditCoachModal({
   onSaved,
 }: Props) {
   const [fullName, setFullName] = useState(initialFullName)
-  const [phone, setPhone] = useState(initialPhone ?? '')
+  const [phone, setPhone] = useState(formatPhone(initialPhone ?? ''))
   const [role, setRole] = useState<'coach' | 'manager'>(initialRole)
   const [isAdmin, setIsAdmin] = useState(initialIsAdmin)
   const [submitting, setSubmitting] = useState(false)
@@ -55,7 +56,7 @@ export function EditCoachModal({
   useEffect(() => {
     if (open) {
       setFullName(initialFullName)
-      setPhone(initialPhone ?? '')
+      setPhone(formatPhone(initialPhone ?? ''))
       setRole(initialRole)
       setIsAdmin(initialIsAdmin)
       setSubmitting(false)
@@ -162,7 +163,7 @@ export function EditCoachModal({
             label="Phone"
             type="tel"
             value={phone}
-            onChange={setPhone}
+            onChange={(v) => setPhone(formatPhone(v))}
           />
           {viewerIsAdmin && (
             <>

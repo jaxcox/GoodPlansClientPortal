@@ -5,6 +5,7 @@ import { useDirtyGuard } from '../lib/dirtyGuard'
 import { Card } from '../components/Card'
 import { SaveBar } from '../components/SaveBar'
 import { DarkField } from '../components/DarkField'
+import { formatPhone } from '../lib/phone'
 
 // =============================================================================
 // Account page — admin-only (Phase B gating). Company-level information only:
@@ -37,7 +38,7 @@ export function CoachAccountPage({ onLeave }: Props) {
     setBrandFooter(coach?.brand_footer_text ?? '')
     setBrandColor(coach?.brand_primary_color ?? '')
     setCompanyAddress(coach?.brand_address ?? '')
-    setCompanyPhone(coach?.brand_phone ?? '')
+    setCompanyPhone(formatPhone(coach?.brand_phone ?? ''))
     setCompanyWebsite(coach?.brand_website ?? '')
   }, [coach])
 
@@ -103,7 +104,7 @@ export function CoachAccountPage({ onLeave }: Props) {
     setBrandFooter(initial.brandFooter)
     setBrandColor(initial.brandColor)
     setCompanyAddress(initial.companyAddress)
-    setCompanyPhone(initial.companyPhone)
+    setCompanyPhone(formatPhone(initial.companyPhone))
     setCompanyWebsite(initial.companyWebsite)
     setSavedAt(null)
     setSaveError(null)
@@ -164,8 +165,8 @@ export function CoachAccountPage({ onLeave }: Props) {
             label="Company Phone"
             type="tel"
             value={companyPhone}
-            onChange={setCompanyPhone}
-            placeholder="(555) 555-0100"
+            onChange={(v) => setCompanyPhone(formatPhone(v))}
+            placeholder="(555)555-0100"
           />
           <DarkField
             label="Company Website"

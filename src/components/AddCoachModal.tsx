@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useFocusTrap } from '../lib/useFocusTrap'
+import { formatPhone } from '../lib/phone'
 
 type Props = {
   open: boolean
@@ -152,7 +153,7 @@ export function AddCoachModal({ open, onClose, onAdded }: Props) {
               label="Phone"
               type="tel"
               value={phone}
-              onChange={setPhone}
+              onChange={(v) => setPhone(formatPhone(v))}
             />
             {error && (
               <div
