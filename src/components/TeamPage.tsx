@@ -38,6 +38,16 @@ export function TeamPage({ onSelectCoach }: Props) {
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
   const [editTarget, setEditTarget] = useState<Coach | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Coach | null>(null)
+  /** Set of coach ids currently in the middle of a resend-welcome call,
+   *  so the button can show a spinner + lock against double-clicks. */
+  const [resendingIds, setResendingIds] = useState<Set<string>>(new Set())
+  /** Most recent resend outcome message — shown briefly under the
+   *  button. Cleared when another resend kicks off or after a delay. */
+  const [resendNote, setResendNote] = useState<{
+    coachId: string
+    text: string
+    ok: boolean
+  } | null>(null)
 
   const refresh = async () => {
     if (!coach) return
@@ -118,6 +128,53 @@ export function TeamPage({ onSelectCoach }: Props) {
     refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coach?.id])
+
+  /** Send a fresh password-setup link to a teammate. Admin-only on the
+   *  server (resend-coach-welcome enforces). Shows a one-shot status
+   *  line under the card buttons; clears after 4 s. */
+  const resendWelcome = async (target: Coach) => {
+    if (resendingIds.has(target.id)) return
+    setResendingIds((prev) => new Set(prev).add(target.id))
+    setResendNote(null)
+    const { data, error: invokeErr } = await supabase.functions.invoke<{
+      ok?: boolean
+      email_sent?: boolean
+      error?: string
+    }>('resend-coach-welcome', {
+      body: { targetCoachId: target.id },
+    })
+    setResendingIds((prev) => {
+      const next = new Set(prev)
+      next.delete(target.id)
+      return next
+    })
+    let text: string
+    let ok = false
+    if (invokeErr) {
+      let msg = invokeErr.message
+      const ctx = (invokeErr as { context?: Response }).context
+      if (ctx && typeof ctx.json === 'function') {
+        try {
+          const body = await ctx.json()
+          if (body?.error) msg = body.error
+        } catch {
+          /* fall through */
+        }
+      }
+      text = msg
+    } else if (!data?.ok) {
+      text = data?.error ?? 'Resend failed.'
+    } else if (!data.email_sent) {
+      text = 'Link generated but the email did not send. Try again.'
+    } else {
+      text = '✓ Welcome email sent.'
+      ok = true
+    }
+    setResendNote({ coachId: target.id, text, ok })
+    setTimeout(() => {
+      setResendNote((prev) => (prev?.coachId === target.id ? null : prev))
+    }, 4000)
+  }
 
   if (!coach) return null
 
@@ -220,30 +277,59 @@ export function TeamPage({ onSelectCoach }: Props) {
                   </div>
                 </button>
                 {(canEdit || canRemove) && (
-                  <div className="flex gap-2 px-4 pb-3 -mt-1">
-                    {canEdit && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditTarget(c)
-                        }}
-                        className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10"
+                  <div className="px-4 pb-3 -mt-1">
+                    <div className="flex flex-wrap gap-2">
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditTarget(c)
+                          }}
+                          className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canRemove && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            resendWelcome(c)
+                          }}
+                          disabled={resendingIds.has(c.id)}
+                          className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10 disabled:opacity-50"
+                          title="Resend the welcome email with a fresh password-set link"
+                        >
+                          {resendingIds.has(c.id)
+                            ? 'Sending…'
+                            : 'Resend Welcome'}
+                        </button>
+                      )}
+                      {canRemove && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setRemoveTarget(c)
+                          }}
+                          className="bg-transparent text-white border border-bad/60 px-3 py-1 rounded text-xs font-semibold hover:bg-bad/20"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    {resendNote?.coachId === c.id && (
+                      <div
+                        className={`text-xs text-white mt-2 ${
+                          resendNote.ok ? '' : 'italic'
+                        }`}
+                        role="status"
+                        aria-live="polite"
                       >
-                        Edit
-                      </button>
-                    )}
-                    {canRemove && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setRemoveTarget(c)
-                        }}
-                        className="bg-transparent text-white border border-bad/60 px-3 py-1 rounded text-xs font-semibold hover:bg-bad/20"
-                      >
-                        Remove
-                      </button>
+                        {resendNote.text}
+                      </div>
                     )}
                   </div>
                 )}
