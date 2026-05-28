@@ -222,6 +222,7 @@ export function CoachNoteBlock({
           </button>
           <button
             type="button"
+            tabIndex={-1}
             onClick={() => setCollapsed(true)}
             aria-label="Collapse coach note"
             className="text-white border border-mute rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10"
@@ -272,6 +273,7 @@ export function CoachNoteBlock({
           )}
           <button
             type="button"
+            tabIndex={-1}
             onClick={() => setCollapsed(true)}
             aria-label="Collapse coach note"
             className="text-white border border-mute rounded w-6 h-6 flex items-center justify-center text-base font-bold leading-none hover:bg-white/10"
