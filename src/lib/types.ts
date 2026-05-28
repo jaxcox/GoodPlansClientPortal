@@ -151,13 +151,6 @@ export type Client = {
   reset_code_expires_at: string | null
   activated: boolean
   archived: boolean
-  /** True when a coach has set a temporary password via the coach-side
-   *  Reset Password modal. ClientPortal renders a force-change-password
-   *  interstitial until the client picks their own password, at which
-   *  point this flips back to false. One-time use enforced at the UI
-   *  level — the auth password still works for additional sign-ins, but
-   *  the client can't reach any page in the portal until they change it. */
-  must_change_password: boolean
   /** Per-client preference. True = send weekly entry reminder emails when
    *  a client misses the prior week. Email job not built yet (Phase 9). */
   weekly_reminder_enabled: boolean

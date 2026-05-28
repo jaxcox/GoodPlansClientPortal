@@ -11,7 +11,6 @@ import { ClientFormModal } from '../components/ClientFormModal'
 import { IndustriesPage } from '../components/IndustriesPage'
 import { LogoMark } from '../components/LogoMark'
 import { ReassignClientModal } from '../components/ReassignClientModal'
-import { ResetPasswordModal } from '../components/ResetPasswordModal'
 import { TeamPage } from '../components/TeamPage'
 import { CoachAccountPage } from './CoachAccountPage'
 import { useDirtyConfirm } from '../lib/dirtyGuard'
@@ -282,7 +281,6 @@ function ClientsTab({
     | { kind: 'create' }
     | { kind: 'edit'; client: Client }
   >({ kind: 'closed' })
-  const [resetClient, setResetClient] = useState<Client | null>(null)
   /** Bulk reassign selection — only meaningful when teamCoaches.length > 1.
    *  Reset whenever the visible bucket changes (filter / coach filter
    *  switch) so stale selections don't carry across views. */
@@ -512,7 +510,6 @@ function ClientsTab({
               onChange={onChange}
               onViewPortal={() => onViewPortal(c.id)}
               onEdit={() => setModalState({ kind: 'edit', client: c })}
-              onResetPassword={() => setResetClient(c)}
               ownedByCoachName={
                 showCoachOnCards ? coachNameById.get(c.coach_id) ?? null : null
               }
@@ -542,13 +539,6 @@ function ClientsTab({
           if (modalState.kind === 'create') setFilter('active')
           onChange()
         }}
-      />
-
-      <ResetPasswordModal
-        open={resetClient !== null}
-        client={resetClient}
-        onClose={() => setResetClient(null)}
-        onReset={() => onChange()}
       />
 
       {/* Bulk reassign action bar — fixed at viewport bottom whenever the
@@ -909,7 +899,6 @@ function ClientCard({
   onChange,
   onViewPortal,
   onEdit,
-  onResetPassword,
   ownedByCoachName,
   canReassign,
   isAdmin,
@@ -923,7 +912,6 @@ function ClientCard({
   onChange: () => void
   onViewPortal: () => void
   onEdit: () => void
-  onResetPassword: () => void
   /** When set (multi-coach view), shown as "Coach: X" on the card so
    *  the manager can tell whose client this is at a glance. Hidden
    *  when the list is filtered to a single coach (redundant). */
@@ -1098,16 +1086,6 @@ function ClientCard({
             className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
           >
             Edit
-          </button>
-        )}
-        {isAdmin && client.activated && !client.archived && (
-          <button
-            type="button"
-            onClick={onResetPassword}
-            className="bg-transparent text-white border border-mute text-xs font-bold px-3 py-2 sm:py-1.5 rounded hover:bg-white/10"
-            title="Set a temporary password — client will be required to pick their own on next sign-in"
-          >
-            Reset Password
           </button>
         )}
         {!client.archived && canReassign && (

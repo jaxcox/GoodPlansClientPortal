@@ -9,7 +9,6 @@ import { WeeklyEntryPage } from '../components/WeeklyEntryPage'
 import { WeeklyDashboard } from '../components/WeeklyDashboard'
 import { HistoryPage } from '../components/HistoryPage'
 import { ResourcesPage } from '../components/ResourcesPage'
-import { ForceChangePasswordPage } from '../components/ForceChangePasswordPage'
 import { MessageModal } from '../components/MessageModal'
 import { ClientWelcomeCard } from '../components/ClientWelcomeCard'
 import { hasSeenClientTour } from '../lib/clientTour'
@@ -49,19 +48,6 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const [showWelcome, setShowWelcome] = useState(
     () => !coachView && !hasSeenClientTour(clientId)
   )
-
-  const reloadClient = async () => {
-    const { data, error } = await supabase
-      .from('clients_safe')
-      .select('*')
-      .eq('id', clientId)
-      .maybeSingle()
-    if (error || !data) {
-      setError(error?.message ?? 'Client not found')
-      return
-    }
-    setClient(data as Client)
-  }
 
   /** Guarded tab change — prompts if the current page has unsaved edits. */
   const guardedSetTab = (next: NavTab) => {
@@ -160,40 +146,36 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           )}
         </div>
         <div className="flex items-center gap-1 text-base sm:text-sm flex-wrap">
-          {!(client.must_change_password && !coachView) && (
-            <>
-              <span data-tour="dashboard">
-                <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
-              </span>
-              <span data-tour="entry">
-                <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
-              </span>
-              <span data-tour="budget">
-                <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
-              </span>
-              <span data-tour="history">
-                <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
-              </span>
-              <span data-tour="resources">
-                <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
-              </span>
-              <span data-tour="settings">
-                <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
-              </span>
-              {/* Message button — same nav slot, label flips by viewer
-                  role. Styled as a button (yellow accent, matches the
-                  Shared Drive ↗ button alongside) since it triggers an
-                  action rather than navigating to a tab. */}
-              <button
-                type="button"
-                data-tour="message"
-                onClick={() => setMessageOpen(true)}
-                className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
-              >
-                {coachView ? 'Message Client' : 'Message Coach'}
-              </button>
-            </>
-          )}
+          <span data-tour="dashboard">
+            <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
+          </span>
+          <span data-tour="entry">
+            <NavLink active={tab === 'entry'} onClick={() => guardedSetTab('entry')}>Weekly Entry</NavLink>
+          </span>
+          <span data-tour="budget">
+            <NavLink active={tab === 'budget'} onClick={() => guardedSetTab('budget')}>Budget &amp; Goals</NavLink>
+          </span>
+          <span data-tour="history">
+            <NavLink active={tab === 'history'} onClick={() => guardedSetTab('history')}>History</NavLink>
+          </span>
+          <span data-tour="resources">
+            <NavLink active={tab === 'resources'} onClick={() => guardedSetTab('resources')}>Resources</NavLink>
+          </span>
+          <span data-tour="settings">
+            <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
+          </span>
+          {/* Message button — same nav slot, label flips by viewer
+              role. Styled as a button (yellow accent, matches the
+              Shared Drive ↗ button alongside) since it triggers an
+              action rather than navigating to a tab. */}
+          <button
+            type="button"
+            data-tour="message"
+            onClick={() => setMessageOpen(true)}
+            className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
+          >
+            {coachView ? 'Message Client' : 'Message Coach'}
+          </button>
           {client.shared_folder_link && (
             <a
               href={client.shared_folder_link}
@@ -229,13 +211,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
 
       {/* Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {client.must_change_password && !coachView ? (
-          <ForceChangePasswordPage
-            clientId={clientId}
-            email={client.email}
-            onChanged={reloadClient}
-          />
-        ) : tab === 'settings' ? (
+        {tab === 'settings' ? (
           <SettingsPage
             clientId={clientId}
             coachView={coachView}
