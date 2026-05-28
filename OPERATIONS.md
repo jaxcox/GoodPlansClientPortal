@@ -210,18 +210,77 @@ Backed up on GitHub. Even if your laptop dies, the code is recoverable from ther
 
 **Realistic risk at 5–10 real clients**: losing months of weekly entries from multiple businesses is a genuine business problem. Hard to explain.
 
-#### Free mitigations (no upgrade)
-1. **Manual monthly dump (already set up)** (5 min). The query lives at [`supabase/backups/full-backup.sql`](supabase/backups/full-backup.sql) and step-by-step instructions are in [`supabase/backups/README.md`](supabase/backups/README.md). Paste the query into Supabase SQL Editor, click Run, click Download CSV, save the file somewhere safe. Once a month.
-2. **Automated weekly dump via Edge Function** (~1 hr setup). Runs on a cron, exports the database to JSON, emails it to you via Resend. Rolling archive in your inbox. Ask me to build this when you want it.
-3. **Supabase CLI local dump** (~30 min setup, run monthly). Run `supabase db dump` from your laptop → saves a SQL file → back it up like any document.
+#### The manual monthly backup (your current safety net)
+
+This is already set up. Run it once a month and you're protected against accidental deletion. Whole process takes about 2 minutes.
+
+**Step 1 — Open Supabase**
+1. Go to <https://supabase.com> and sign in
+2. Click your project
+3. Left sidebar: **SQL Editor**
+4. Click **+ New query**
+
+**Step 2 — Paste the backup query**
+
+The query lives in this project at `supabase/backups/full-backup.sql`. Two ways to grab it:
+
+- **Easiest**: open Terminal, paste this and hit Enter:
+  ```
+  cat "/Users/jackieferrier/Documents/portal rebuild/supabase/backups/full-backup.sql" | pbcopy
+  ```
+  That copies the file contents to your clipboard. Then Cmd+V in the SQL Editor.
+
+- **Manual**: open the file in any text editor (Finder → Documents → portal rebuild → supabase → backups → full-backup.sql), select all, copy, paste into the SQL Editor.
+
+**Step 3 — Run it**
+
+Click the green **Run** button (or hit Cmd+Enter).
+
+You'll see one row with one giant cell of text. That's expected — the whole database is packed into a single JSON value in that cell.
+
+**Step 4 — Download**
+
+Look for a **"Download CSV"** button (or a download arrow icon) on the result toolbar. Click it.
+
+You'll get a file called `result.csv` in your Downloads folder.
+
+**Step 5 — Rename and save somewhere safe**
+
+Rename it to include today's date so future-you can tell snapshots apart: `portal-backup-2026-05-28.csv` (with the actual date).
+
+Drag it into Dropbox, iCloud, Google Drive, a USB stick — anywhere you trust. **The Downloads folder doesn't count.** A laptop crash and you lose the backup.
+
+That's it. Once a month.
+
+#### How to know your backup is good
+
+Open the CSV file in any text editor (TextEdit works). You should see a big block of JSON with recognizable bits — client company names, dates, KPI values. If the file says `null` everywhere or is empty, something went wrong. Run it again.
+
+#### How to restore from a backup
+
+The CSV isn't directly importable — it's a snapshot for safekeeping, not a one-click restore. If you ever need to recover data, open a Claude Code session, share the backup file, and ask Claude to write a restore script. It'll parse the JSON and re-insert the rows into the database.
+
+Hopefully you never need it. The point is having it.
+
+#### Tips for keeping a rolling archive
+
+- **Keep the last 6 at minimum.** Older ones can be deleted to save space.
+- **Don't overwrite.** Each backup is a snapshot of a different point in time. The filename's date is what makes them useful.
+- **Test occasionally**: once a year, ask Claude to write a "verify this backup" script that confirms the file is parseable and complete.
+
+#### Other free options (if the manual monthly is too easy to forget)
+- **Automated weekly dump via Edge Function** (~1 hr setup). Runs on a cron, exports the database to JSON, emails it to you via Resend. Rolling archive in your inbox. Ask me to build this when you want it.
+- **Supabase CLI local dump** (~30 min setup, run monthly). Run `supabase db dump` from your laptop → saves a SQL file → back it up like any document.
 
 #### Paid option
-**Supabase Pro at $25/month** adds daily automatic backups, 30 days of restorable history, and point-in-time recovery. Recommended when:
+
+**Supabase Pro at $25/month** adds daily automatic backups, 30 days of restorable history, and point-in-time recovery. Move to Pro when:
 - You have 5+ paying clients on the portal, OR
 - You're charging clients money and they expect their data to be safe, OR
-- You ever do a database migration that scares you (the safety net is worth $25 that month alone)
+- You ever do a database migration that scares you (the safety net is worth $25 that month alone), OR
+- You realize you keep forgetting to run the monthly backup
 
-**My recommendation today**: stay on free, set up the manual monthly dump when convenient. Upgrade to Pro when you have real client trust on the line.
+**My recommendation today**: stay on free, run the manual monthly dump. Upgrade to Pro when you have real client trust on the line.
 
 ### Email history
 Resend keeps a log of sent emails for 30 days. Useful for debugging "did the email actually go out?" — but not a backup of message content beyond the 30-day window.
