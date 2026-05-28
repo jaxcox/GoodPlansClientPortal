@@ -88,8 +88,8 @@ export function ResourcesPage({ clientId }: Props) {
             Take a tour
           </div>
           <div className="text-sm text-black">
-            A one-minute walk-through of the portal's main pages. Skip
-            it the first time? Replay anytime here.
+            A one-minute walk-through of the portal's main pages.
+            Skipped the first time? Replay anytime here.
           </div>
         </button>
       </div>
