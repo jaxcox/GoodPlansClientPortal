@@ -21,7 +21,7 @@ A bi-weekly rhythm, a dashboard built for your business, and Profit First. Plus 
 Three pieces. The rhythm matters as much as the tools.
 
 ### Your custom dashboard
-Built for your specific business, not a generic template. Your KPIs, your seasonality, your goals — tracked in one place. Margin, capacity, leading indicators, pace against quarterly and annual targets. You see whether you're on pace this week. You see what's about to need attention.
+I built this portal myself. Every client's version is custom — your KPIs (including ones we create from scratch when off-the-shelf doesn't fit). We start by building a realistic annual budget if you don't already have one. From there, you see pace against your goals — this week, this month, this quarter, this year. Margin, capacity, leading indicators, all in one place. You see what's working and what's about to need attention.
 
 **[NOTE: Dashboard demo video will live here once recorded.]**
 
@@ -38,7 +38,7 @@ Annual budgets that account for your seasonality, with quarterly goals that ladd
 The first quarter is structured so you see traction quickly.
 
 ### Weeks 1-2: Setup
-We pick your KPIs together. I set up your dashboard. We get your Profit First accounts in place. You start seeing your numbers in a clear view, probably for the first time.
+We build your annual budget if you don't already have one (most don't). We pick your KPIs together. I set up your dashboard. You start seeing your numbers in a clear view, probably for the first time.
 
 ### Weeks 3-6: Baseline
 First few sessions of real data. We identify two or three specific things worth focusing on. Not fifteen. Three. The goal is wins you can feel by week 8.

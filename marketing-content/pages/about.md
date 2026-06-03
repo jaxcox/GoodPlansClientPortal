@@ -28,7 +28,17 @@ It almost never does.
 
 The fix isn't more hours. It's better visibility, the right system for managing cash, and a second pair of eyes that knows how to read what the numbers say.
 
-That's the practice I built. The portal does the visibility. Profit First does the cash. I do the asking-the-right-questions part. Twice a month we sit down and work it through.
+That's the practice I built. The portal does the visibility. The bi-weekly sessions do the strategy. I do the asking-the-right-questions part. Twice a month we sit down and work it through.
+
+---
+
+## Why I built the portal
+
+I needed a tool I couldn't buy. Spreadsheets weren't doing it. The vendor portals other coaches use are rigid templates — every client gets the same thing whether it fits or not. Some businesses need to track things those templates don't include. Some businesses need entirely new KPIs that no off-the-shelf system supports.
+
+So I built one. Every client gets a portal built for them, not adapted from someone else's idea of what should matter. The KPIs are custom. The budget structure is custom. If the standard tracking doesn't fit your business, we build something that does.
+
+It's the difference between coaching with a tool and coaching with a tool that's actually yours.
 
 ---
 

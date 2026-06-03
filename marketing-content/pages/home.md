@@ -2,7 +2,7 @@
 
 **URL:** `/`
 **Meta title:** The Good Plans Co | Understand your numbers, understand your business
-**Meta description:** Coaching for small business owners who want progress they can actually see. Bi-weekly sessions, a dashboard built for your business, and Profit First done right.
+**Meta description:** Coaching for small business owners who want progress they can actually see. Bi-weekly sessions, a dashboard built for your business, and clear next steps.
 
 ---
 
@@ -25,7 +25,7 @@ Book a discovery call → `/book-a-call`
 I'm Jackie. Over 200 businesses coached across seven years.
 
 **Body:**
-The pattern I see most: small business owners stuck working harder, watching the bank account stay flat, with no real way to see why. Their CPA tells them what happened last year. Nobody tells them what's happening this week. We fix that. The dashboard I built and the Profit First system I run my clients on are the two tools that change the picture. Twice a month we sit down and work it through.
+The pattern I see most: small business owners stuck working harder, watching the bank account stay flat, with no real way to see why. Their CPA tells them what happened last year. Nobody tells them what's happening this week. We fix that. The dashboard I built is the tool that changes the picture. Twice a month we sit down and work it through.
 
 **Link:**
 More about how I work → `/about`
@@ -40,7 +40,7 @@ What we work on together.
 **Three service cards:**
 
 ### Your Dashboard
-Built for your specific business, not a generic template. Your KPIs, your seasonality, your goals — tracked in one place. Margin, capacity, leading indicators, pace against quarterly and annual targets. You see whether you're on pace this week. You see what's about to need attention. You see your business clearly, probably for the first time.
+I built this portal myself. Every client's version is custom — your KPIs (including ones we create from scratch when off-the-shelf doesn't fit). We start by building a realistic annual budget if you don't already have one. From there, you see pace against your goals — this week, this month, this quarter, this year. Margin, capacity, leading indicators, all in one place. You see what's working and what's about to need attention.
 
 **[NOTE: This is where the dashboard demo video will be embedded once recorded.]**
 
@@ -80,7 +80,7 @@ What changes when you can see it.
 
 **Lead story (callout block):**
 
-> A remodeler I work with came in wanting to clear $1M in sales. Eighteen months later we're talking about whether he'll hit his $1.7M goal this year. He's running Profit First. When taxes came due, the money was already in the tax account. He didn't spend everything he'd just earned, because we'd built a profit account on purpose. He bought a boat with his profit bonus.
+> A remodeler I work with came in wanting to clear $1M in sales. Eighteen months later we're talking about whether he'll hit his $1.7M goal this year. He had tax money in the tax account when taxes came due. He didn't spend everything he'd just earned. He bought a boat with his profit bonus.
 
 **Supporting before / after table:**
 
