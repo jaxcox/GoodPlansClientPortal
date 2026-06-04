@@ -218,7 +218,7 @@ function buildReminderHtml({
   <div style="max-width: 480px; margin: 0 auto; background-color: #ffffff; padding: 32px 24px; border-radius: 8px;">
 
     <div style="text-align: center; margin-bottom: 24px;">
-      <img src="${PORTAL_URL}/logo.png" alt="The Good Plans Co" style="height: 80px; width: auto;" />
+      <img src="${PORTAL_URL}/logo.png" alt="The Good Plans Co" width="80" height="80" style="display: block; width: 80px; height: 80px; max-width: 80px;" />
     </div>
 
     <p style="font-size: 14px; line-height: 1.5; color: #0f0f0f; margin: 0 0 16px 0;">
