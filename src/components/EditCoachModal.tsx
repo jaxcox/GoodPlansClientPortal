@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { formatPhone } from '../lib/phone'
+import { ChangeLoginEmailModal } from './ChangeLoginEmailModal'
 
 type Props = {
   open: boolean
@@ -24,6 +25,11 @@ type Props = {
    *  checkbox when the target is the only admin and demoting them
    *  would lock the brand out of management. */
   brandAdminCount: number
+  /** Current login email — only known for self-edit (from the signed-
+   *  in session). Pass null when editing another coach (auth.users
+   *  email isn't readable from client-side). The Change Login Email
+   *  modal handles the null case by just not showing the current. */
+  currentLoginEmail: string | null
   onClose: () => void
   onSaved: () => void
 }
@@ -43,6 +49,7 @@ export function EditCoachModal({
   viewerIsAdmin,
   isSelf,
   brandAdminCount,
+  currentLoginEmail,
   onClose,
   onSaved,
 }: Props) {
@@ -52,6 +59,13 @@ export function EditCoachModal({
   const [isAdmin, setIsAdmin] = useState(initialIsAdmin)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false)
+
+  // Login-email change is permitted when:
+  //   - The viewer is the target (self-edit, any coach can change own)
+  //   - OR the viewer is an admin (admin can change any coach in the brand)
+  // Server-side update-login-email enforces the same rule.
+  const canChangeLoginEmail = isSelf || viewerIsAdmin
 
   useEffect(() => {
     if (open) {
@@ -152,6 +166,26 @@ export function EditCoachModal({
           </button>
         </div>
 
+        {canChangeLoginEmail && (
+          <div className="mb-4 pb-3 border-b border-line">
+            <div className="text-white text-xs font-semibold mb-1 uppercase tracking-wider">
+              Login email
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-white truncate flex-1 min-w-0">
+                {currentLoginEmail || '(hidden — not visible from this view)'}
+              </div>
+              <button
+                type="button"
+                onClick={() => setChangeEmailOpen(true)}
+                className="bg-transparent text-white border border-mute px-3 py-1 rounded text-xs font-semibold hover:bg-white/10 flex-shrink-0"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={onSubmit} className="space-y-3">
           <Field
             label="Full Name"
@@ -230,6 +264,26 @@ export function EditCoachModal({
           </div>
         </form>
       </div>
+
+      {/* Sub-modal: Change login email. Rendered alongside the edit
+          modal so it stacks above (z-[60] beats the edit modal's z-50).
+          Closes on its own save; the edit modal stays open behind so
+          the user can continue editing other fields if they want. */}
+      <ChangeLoginEmailModal
+        open={changeEmailOpen}
+        targetType="coach"
+        targetId={coachId}
+        currentEmail={currentLoginEmail}
+        targetName={fullName || 'this coach'}
+        onClose={() => setChangeEmailOpen(false)}
+        onSaved={() => {
+          setChangeEmailOpen(false)
+          // Bubble to parent so it refetches if it needs to. The edit
+          // modal itself stays open since only the email changed —
+          // other fields haven't been saved yet.
+          onSaved()
+        }}
+      />
     </div>
   )
 }

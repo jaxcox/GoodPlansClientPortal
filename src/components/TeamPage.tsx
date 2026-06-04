@@ -33,7 +33,7 @@ type Props = {
  *  because RLS doesn't expose them). Clicking a card jumps to the
  *  Clients tab filtered to that coach. */
 export function TeamPage({ onSelectCoach }: Props) {
-  const { coach, refreshProfile } = useAuth()
+  const { coach, refreshProfile, session } = useAuth()
   const [coaches, setCoaches] = useState<Coach[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
@@ -390,6 +390,13 @@ export function TeamPage({ onSelectCoach }: Props) {
             // last-admin lockout anyway, so this is just for the
             // friendlier disabled-checkbox state.
             (coaches ?? []).filter((x) => x.is_admin).length
+          }
+          currentLoginEmail={
+            // Only known for self-edit (from the signed-in session).
+            // For admin-editing-other, auth.users.email isn't client-
+            // readable so we pass null and the Change Login Email modal
+            // hides the "current" display.
+            editTarget.is_current ? session?.user.email ?? null : null
           }
           onClose={() => setEditTarget(null)}
           onSaved={() => {

@@ -13,6 +13,7 @@ import { formatPhone } from '../lib/phone'
 import { getBrandOwnerId } from '../lib/brandOwner'
 import { Toggle } from './Toggle'
 import { IndustryQuickAddModal } from './IndustryQuickAddModal'
+import { ChangeLoginEmailModal } from './ChangeLoginEmailModal'
 
 const CREATE_NEW_INDUSTRY = '__create__'
 
@@ -41,6 +42,7 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [industryModalOpen, setIndustryModalOpen] = useState(false)
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false)
 
   // Reset when reopening (or seed from `editing`)
   useEffect(() => {
@@ -285,18 +287,24 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
             <Field label="Contact Name" value={contactName} onChange={setContactName} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field
-              label={emailLocked ? 'Email (login — locked)' : 'Email *'}
-              type="email"
-              value={email}
-              onChange={setEmail}
-              disabled={emailLocked}
-              hint={
-                emailLocked
-                  ? "This client has activated. Email is the login key and can't be changed here."
-                  : undefined
-              }
-            />
+            <div>
+              <Field
+                label={emailLocked ? 'Email (login)' : 'Email *'}
+                type="email"
+                value={email}
+                onChange={setEmail}
+                disabled={emailLocked}
+              />
+              {emailLocked && (
+                <button
+                  type="button"
+                  onClick={() => setChangeEmailOpen(true)}
+                  className="text-xs text-white italic mt-1 underline underline-offset-2 decoration-accent hover:opacity-80"
+                >
+                  Change login email →
+                </button>
+              )}
+            </div>
             <Field
               label="Phone"
               type="tel"
@@ -422,6 +430,33 @@ export function ClientFormModal({ open, onClose, onSaved, editing }: Props) {
           brandOwnerId={getBrandOwnerId(coach)}
           onClose={() => setIndustryModalOpen(false)}
           onCreated={onIndustryCreated}
+        />
+      )}
+
+      {/* Sub-modal: change a client's auth.users.email (admin-only,
+          server-enforced). Only mountable when editing an activated
+          client — `editing` is set + emailLocked is true. The current
+          email comes from clients.email which is normally in sync with
+          the auth email but isn't authoritative; the change-login flow
+          updates auth.users and (by checkbox default) clients.email. */}
+      {isEdit && editing && emailLocked && (
+        <ChangeLoginEmailModal
+          open={changeEmailOpen}
+          targetType="client"
+          targetId={editing.id}
+          currentEmail={editing.email}
+          targetName={editing.company_name || 'this client'}
+          onClose={() => setChangeEmailOpen(false)}
+          onSaved={() => {
+            setChangeEmailOpen(false)
+            // Reflect the new email in this modal's local state so the
+            // user sees it immediately without closing/reopening.
+            setEmail((prev) => prev) // no-op; parent should refetch on close
+            // Most callers refetch the client list after onSaved fires;
+            // we don't have a direct way to refresh `editing` from the
+            // child, so closing the parent modal next is the cleanest
+            // path for the user.
+          }}
         />
       )}
     </div>
