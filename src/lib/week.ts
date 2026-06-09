@@ -134,6 +134,12 @@ export function entryCoveredIsos(startIso: string, days: number): string[] {
  *  Partial A row saved still shows as missed because Partial B's days
  *  aren't covered.
  *
+ *  Exception: if the FIRST week (the one containing `fromDate`) is a
+ *  boundary week, only its Partial B half (the new-month side) is
+ *  required. The client starts entering in the month after their most-
+ *  recent-closed month, so the prior-month first half of that split
+ *  starting week is never expected and won't flag them as behind.
+ *
  *  Returned most-recent-first. Used by Weekly Entry (dropdown of weeks
  *  to fill in) and the Weekly Dashboard (multi-week-gap status pill). */
 export function missedWeeksBetween(
@@ -156,9 +162,22 @@ export function missedWeeksBetween(
   const out: Date[] = []
   const cur = new Date(start)
   while (cur < current) {
+    // The starting week is special: when it straddles a month boundary, the
+    // client begins entering on the new-month side (their first month after
+    // the most-recent-closed month), so the prior-month first half (Partial
+    // A) is never expected. For that one week, start probing at Partial B's
+    // first day instead of the Sunday. Every later boundary week still
+    // requires both halves, so a mid-stream week with only one partial saved
+    // still shows as missed.
+    let probe = new Date(cur)
+    if (cur.getTime() === start.getTime()) {
+      const boundary = monthBoundaryInWeek(cur)
+      if (boundary) probe = dateFromIso(boundary.b.startIso)
+    }
+    const weekEnd = new Date(cur)
+    weekEnd.setDate(weekEnd.getDate() + 6)
     let allCovered = true
-    const probe = new Date(cur)
-    for (let i = 0; i < 7; i++) {
+    while (probe <= weekEnd) {
       if (!coveredDays.has(isoDate(probe))) {
         allCovered = false
         break
