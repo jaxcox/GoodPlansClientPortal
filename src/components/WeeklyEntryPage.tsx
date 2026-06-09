@@ -248,6 +248,16 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     const side = boundary[selectedSide]
     return { startIso: side.startIso, days: side.days, isPartial: true }
   }, [boundary, selectedSide, weekStart])
+  /** True when the picked week is the client's STARTING week AND it
+   *  straddles a month boundary. Partial A is then the prior (most-
+   *  recent-closed) month, which the client never enters — so the
+   *  boundary picker hides the A card and the form defaults to Partial B.
+   *  Mirrors the starting-week rule in missedWeeksBetween. */
+  const startBoundaryHidesA = useMemo(() => {
+    if (!boundary || !client) return false
+    const startWeek = weekStartSunday(new Date(client.created_at))
+    return weekStart.getTime() === startWeek.getTime()
+  }, [boundary, client, weekStart])
   /** The saved entry for whichever side is selected. The form's dirty
    *  tracking, cancel-reseed, and save-vs-update branching all key off
    *  this. */
@@ -354,6 +364,17 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
       cancelled = true
     }
   }, [clientId, weekStart])
+
+  // When the starting week is a boundary week, Partial A is the closed
+  // month and isn't shown. The load effect defaults boundary weeks to
+  // side 'a', so flip to side 'b' (and re-seed from it) whenever A is
+  // hidden so the form edits the entered partial, not the hidden one.
+  useEffect(() => {
+    if (startBoundaryHidesA && selectedSide === 'a') {
+      setSelectedSide('b')
+      seedFromEntry(entries.b)
+    }
+  }, [startBoundaryHidesA, selectedSide, entries.b])
 
   // ---- Dirty tracking ----------------------------------------------------
   const isDirty = useMemo(() => {
@@ -668,6 +689,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
           entries={entries}
           selectedSide={selectedSide}
           onSelect={switchSide}
+          hideA={startBoundaryHidesA}
         />
       )}
 
@@ -878,11 +900,14 @@ function BoundaryCardPicker({
   entries,
   selectedSide,
   onSelect,
+  hideA = false,
 }: {
   boundary: { a: PartialSlot; b: PartialSlot }
   entries: { a: WeeklyEntry | null; b: WeeklyEntry | null }
   selectedSide: 'a' | 'b'
   onSelect: (side: 'a' | 'b') => void
+  /** Hide the Partial A card (closed-month half of the starting week). */
+  hideA?: boolean
 }) {
   const renderRange = (startIso: string, days: number) => {
     const start = dateFromIso(startIso)
@@ -942,7 +967,7 @@ function BoundaryCardPicker({
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Card side="a" slot={boundary.a} entry={entries.a} />
+      {!hideA && <Card side="a" slot={boundary.a} entry={entries.a} />}
       <Card side="b" slot={boundary.b} entry={entries.b} />
     </div>
   )
