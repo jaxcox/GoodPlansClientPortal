@@ -6,6 +6,7 @@
 // pill UX.
 // =============================================================================
 
+import { useRef } from 'react'
 import {
   dateFromIso,
   formatWeekShort,
@@ -16,11 +17,13 @@ import {
 // -----------------------------------------------------------------------------
 // WeekOfCalendarPill
 // -----------------------------------------------------------------------------
-/** Combined "Week of [date]" pill + invisible native date input overlay.
- *  Tapping anywhere on the pill opens the OS-native date picker (because
- *  the input lives inside the <label> and the click bubbles to it). Caps
- *  at the most recent completed Saturday — you can view any past
- *  completed week, never a future one. */
+/** Combined "Week of [date]" pill — the ENTIRE pill is a button. Clicking
+ *  anywhere on it opens the OS-native date picker via showPicker() on a
+ *  hidden date input (a bare invisible-overlay input only opens on desktop
+ *  when you hit its calendar indicator, which made the pill feel like only
+ *  the icon was clickable). Falls back to focusing the input if showPicker
+ *  isn't supported. Caps at the most recent completed Saturday — any past
+ *  completed week is viewable, never a future one. */
 export function WeekOfCalendarPill({
   weekStart,
   onPick,
@@ -28,21 +31,46 @@ export function WeekOfCalendarPill({
   weekStart: Date
   onPick: (date: Date) => void
 }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const openPicker = () => {
+    const el = inputRef.current
+    if (!el) return
+    if (typeof el.showPicker === 'function') {
+      try {
+        el.showPicker()
+        return
+      } catch {
+        // Some browsers throw if the picker can't open; fall through.
+      }
+    }
+    el.focus()
+  }
   return (
-    <label className="bg-ink text-white px-3 py-1 rounded font-semibold inline-flex items-center gap-2 cursor-pointer relative">
-      <span>Week of {formatWeekShort(weekStart)}</span>
-      <span aria-hidden className="text-sm">📅</span>
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={openPicker}
+        aria-label="Pick a week"
+        className="bg-ink text-white px-3 py-1 rounded font-semibold inline-flex items-center gap-2 cursor-pointer hover:brightness-110 transition-[filter]"
+      >
+        <span>Week of {formatWeekShort(weekStart)}</span>
+        <span aria-hidden className="text-sm">📅</span>
+      </button>
       <input
+        ref={inputRef}
         type="date"
         value={isoDate(weekStart)}
         max={isoDate(lastCompletedSaturday())}
         onChange={(e) => {
           if (e.target.value) onPick(dateFromIso(e.target.value))
         }}
-        aria-label="Pick a week"
-        className="absolute inset-0 opacity-0 cursor-pointer"
+        aria-hidden="true"
+        tabIndex={-1}
+        // Hidden but kept in the DOM (not display:none) so showPicker can
+        // anchor the native popup near the pill's bottom-left.
+        className="absolute bottom-0 left-0 h-0 w-0 opacity-0 pointer-events-none"
       />
-    </label>
+    </span>
   )
 }
 

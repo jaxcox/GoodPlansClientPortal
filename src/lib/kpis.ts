@@ -218,12 +218,12 @@ export const KPIS: KpiDef[] = [
   {
     id: 'newClients',
     label: 'Leads Converted',
-    desc: 'Number of new customers. Leads that became paying clients this week. First-time buyers, not existing customers placing repeat orders.',
+    desc: 'Number of leads that converted into a written estimate or proposal this week. These prospects moved from initial interest to a real quote.',
     glossary: {
       whatItMeasures:
-        'The number of leads that became paying customers this period.',
+        'The number of leads that converted into a written estimate or proposal during the period. It captures movement from initial interest to a real quote.',
       whyItsImportant:
-        'This number shows how effectively your sales process is turning prospects into paying clients.',
+        'This shows how effectively your marketing and early sales process move prospects from interest into your active pipeline, before any deal is won.',
     },
     category: 'Marketing',
     format: '#',
@@ -232,12 +232,12 @@ export const KPIS: KpiDef[] = [
   {
     id: 'conversionRate',
     label: 'Leads Conversion Rate',
-    desc: 'New Clients ÷ Leads Generated, shown as a percent. How many of the prospects who came in actually became paying customers.',
+    desc: 'Leads Converted ÷ Leads Generated, shown as a percent. The share of incoming leads that turned into a written estimate or proposal.',
     glossary: {
       whatItMeasures:
-        'The percent of incoming prospects that became paying customers.',
+        'The percent of incoming leads that converted into a written estimate or proposal.',
       whyItsImportant:
-        'There\'s no real good or bad in this number. A "good" conversion rate is based on your personal data and ensures that you\'re converting enough leads at the right price to be profitable, while keeping marketing spending within budget.',
+        'There\'s no real good or bad in this number. A "good" conversion rate is based on your own history. It tells you whether enough of your leads are turning into real estimates to keep your pipeline full while keeping marketing spend in line.',
     },
     category: 'Marketing',
     format: '%',
