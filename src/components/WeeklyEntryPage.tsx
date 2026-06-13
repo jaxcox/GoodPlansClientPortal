@@ -19,7 +19,7 @@ import {
   isoDate,
   missedWeeksBetween,
   monthBoundaryInWeek,
-  mostRecentCompletedWeekStart,
+  latestEnterableWeekStart,
   weekStartSunday,
 } from '../lib/week'
 import type { PartialSlot } from '../lib/week'
@@ -216,13 +216,13 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
     { startIso: string; days: number }[]
   >([])
 
-  // Default to the most recent COMPLETED week — i.e. last week. The
-  // in-progress current week is intentionally NOT selectable; users only
-  // enter actuals for weeks that have finished. When the caller passed
+  // Default to the latest enterable week. On Saturday that's the current
+  // week (it just reached its last day, so clients can close it out that
+  // day); on Sunday–Friday it's last week. When the caller passed
   // initialWeekStart (deep-link from the dashboard's missed-weeks pill),
   // honor that instead.
   const [weekStart, setWeekStart] = useState<Date>(
-    () => initialWeekStart ?? mostRecentCompletedWeekStart()
+    () => initialWeekStart ?? latestEnterableWeekStart()
   )
 
   // If a deep-link week arrives while this component is already mounted

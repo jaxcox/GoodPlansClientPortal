@@ -40,9 +40,12 @@ export function shiftWeek(weekStart: Date, weeks: number): Date {
   return weekStartSunday(d)
 }
 
-/** The Sunday of the most recent COMPLETED week (i.e. last week — never
- *  the current in-progress week). If today is Sunday May 11, this returns
- *  May 4. Used as the default landing week on the Weekly Entry page. */
+/** The Sunday of the most recent FULLY-completed week (last week — never
+ *  the current week, even on its Saturday). If today is Sunday May 11,
+ *  this returns May 4. Used as the "are they behind?" reference for the
+ *  Coach Admin entry-status pill and the dashboard's default week. For the
+ *  Weekly Entry landing week (which opens the current week on its Saturday),
+ *  use latestEnterableWeekStart instead. */
 export function mostRecentCompletedWeekStart(today: Date = new Date()): Date {
   const current = weekStartSunday(today)
   const d = new Date(current)
@@ -50,14 +53,25 @@ export function mostRecentCompletedWeekStart(today: Date = new Date()): Date {
   return d
 }
 
-/** The Saturday at the end of the most recent completed week — i.e. the
- *  latest date the user is allowed to enter actuals for (yesterday-or-
- *  earlier, never inside the in-progress week). */
+/** The latest date a user can enter actuals for: the most recent Saturday
+ *  on or before `today`. A Sun-Sat week becomes enterable on its final day
+ *  (Saturday), so clients whose work week ends Saturday can do their numbers
+ *  that day instead of waiting for Sunday. On Sunday–Friday this is last
+ *  week's Saturday (the current week isn't enterable until its Saturday). */
 export function lastCompletedSaturday(today: Date = new Date()): Date {
-  const current = weekStartSunday(today)
-  const d = new Date(current)
-  d.setDate(d.getDate() - 1)
+  const d = new Date(today)
+  d.setHours(0, 0, 0, 0)
+  // Step back to the most recent Saturday: Sat→0 days, Sun→1, … Fri→6.
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7))
   return d
+}
+
+/** The Sunday of the latest ENTERABLE week — the week ending at
+ *  lastCompletedSaturday(). On Saturday this is the current week (it just
+ *  reached its last day); on Sunday–Friday it's last week. The Weekly Entry
+ *  page lands here so a Saturday entry opens the week being closed out. */
+export function latestEnterableWeekStart(today: Date = new Date()): Date {
+  return weekStartSunday(lastCompletedSaturday(today))
 }
 
 /** Spec for one partial side of a boundary-week split. */
