@@ -134,14 +134,18 @@ export function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-/** Pro-rate fraction for a Sun–Sat full week: 7 / daysInMonth. Partial
- *  Period entries (parking lot #4) would carry a per-row days count; until
- *  that lands every entry is treated as a 7-day full week. */
+/** Pro-rate fraction for a week: entry.days / daysInMonth. A full Sun–Sat
+ *  week is 7 days; a month-boundary partial carries its own day count (1–6),
+ *  so its weekly goal scales to the days it actually covers instead of a full
+ *  7 (otherwise a 3-day partial is compared against a full-week target). The
+ *  per-week fractions across a month still sum to 1.0, so the weekly goals add
+ *  up to the monthly goal. A closed full week keeps days = 7 (its goal stays
+ *  full and the 0 actual reads as honestly behind). */
 function weekFraction(entry: WeeklyEntry): number {
   const startDate = dateFromIso(entry.week_start_date)
   const year = startDate.getFullYear()
   const month = startDate.getMonth()
-  return 7 / daysInMonth(year, month)
+  return (entry.days ?? 7) / daysInMonth(year, month)
 }
 
 type WeeklyGoalArgs = {

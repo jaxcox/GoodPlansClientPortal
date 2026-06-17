@@ -603,7 +603,8 @@ export function WeeklyDashboard({
               goal = rawGoal
             } else {
               const share = weeklyMonthShares[entryMonth] ?? 1 / 12
-              const frac = 7 / daysInMonth(entryYear, entryMonth)
+              const frac =
+                (displayedEntry.days ?? 7) / daysInMonth(entryYear, entryMonth)
               goal = rawGoal * share * frac
             }
           }
@@ -1891,7 +1892,7 @@ function CustomTile({
       const month = start.getMonth()
       const year = start.getFullYear()
       const share = monthShares[month] ?? 1 / 12
-      const frac = 7 / daysInMonth(year, month)
+      const frac = (entry.days ?? 7) / daysInMonth(year, month)
       weeklyG = goal * share * frac
     }
   }

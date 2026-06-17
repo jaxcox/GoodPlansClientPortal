@@ -769,7 +769,7 @@ function computeCell({
         const m = start.getMonth()
         const y = start.getFullYear()
         const share = monthShares[m] ?? 1 / 12
-        const frac = 7 / new Date(y, m + 1, 0).getDate()
+        const frac = (entry.days ?? 7) / new Date(y, m + 1, 0).getDate()
         goal = goalRaw * share * frac
       }
     }
