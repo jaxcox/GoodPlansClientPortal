@@ -1844,13 +1844,6 @@ function StandardTile({
     annualRevenue,
   })
 
-  // Expenses on the weekly dashboard is "awareness only" — show the
-  // value + prior-week delta with no goal line. Coaches set an annual
-  // expense target on Budget & Goals but the weekly slice isn't
-  // actionable on its own; cumulative views (MTD/QTD/YTD) carry the
-  // pace tracking instead.
-  const isAwarenessOnly = kpi.id === 'expenses'
-
   return (
     <KpiTile
       label={kpi.label}
@@ -1858,10 +1851,9 @@ function StandardTile({
       format={kpi.format}
       direction={kpi.direction ?? 'hi'}
       value={value}
-      goal={isAwarenessOnly ? null : goal}
+      goal={goal}
       delta={delta}
       range={kpi.range}
-      hideGoal={isAwarenessOnly}
     />
   )
 }
