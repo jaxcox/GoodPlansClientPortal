@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   KPIS,
@@ -98,6 +98,7 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [industryModalOpen, setIndustryModalOpen] = useState(false)
+  const saveErrorRef = useRef<HTMLDivElement>(null)
 
   const seedDraft = (c: Client) => {
     setCompanyName(c.company_name)
@@ -278,6 +279,19 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
   useEffect(() => {
     if (savedAt && isDirty) setSavedAt(null)
   }, [savedAt, isDirty])
+
+  // Surface save/validation errors even when the user is scrolled down in
+  // the long form. The Save button lives in the sticky bar but this banner
+  // does not, so a failed save could set an error the user never sees and
+  // feel like "nothing happened" — scroll it into view instead.
+  useEffect(() => {
+    if (saveError) {
+      saveErrorRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, [saveError])
 
   const onIndustryChange = (id: string) => {
     if (id === CREATE_NEW_INDUSTRY) {
@@ -532,7 +546,10 @@ export function SettingsPage({ clientId, coachView, onLeave }: Props) {
       </div>
 
       {saveError && (
-        <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3">
+        <div
+          ref={saveErrorRef}
+          className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3"
+        >
           {saveError}
         </div>
       )}
