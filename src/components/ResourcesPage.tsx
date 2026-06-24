@@ -47,7 +47,7 @@ export function ResourcesPage({ clientId }: Props) {
     return (
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-ink">{active.title}</h1>
+          <h1 className="font-brand text-lg font-bold text-ink">{active.title}</h1>
           <button
             type="button"
             onClick={() => setActiveId(null)}
@@ -66,7 +66,7 @@ export function ResourcesPage({ clientId }: Props) {
   // opening article content.
   return (
     <section className="space-y-4">
-      <h1 className="text-lg font-bold text-ink">Resources</h1>
+      <h1 className="font-brand text-lg font-bold text-ink">Resources</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {ARTICLES.map((a) => (
           <button

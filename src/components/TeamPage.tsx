@@ -189,7 +189,7 @@ export function TeamPage({ onSelectCoach }: Props) {
   return (
     <section>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h1 className="text-ink text-lg font-bold">Team</h1>
+        <h1 className="font-brand text-ink text-lg font-bold">Team</h1>
         {isAdmin && (
           <button
             type="button"

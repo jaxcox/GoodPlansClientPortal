@@ -119,7 +119,7 @@ export function CoachAccountPage({ onLeave }: Props) {
   return (
     <section className="space-y-4">
       <div className="sticky top-[84px] z-20 bg-[#dad7c5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 -mt-6 flex flex-wrap justify-between items-center gap-3">
-        <h1 className="text-ink text-lg font-bold">Account</h1>
+        <h1 className="font-brand text-ink text-lg font-bold">Account</h1>
         <SaveBar
           isDirty={isDirty}
           saving={saving}

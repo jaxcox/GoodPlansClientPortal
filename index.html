@@ -11,12 +11,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
-    <!-- display=optional: brief block period; if Playfair isn't ready,
-         the page uses the fallback for this load (no mid-render swap
-         and no layout reflow). Cached for next visit. Aggressive but
-         the only way to fully guarantee no visible blink. -->
+    <!-- display=swap: render the fallback immediately, then swap in
+         Playfair the moment it loads. Matches the marketing site's
+         font load exactly (same weights + swap) so the brand wordmark
+         renders in real Playfair Display, not the Georgia fallback. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;800&display=optional"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="https://use.typekit.net/amy5ajz.css" />

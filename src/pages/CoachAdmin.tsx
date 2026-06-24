@@ -137,58 +137,58 @@ export function CoachAdmin({ onViewPortal }: Props) {
 
   return (
     <div className="min-h-screen bg-[#dad7c5]">
-      <div className="sticky top-0 z-30">
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
-        <div className="grid grid-cols-3 items-center gap-3">
-          <div></div>
-          <div className="flex items-center justify-center">
-            {brandName === 'The Good Plans Co' ? (
-              <span className="font-brand text-3xl font-bold text-ink">The Good P<span className="underline decoration-accent decoration-[3px] underline-offset-[6px]">lans Co&nbsp;&nbsp;&nbsp;</span></span>
-            ) : (
-              <span className="font-brand text-3xl font-bold text-ink">{brandName}</span>
-            )}
+      <div className="sticky top-0 z-30 bg-white border-b border-ink/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          {/* Brand row — centered wordmark, name + Logout right. Mirrors the
+              marketing site header. */}
+          <div className="grid grid-cols-3 items-center py-4">
+            <div></div>
+            <div className="justify-self-center">
+              {brandName === 'The Good Plans Co' ? (
+                <span className="font-brand text-3xl font-bold text-ink">The Good P<span className="underline decoration-accent decoration-[3px] underline-offset-[6px]">lans Co&nbsp;&nbsp;&nbsp;</span></span>
+              ) : (
+                <span className="font-brand text-3xl font-bold text-ink">{brandName}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 justify-end text-sm">
+              <span className="text-ink">{profile?.display_name ?? 'Coach'}</span>
+              <button
+                type="button"
+                onClick={guardedSignOut}
+                className="bg-ink text-white font-bold px-4 py-2 rounded hover:brightness-110 transition-all text-sm"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-2xl justify-end">
-            <span className="text-black">
-              {profile?.display_name ?? 'Coach'}
-            </span>
-            <button
-              type="button"
-              onClick={guardedSignOut}
-              className="bg-surface-2 text-white border border-line px-5 py-3 sm:py-2.5 rounded hover:bg-surface-1"
-            >
-              Logout
-            </button>
+          {/* Tab row — centered, text-sm, matching the site's nav row. */}
+          <div className="border-t border-ink/10 py-3">
+            <nav className="flex justify-center gap-12 text-sm">
+              <TabButton active={tab === 'clients'} onClick={() => guardedSetTab('clients')}>
+                Clients
+              </TabButton>
+              {isAdmin && (
+                <TabButton
+                  active={tab === 'industries'}
+                  onClick={() => guardedSetTab('industries')}
+                >
+                  Industries
+                </TabButton>
+              )}
+              <TabButton active={tab === 'team'} onClick={() => guardedSetTab('team')}>
+                Team
+              </TabButton>
+              {isAdmin && (
+                <TabButton
+                  active={tab === 'account'}
+                  onClick={() => guardedSetTab('account')}
+                >
+                  Account
+                </TabButton>
+              )}
+            </nav>
           </div>
         </div>
-      </header>
-
-      <nav className="bg-white border-b border-gray-100 px-4 sm:px-6">
-        <div className="flex gap-8">
-          <TabButton active={tab === 'clients'} onClick={() => guardedSetTab('clients')}>
-            Clients
-          </TabButton>
-          {isAdmin && (
-            <TabButton
-              active={tab === 'industries'}
-              onClick={() => guardedSetTab('industries')}
-            >
-              Industries
-            </TabButton>
-          )}
-          <TabButton active={tab === 'team'} onClick={() => guardedSetTab('team')}>
-            Team
-          </TabButton>
-          {isAdmin && (
-            <TabButton
-              active={tab === 'account'}
-              onClick={() => guardedSetTab('account')}
-            >
-              Account
-            </TabButton>
-          )}
-        </div>
-      </nav>
       </div>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
@@ -235,13 +235,17 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`text-2xl sm:text-xl py-5 sm:py-4 ${
-        active ? 'font-bold text-ink' : 'text-black'
+      className={`text-sm py-1 ${
+        active ? 'font-bold text-ink' : 'text-ink hover:text-ink/70 transition-colors'
       }`}
     >
       {/* Underline on an inner span so the yellow rule hugs the word,
-          not the bottom of the tap-target padding. */}
-      <span className={active ? 'border-b-2 border-accent pb-0.5' : ''}>
+          not the bottom of the tap-target padding. Always reserve the
+          border + padding (toggle only its color) so the active tab's
+          baseline doesn't shift up relative to the inactive ones. */}
+      <span
+        className={`border-b-2 pb-0.5 ${active ? 'border-accent' : 'border-transparent'}`}
+      >
         {children}
       </span>
     </button>
@@ -360,7 +364,7 @@ function ClientsTab({
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-ink text-lg font-bold">{heading}</h1>
+        <h1 className="font-brand text-ink text-lg font-bold">{heading}</h1>
         {isAdmin && (
           <button
             type="button"

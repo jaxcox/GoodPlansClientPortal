@@ -58,7 +58,7 @@ export function Card({ title, children, id, info, fit = false }: Props) {
       <div
         className={`flex items-center justify-between ${collapsed ? '' : 'mb-4'}`}
       >
-        <h2 className="text-white text-base font-bold flex items-center gap-1.5">
+        <h2 className="font-brand text-white text-base font-bold flex items-center gap-1.5">
           <span>{title}</span>
           {info && <InfoIcon text={info} />}
         </h2>

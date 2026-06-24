@@ -96,7 +96,7 @@ export function RemoveCoachConfirm({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-white text-base font-bold">Remove coach</h2>
+          <h2 className="font-brand text-white text-base font-bold">Remove coach</h2>
           <button
             type="button"
             onClick={onClose}

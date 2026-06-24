@@ -95,7 +95,7 @@ export function IndustriesPage() {
   return (
     <section>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h1 className="text-ink text-lg font-bold">Custom Industries</h1>
+        <h1 className="font-brand text-ink text-lg font-bold">Custom Industries</h1>
         <button
           type="button"
           onClick={() => setMode({ kind: 'edit', industry: null })}
@@ -363,7 +363,7 @@ function IndustryEditor({
   return (
     <section>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h1 className="text-ink text-lg font-bold">
+        <h1 className="font-brand text-ink text-lg font-bold">
           {industry ? 'Edit Industry' : 'New Industry'}
         </h1>
         <button

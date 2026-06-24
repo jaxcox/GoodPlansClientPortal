@@ -51,7 +51,7 @@ export function ClientWelcomeCard({
     <div className="bg-ink border border-line rounded-xl p-6 mb-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-white text-xl font-bold mb-2">
+          <h2 className="font-brand text-white text-xl font-bold mb-2">
             Welcome to your Client Portal
           </h2>
           <p className="text-white text-sm mb-4 leading-relaxed">

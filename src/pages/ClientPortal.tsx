@@ -134,7 +134,8 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           When a force-change-password is required, the nav links are
           suppressed so the client can't navigate around the interstitial.
           Logout / Back stays available. */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-2">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
+       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-3 flex items-center flex-wrap gap-x-6 gap-y-2">
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-ink">
             {client.company_name}
@@ -145,7 +146,8 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-base sm:text-sm flex-wrap">
+        {/* Center: tab navigation. */}
+        <nav className="flex items-center gap-1 text-base sm:text-sm flex-wrap">
           <span data-tour="dashboard">
             <NavLink active={tab === 'dashboard'} onClick={() => guardedSetTab('dashboard')}>Dashboard</NavLink>
           </span>
@@ -164,15 +166,19 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           <span data-tour="settings">
             <NavLink active={tab === 'settings'} onClick={() => guardedSetTab('settings')}>Settings</NavLink>
           </span>
-          {/* Message button — same nav slot, label flips by viewer
-              role. Styled as a button (yellow accent, matches the
-              Shared Drive ↗ button alongside) since it triggers an
-              action rather than navigating to a tab. */}
+        </nav>
+        {/* Right: action buttons, pushed to the far right with ml-auto so
+            they stay right-aligned even when the row wraps, and kept
+            separate from the tab navigation. */}
+        <div className="flex items-center gap-2 text-base sm:text-sm flex-wrap ml-auto">
+          {/* Message button — label flips by viewer role. Yellow accent,
+              matches the Shared Drive ↗ button alongside, since it
+              triggers an action rather than navigating to a tab. */}
           <button
             type="button"
             data-tour="message"
             onClick={() => setMessageOpen(true)}
-            className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
+            className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded hover:brightness-95"
           >
             {coachView ? 'Message Client' : 'Message Coach'}
           </button>
@@ -181,7 +187,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
               href={client.shared_folder_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded ml-2 hover:brightness-95"
+              className="bg-accent text-black font-bold border border-accent px-3 py-2 sm:py-1 rounded hover:brightness-95"
               title={`Open ${client.company_name}'s shared folder`}
             >
               Shared Drive ↗
@@ -194,7 +200,7 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
             <button
               type="button"
               onClick={guardedBack}
-              className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
+              className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded hover:bg-surface-1"
             >
               Back
             </button>
@@ -202,11 +208,12 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
           <button
             type="button"
             onClick={guardedSignOut}
-            className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded ml-2 hover:bg-surface-1"
+            className="bg-surface-2 text-white border border-line px-3 py-2 sm:py-1 rounded hover:bg-surface-1"
           >
             Logout
           </button>
         </div>
+       </div>
       </header>
 
       {/* Body */}
