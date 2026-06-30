@@ -5,12 +5,12 @@
 // to the new auth user with a profile row. Atomic with rollback.
 //
 // Deploy:
-//   - Dashboard: Edge Functions → New function → paste this file → Deploy.
+//   - Dashboard: Edge Functions - New function - paste this file - Deploy.
 //   - CLI: `npm run functions:deploy` (after `npx supabase link`).
 //
-// Env vars (Supabase auto-injects the first two — nothing to set):
+// Env vars (Supabase auto-injects the first two - nothing to set):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-// Optional (for auto-enrolling the activated client in the Resend newsletter —
+// Optional (for auto-enrolling the activated client in the Resend newsletter -
 // see enrollInNewsletter below). If unset, enrollment is skipped silently:
 //   RESEND_CONTACTS_KEY     full-access Resend key (sending-only keys can't
 //                           write contacts). Falls back to RESEND_API_KEY.
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
   if (client.activated) {
     return jsonError(
       400,
-      'This account is already activated — sign in with your password instead.'
+      'This account is already activated - sign in with your password instead.'
     )
   }
   if (
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
   })
 
   if (profileErr) {
-    // Best-effort rollback — these may fail too, in which case manual cleanup
+    // Best-effort rollback - these may fail too, in which case manual cleanup
     // is needed in the Supabase dashboard.
     await admin
       .from('clients')
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
   // 4. Best-effort: enroll the freshly-activated client in the Resend
   //    newsletter (main Monday Question segment + the Clients segment) so they
   //    receive the weekly content automatically. This runs exactly once per
-  //    client — the `client.activated` guard above means we never reach here
+  //    client - the `client.activated` guard above means we never reach here
   //    twice, so there's no risk of re-subscribing someone who later opts out.
   //    Never blocks activation: any failure (or missing config) is swallowed.
   await enrollInNewsletter(email, client.contact_name ?? null)
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
 
 // Adds the client to Resend contacts and the configured segment(s). Mirrors the
 // marketing site's api/subscribe.js call so the two stay consistent. Requires a
-// FULL-ACCESS Resend key — sending-only keys can't write contacts — read from
+// FULL-ACCESS Resend key - sending-only keys can't write contacts - read from
 // RESEND_CONTACTS_KEY, falling back to RESEND_API_KEY. All failures are logged
 // and swallowed: enrollment is a nice-to-have, account activation is not.
 async function enrollInNewsletter(email: string, contactName: string | null) {
