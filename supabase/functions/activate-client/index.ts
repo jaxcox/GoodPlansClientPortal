@@ -8,8 +8,14 @@
 //   - Dashboard: Edge Functions → New function → paste this file → Deploy.
 //   - CLI: `npm run functions:deploy` (after `npx supabase link`).
 //
-// Env vars (Supabase auto-injects these — nothing to set):
+// Env vars (Supabase auto-injects the first two — nothing to set):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// Optional (for auto-enrolling the activated client in the Resend newsletter —
+// see enrollInNewsletter below). If unset, enrollment is skipped silently:
+//   RESEND_CONTACTS_KEY     full-access Resend key (sending-only keys can't
+//                           write contacts). Falls back to RESEND_API_KEY.
+//   RESEND_MAIN_SEGMENT_ID  the public Monday Question segment
+//   RESEND_CLIENTS_SEGMENT_ID  the Clients-only segment
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -56,7 +62,7 @@ Deno.serve(async (req) => {
   const { data: client, error: lookupErr } = await admin
     .from('clients')
     .select(
-      'id, coach_id, email, archived, activated, invite_code_expires_at'
+      'id, coach_id, email, contact_name, archived, activated, invite_code_expires_at'
     )
     .eq('invite_code', code)
     .eq('email', email)
@@ -134,11 +140,66 @@ Deno.serve(async (req) => {
     return jsonError(500, profileErr.message)
   }
 
+  // 4. Best-effort: enroll the freshly-activated client in the Resend
+  //    newsletter (main Monday Question segment + the Clients segment) so they
+  //    receive the weekly content automatically. This runs exactly once per
+  //    client — the `client.activated` guard above means we never reach here
+  //    twice, so there's no risk of re-subscribing someone who later opts out.
+  //    Never blocks activation: any failure (or missing config) is swallowed.
+  await enrollInNewsletter(email, client.contact_name ?? null)
+
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { ...cors, 'Content-Type': 'application/json' },
   })
 })
+
+// Adds the client to Resend contacts and the configured segment(s). Mirrors the
+// marketing site's api/subscribe.js call so the two stay consistent. Requires a
+// FULL-ACCESS Resend key — sending-only keys can't write contacts — read from
+// RESEND_CONTACTS_KEY, falling back to RESEND_API_KEY. All failures are logged
+// and swallowed: enrollment is a nice-to-have, account activation is not.
+async function enrollInNewsletter(email: string, contactName: string | null) {
+  const key =
+    Deno.env.get('RESEND_CONTACTS_KEY') ?? Deno.env.get('RESEND_API_KEY')
+  if (!key) return
+
+  const segments = [
+    Deno.env.get('RESEND_MAIN_SEGMENT_ID'),
+    Deno.env.get('RESEND_CLIENTS_SEGMENT_ID'),
+  ]
+    .filter((id): id is string => !!id)
+    .map((id) => ({ id }))
+
+  const [firstName, ...rest] = (contactName ?? '').trim().split(/\s+/)
+  const lastName = rest.join(' ')
+
+  try {
+    const res = await fetch('https://api.resend.com/contacts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        unsubscribed: false,
+        ...(firstName ? { first_name: firstName } : {}),
+        ...(lastName ? { last_name: lastName } : {}),
+        ...(segments.length ? { segments } : {}),
+      }),
+    })
+    if (!res.ok) {
+      console.error(
+        `Newsletter enroll failed for ${email}: ${res.status} ${await res
+          .text()
+          .catch(() => '')}`
+      )
+    }
+  } catch (err) {
+    console.error(`Newsletter enroll error for ${email}:`, err)
+  }
+}
 
 function jsonError(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {
