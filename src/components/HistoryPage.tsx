@@ -634,6 +634,11 @@ function HistoryTable({
             ))}
           </tbody>
         </table>
+        {/* Spacer so the last data row clears the horizontal scrollbar that
+            overlays the bottom edge. A real element's height is reliably part
+            of the scroll content, unlike padding-bottom, which Chrome/Safari
+            drop on scroll containers. */}
+        <div aria-hidden className="h-4" />
       </div>
     </div>
   )
