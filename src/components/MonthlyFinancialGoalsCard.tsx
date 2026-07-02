@@ -116,23 +116,32 @@ function MonthTile({
   return (
     <div
       className={`rounded-lg border overflow-hidden ${
-        month.isPast
-          ? 'border-line opacity-60'
-          : month.isAdjusted
-            ? 'border-accent'
-            : 'border-line'
+        month.incomplete
+          ? 'border-amber-400 opacity-75'
+          : month.isPast
+            ? 'border-line opacity-60'
+            : month.isAdjusted
+              ? 'border-accent'
+              : 'border-line'
       }`}
     >
       {/* White header — month label */}
       <div className="bg-white px-3 py-2 flex justify-between items-baseline border-b border-line">
         <div className="text-black text-sm font-bold">
           {label}
-          {month.isPast && ' ✓'}
+          {month.isPast && !month.incomplete && ' ✓'}
         </div>
-        {month.isAdjusted && !month.isPast && (
-          <div className="text-black text-xs font-semibold uppercase tracking-wider">
-            Adjusted
+        {month.incomplete ? (
+          <div className="text-amber-600 text-xs font-semibold uppercase tracking-wider">
+            Incomplete
           </div>
+        ) : (
+          month.isAdjusted &&
+          !month.isPast && (
+            <div className="text-black text-xs font-semibold uppercase tracking-wider">
+              Adjusted
+            </div>
+          )
         )}
       </div>
 

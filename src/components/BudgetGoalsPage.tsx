@@ -10,6 +10,7 @@ import {
   costOfGoodsPct,
   emptyMonthArray,
   evenSeasonPct,
+  monthlyProgramActuals,
 } from '../lib/budget'
 import type {
   Budget,
@@ -36,6 +37,11 @@ type Props = {
 export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
+  // The client's weekly entries — used to fill in per-month actuals for months
+  // that complete during the program (Monthly Financial Goals tab).
+  const [entries, setEntries] = useState<
+    { week_start_date: string; days: number; kpi_values: Record<string, number> }[]
+  >([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Form draft -------------------------------------------------------------
@@ -125,6 +131,21 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
       }
       setBudget((budgetData as Budget) ?? null)
       seedDraftFromBudget((budgetData as Budget) ?? null)
+
+      // Weekly entries drive the per-month actuals for months completed during
+      // the program. Only the three columns the month math needs are selected.
+      const { data: entryData } = await supabase
+        .from('weekly_entries')
+        .select('week_start_date, days, kpi_values')
+        .eq('client_id', clientId)
+      if (cancelled) return
+      setEntries(
+        (entryData as {
+          week_start_date: string
+          days: number
+          kpi_values: Record<string, number>
+        }[]) ?? []
+      )
     })()
     return () => {
       cancelled = true
@@ -192,9 +213,18 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
   const npPct = annualNetProfitPct(npDollars, annualRevenue ?? null)
   const seasonalSum = seasonPct.reduce((a, b) => a + (b || 0), 0)
 
+  // Per-month actuals for months that have completed during the program,
+  // aggregated from the client's weekly entries (with a complete/incomplete
+  // flag). Feeds the Monthly Financial Goals grid so the darkened + checked
+  // "past month" treatment continues as real months close.
+  const programActualsByMonth = useMemo(
+    () => monthlyProgramActuals(entries, year, budget?.ytd_thru_month ?? null),
+    [entries, year, budget]
+  )
+
   // YTD inputs come from the budget row directly — they're edited on
   // Settings now, not here. We still need them to compute the Monthly
-  // Financial Goals view (catch-up math reads YTD totals).
+  // Financial Goals view (catch-up math reads YTD + program actuals).
   const view = computeBudgetView({
     annualRevenue: annualRevenue ?? null,
     grossProfitPct: grossProfitPct ?? null,
@@ -209,6 +239,7 @@ export function BudgetGoalsPage({ clientId, onLeave }: Props) {
     ytdExpensesByMonth:
       (budget?.ytd_expenses_by_month as (number | null)[] | null) ??
       emptyMonthArray(),
+    programActualsByMonth,
   })
 
   // ---- Handlers ----------------------------------------------------------

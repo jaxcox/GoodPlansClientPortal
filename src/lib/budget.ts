@@ -1,4 +1,5 @@
 import type { Budget, SeasonType } from './types'
+import { dateFromIso, entryCoveredIsos, isoDate } from './week'
 
 export const MONTH_LABELS = [
   'Jan',
@@ -196,6 +197,11 @@ export type MonthlyGoal = {
   isPast: boolean
   /** True for future months when the GP gap pushed targets above the baseline. */
   isAdjusted: boolean
+  /** True for a past month that's calendar-complete but still missing one or
+   *  more weekly entries — the tile shows the actuals available so far and a
+   *  heads-up badge. Never set for YTD-import months (those are pre-loaded)
+   *  or future months. */
+  incomplete: boolean
   revenue: number
   cogs: number
   grossProfit: number
@@ -205,6 +211,17 @@ export type MonthlyGoal = {
   netProfit: number
   /** Computed Net Profit margin: NP$ ÷ Revenue × 100. 0 when revenue is 0. */
   netProfitPct: number
+}
+
+/** Per-month actuals for a month that completed DURING the program (after the
+ *  YTD-import window), aggregated from the client's weekly entries. */
+export type MonthActual = {
+  revenue: number
+  cogs: number
+  expenses: number
+  /** False when the month is calendar-complete but some of its weeks have no
+   *  saved entry yet. */
+  complete: boolean
 }
 
 export type BudgetView = {
@@ -238,6 +255,11 @@ type ComputeArgs = {
   ytdRevenueByMonth: (number | null)[] | null
   ytdCogsByMonth: (number | null)[] | null
   ytdExpensesByMonth: (number | null)[] | null
+  /** Actuals for months that have completed during the program (after the
+   *  YTD window, before the current month), keyed by month index (0–11).
+   *  Non-null entries are treated as past months showing real results, exactly
+   *  like YTD months. Omit (or leave null) to get YTD-only behavior. */
+  programActualsByMonth?: (MonthActual | null)[]
 }
 
 export function computeBudgetView(args: ComputeArgs): BudgetView | null {
@@ -251,6 +273,7 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
     ytdRevenueByMonth,
     ytdCogsByMonth,
     ytdExpensesByMonth,
+    programActualsByMonth,
   } = args
 
   if (annualRevenue == null || grossProfitPct == null) return null
@@ -282,43 +305,71 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
     (s) => annualRevenue * s
   )
 
-  // Step 2: actual YTD totals when the YTD window is set.
+  // Step 2: actuals to date. "Past" months are the YTD-import window
+  // (0..ytdThruMonth, actuals pre-loaded on the budget) PLUS any months that
+  // have since completed during the program, whose actuals arrive via
+  // programActualsByMonth (aggregated from weekly entries by the caller).
+  // Both kinds are treated identically here — real results the future months
+  // adjust around.
   const thru = ytdThruMonth ?? -1
   const hasYtd = thru >= 0
-  let ytdRevenueActual = 0
-  let ytdGpActual = 0
-  let ytdExpensesActual = 0
-  if (hasYtd) {
-    for (let i = 0; i <= thru && i < 12; i++) {
-      const r = Number(ytdRevenueByMonth?.[i] ?? 0)
-      const c = Number(ytdCogsByMonth?.[i] ?? 0)
-      const e = Number(ytdExpensesByMonth?.[i] ?? 0)
-      ytdRevenueActual += r
-      ytdGpActual += r - c
-      ytdExpensesActual += e
+  const prog = programActualsByMonth ?? []
+
+  // A month is "past" (shows actuals) if it's in the YTD window or has a
+  // program-actuals entry. Program months are contiguous after the YTD
+  // window, so pastThru is simply the last such month.
+  let pastThru = thru
+  for (let i = thru + 1; i < 12; i++) {
+    if (prog[i]) pastThru = i
+    else break
+  }
+  const hasPast = pastThru >= 0
+
+  // Actuals for a past month, from whichever source owns it.
+  const actualFor = (i: number): { r: number; c: number; e: number } | null => {
+    if (i <= thru && hasYtd) {
+      return {
+        r: Number(ytdRevenueByMonth?.[i] ?? 0),
+        c: Number(ytdCogsByMonth?.[i] ?? 0),
+        e: Number(ytdExpensesByMonth?.[i] ?? 0),
+      }
+    }
+    const a = prog[i]
+    if (a) return { r: a.revenue, c: a.cogs, e: a.expenses }
+    return null
+  }
+
+  // Totals across all past months (YTD + completed program months), plus the
+  // baseline that was planned for those same months — the gap between them
+  // drives the future-month adjustment.
+  let pastRevenueActual = 0
+  let pastGpActual = 0
+  let pastExpensesActual = 0
+  let pastRevenuePlanned = 0
+  for (let i = 0; i <= pastThru; i++) {
+    pastRevenuePlanned += baselineRevenue[i]
+    const a = actualFor(i)
+    if (a) {
+      pastRevenueActual += a.r
+      pastGpActual += a.r - a.c
+      pastExpensesActual += a.e
     }
   }
-  const ytdNetProfitActual = ytdGpActual - ytdExpensesActual
+  const pastNetProfitActual = pastGpActual - pastExpensesActual
+  const pastGpPlanned = pastRevenuePlanned * gpRate
 
-  // Step 3: planned YTD = sum of baseline through thru.
-  let ytdRevenuePlanned = 0
-  for (let i = 0; i <= thru && i < 12; i++) {
-    ytdRevenuePlanned += baselineRevenue[i]
-  }
-  const ytdGpPlanned = ytdRevenuePlanned * gpRate
+  const revenueGap = pastRevenueActual - pastRevenuePlanned // < 0 = behind
+  const gpGap = pastGpActual - pastGpPlanned
 
-  const revenueGap = ytdRevenueActual - ytdRevenuePlanned // < 0 = behind
-  const gpGap = ytdGpActual - ytdGpPlanned
-
-  // Step 4: build the per-month view, holding annual GP $ constant by
-  // distributing the remaining GP across future months by share weight.
+  // Step 3: build the per-month view, holding annual GP $ constant by
+  // distributing the remaining GP across the still-future months by share.
   const futureIdxs: number[] = []
-  for (let i = thru + 1; i < 12; i++) futureIdxs.push(i)
+  for (let i = pastThru + 1; i < 12; i++) futureIdxs.push(i)
   const futureShareSum = futureIdxs.reduce(
     (acc, i) => acc + monthShare[i],
     0
   )
-  const remainingGpNeeded = annualGp - ytdGpActual
+  const remainingGpNeeded = annualGp - pastGpActual
   const remainingRevenueNeeded = gpRate > 0 ? remainingGpNeeded / gpRate : 0
 
   let remainingRevenueSum = 0
@@ -327,29 +378,31 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
   const months: MonthlyGoal[] = []
 
   // Expenses are distributed by the same monthShare as revenue, but unlike GP
-  // they aren't auto-adjusted to close the YTD gap — they're an independent
+  // they aren't auto-adjusted to close the gap — they're an independent
   // operating-cost target. Past months show actual expenses; future months
   // show their share of the remaining annual expense pool.
-  const remainingAnnualExpenses = totalAnnualExpenses - ytdExpensesActual
+  const remainingAnnualExpenses = totalAnnualExpenses - pastExpensesActual
 
   for (let i = 0; i < 12; i++) {
-    if (i <= thru && hasYtd) {
-      const r = Number(ytdRevenueByMonth?.[i] ?? 0)
-      const c = Number(ytdCogsByMonth?.[i] ?? 0)
-      const e = Number(ytdExpensesByMonth?.[i] ?? 0)
-      const gp = r - c
-      const np = gp - e
+    const a = i <= pastThru ? actualFor(i) : null
+    if (a) {
+      const gp = a.r - a.c
+      const np = gp - a.e
+      // YTD-import months are pre-loaded and always complete; a program month
+      // is flagged incomplete when some of its weeks aren't entered yet.
+      const incomplete = i > thru && !!prog[i] && !prog[i]!.complete
       months.push({
         monthIdx: i,
         isPast: true,
         isAdjusted: false,
-        revenue: r,
-        cogs: c,
+        incomplete,
+        revenue: a.r,
+        cogs: a.c,
         grossProfit: gp,
-        gpPct: r > 0 ? (gp / r) * 100 : 0,
-        expenses: e,
+        gpPct: a.r > 0 ? (gp / a.r) * 100 : 0,
+        expenses: a.e,
         netProfit: np,
-        netProfitPct: r > 0 ? (np / r) * 100 : 0,
+        netProfitPct: a.r > 0 ? (np / a.r) * 100 : 0,
       })
     } else {
       const weight =
@@ -362,11 +415,12 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
       const expenses = remainingAnnualExpenses * weight
       const np = gp - expenses
       const baseline = baselineRevenue[i]
-      const isAdjusted = hasYtd && Math.abs(revenue - baseline) > 0.5
+      const isAdjusted = hasPast && Math.abs(revenue - baseline) > 0.5
       months.push({
         monthIdx: i,
         isPast: false,
         isAdjusted,
+        incomplete: false,
         revenue,
         cogs,
         grossProfit: gp,
@@ -383,17 +437,87 @@ export function computeBudgetView(args: ComputeArgs): BudgetView | null {
 
   return {
     months,
-    ytdRevenueActual,
-    ytdRevenuePlanned,
+    ytdRevenueActual: pastRevenueActual,
+    ytdRevenuePlanned: pastRevenuePlanned,
     revenueGap,
-    ytdGpActual,
-    ytdGpPlanned,
+    ytdGpActual: pastGpActual,
+    ytdGpPlanned: pastGpPlanned,
     gpGap,
-    ytdExpensesActual,
-    ytdNetProfitActual,
+    ytdExpensesActual: pastExpensesActual,
+    ytdNetProfitActual: pastNetProfitActual,
     remainingMonths: futureIdxs.length,
     remainingRevenue: remainingRevenueSum || remainingRevenueNeeded,
     remainingGrossProfit: remainingGpSum || remainingGpNeeded,
     remainingNetProfit: remainingNpSum,
   }
+}
+
+/** Aggregate weekly entries into per-month actuals for the months that
+ *  completed DURING the program — i.e. after the YTD-import window
+ *  (`ytdThruMonth`) and strictly before the current, in-progress month.
+ *  Returns a length-12 array; only those months are non-null (feed it
+ *  straight to `computeBudgetView`'s `programActualsByMonth`).
+ *
+ *  Attribution: each entry's revenue / COGS / expenses land in the month of
+ *  its `week_start_date`. Boundary weeks are stored as two partial rows (one
+ *  per month, each starting in its own month), so this is exact — no day-
+ *  splitting needed here.
+ *
+ *  Completeness: a month is `complete` only when every one of its days is
+ *  covered by some saved entry's date range. A closed week still counts as
+ *  covered (it's a real zero-revenue week), so an intentionally-closed
+ *  business doesn't read as "incomplete". */
+export function monthlyProgramActuals(
+  entries: {
+    week_start_date: string
+    days: number
+    kpi_values: Record<string, number>
+  }[],
+  year: number,
+  ytdThruMonth: number | null,
+  today: Date = new Date()
+): (MonthActual | null)[] {
+  const byMonth: (MonthActual | null)[] = Array(12).fill(null)
+  const thru = ytdThruMonth ?? -1
+
+  // Last calendar-complete month for this budget year.
+  let calThru: number
+  if (year < today.getFullYear()) calThru = 11
+  else if (year > today.getFullYear()) calThru = -1
+  else calThru = today.getMonth() - 1
+
+  if (calThru <= thru) return byMonth
+
+  const covered = new Set<string>()
+  const sums = Array.from({ length: 12 }, () => ({
+    revenue: 0,
+    cogs: 0,
+    expenses: 0,
+  }))
+  const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0)
+
+  for (const e of entries) {
+    for (const iso of entryCoveredIsos(e.week_start_date, e.days)) {
+      covered.add(iso)
+    }
+    const d = dateFromIso(e.week_start_date)
+    if (d.getFullYear() !== year) continue
+    const m = d.getMonth()
+    sums[m].revenue += num(e.kpi_values?.revenue)
+    sums[m].cogs += num(e.kpi_values?.cogs)
+    sums[m].expenses += num(e.kpi_values?.expenses)
+  }
+
+  for (let m = thru + 1; m <= calThru; m++) {
+    const lastDay = new Date(year, m + 1, 0).getDate()
+    let complete = true
+    for (let day = 1; day <= lastDay; day++) {
+      if (!covered.has(isoDate(new Date(year, m, day)))) {
+        complete = false
+        break
+      }
+    }
+    byMonth[m] = { ...sums[m], complete }
+  }
+  return byMonth
 }
