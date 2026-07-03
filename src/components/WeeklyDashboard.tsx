@@ -404,12 +404,40 @@ export function WeeklyDashboard({
   }, [client])
 
   // activeMonth drives every cumulative-period calc (entriesInPeriod,
-  // periodLabel, ytdActualsContribution, CumulativeKpiGrid). Falls
-  // through to currentMonth when the user hasn't picked a past period —
-  // the dashboard reads "month-to-date through today" exactly as before.
+  // periodLabel, ytdActualsContribution, CumulativeKpiGrid).
   // (today/currentYear/currentMonth are declared earlier in the function
   // body because the year-boundary weeklyBudget memo needs them.)
-  const activeMonth = pickedPeriodMonth ?? currentMonth
+  //
+  // When the user hasn't picked a period, default to the current one — UNLESS
+  // the current month/quarter has no entries yet (e.g. the first days of a new
+  // month or quarter), in which case fall back to the most recent period that
+  // does have data, so the roll-up opens on real numbers instead of an empty
+  // screen. A current period that already has entries is unchanged, and
+  // YTD/weekly are never remapped (only MTD/QTD have this empty-start problem).
+  const defaultAnchorMonth = useMemo(() => {
+    if (mode !== 'mtd' && mode !== 'qtd') return currentMonth
+    const monthsWithData = new Set<number>()
+    for (const e of entries) {
+      const d = dateFromIso(e.week_start_date)
+      if (d.getFullYear() === currentYear) monthsWithData.add(d.getMonth())
+    }
+    if (monthsWithData.size === 0) return currentMonth
+    const priorOrEqual = [...monthsWithData].filter((m) => m <= currentMonth)
+    const mostRecentWithData =
+      priorOrEqual.length > 0
+        ? Math.max(...priorOrEqual)
+        : Math.max(...monthsWithData)
+    if (mode === 'qtd') {
+      const curQ = quarterFromMonth(currentMonth)
+      const currentQuarterHasData = [...monthsWithData].some(
+        (m) => m <= currentMonth && quarterFromMonth(m) === curQ
+      )
+      return currentQuarterHasData ? currentMonth : mostRecentWithData
+    }
+    return monthsWithData.has(currentMonth) ? currentMonth : mostRecentWithData
+  }, [entries, currentYear, currentMonth, mode])
+
+  const activeMonth = pickedPeriodMonth ?? defaultAnchorMonth
   const isPastPeriod = activeMonth !== currentMonth
 
   // Reset the picked period whenever the mode pill changes so MTD →
@@ -978,9 +1006,7 @@ export function WeeklyDashboard({
         currentYear={currentYear}
         currentMonth={currentMonth}
         activeMonth={activeMonth}
-        onPickPeriod={(m) =>
-          setPickedPeriodMonth(m === currentMonth ? null : m)
-        }
+        onPickPeriod={(m) => setPickedPeriodMonth(m)}
         onDownloadReport={reportData ? onDownloadReport : undefined}
         downloading={downloading}
       />
