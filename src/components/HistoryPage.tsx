@@ -56,14 +56,24 @@ export function HistoryPage({ clientId }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadingEntries, setLoadingEntries] = useState(false)
 
-  // Default date range — Quarter-to-Date: from the first day of the
-  // current calendar quarter through today.
+  // Default date range — the most recent COMPLETED calendar quarter (the one
+  // before the current, in-progress quarter). The current quarter often has no
+  // finished weeks yet, especially early in it, which left History blank; the
+  // last completed quarter always reflects a full, finished period.
   const defaultRange = useMemo(() => {
     const today = new Date()
-    const q = Math.floor(today.getMonth() / 3) // 0..3 for current quarter
+    const curQ = Math.floor(today.getMonth() / 3) // 0..3, current quarter
+    // Step back one quarter, rolling into the prior year from Q1.
+    let year = today.getFullYear()
+    let q = curQ - 1
+    if (q < 0) {
+      q = 3
+      year -= 1
+    }
+    const startMonth = q * 3
     return {
-      from: isoDate(new Date(today.getFullYear(), q * 3, 1)),
-      to: isoDate(today),
+      from: isoDate(new Date(year, startMonth, 1)),
+      to: isoDate(new Date(year, startMonth + 3, 0)), // last day of the quarter
     }
   }, [])
 
