@@ -32,6 +32,7 @@ import {
   formatWeekShort,
   isoDate,
   missedWeeksBetween,
+  monthBoundaryInWeek,
   mostRecentCompletedWeekStart,
   shiftWeek,
   weekStartSunday,
@@ -238,6 +239,24 @@ export function WeeklyDashboard({
     )
   }, [entries, selectedWeekStart])
 
+  // Boundary-week combine: a week that crosses a month (and possibly year)
+  // boundary is stored as two partial rows — Partial A at the Sunday
+  // (displayedEntry above) and Partial B at the 1st of the next month. The
+  // weekly view always shows the FULL week, so when both halves exist we
+  // aggregate their actuals (identical logic to how MTD rolls weeks up via
+  // aggregateKpi) and sum their per-month goals. MTD/QTD/YTD still file each
+  // half under its own month; this only changes the single-week card.
+  const boundary = useMemo(
+    () => monthBoundaryInWeek(selectedWeekStart),
+    [selectedWeekStart]
+  )
+  const partialB = useMemo<WeeklyEntry | null>(() => {
+    if (!boundary) return null
+    return (
+      entries.find((e) => e.week_start_date === boundary.b.startIso) ?? null
+    )
+  }, [boundary, entries])
+
   // Prior-week entry for week-over-week deltas: exactly 7 days before the
   // displayed entry. Null when no such row exists.
   const priorEntry = useMemo(() => {
@@ -403,6 +422,87 @@ export function WeeklyDashboard({
     return out
   }, [client])
 
+  // Side-aware goal context for one partial of a boundary week — resolved
+  // against its OWN year (same-year halves share the displayed-year budget; a
+  // Dec/Jan week's other half uses the current-year view, which is loaded
+  // during the Dec–Jan viewing window).
+  const goalContextForEntry = (entry: WeeklyEntry): WeeklyGoalCtx => {
+    const d = dateFromIso(entry.week_start_date)
+    const month = d.getMonth()
+    if (d.getFullYear() === currentYear && currentYear !== displayedYear) {
+      return {
+        monthlyGoal:
+          budgetView?.months.find((m) => m.monthIdx === month) ?? null,
+        monthShares,
+        kpiGoals,
+        enabledIds,
+        annualRevenue:
+          budget?.annual_revenue != null
+            ? Number(budget.annual_revenue)
+            : undefined,
+      }
+    }
+    return {
+      monthlyGoal:
+        weeklyBudgetView?.months.find((m) => m.monthIdx === month) ?? null,
+      monthShares: weeklyMonthShares,
+      kpiGoals: weeklyKpiGoals,
+      enabledIds,
+      annualRevenue:
+        weeklyBudget?.annual_revenue != null
+          ? Number(weeklyBudget.annual_revenue)
+          : undefined,
+    }
+  }
+
+  // Full-week combined value+goal per KPI id for a filled-in boundary week
+  // (null for a normal week). Drives the on-screen weekly tiles so the single-
+  // week card shows the WHOLE week; MTD/QTD/YTD still attribute each half to
+  // its own month.
+  const combinedTiles = useMemo<Map<
+    string,
+    { value: number | null; goal: number | null }
+  > | null>(() => {
+    if (!partialB || !displayedEntry || !client) return null
+    const ctxA = goalContextForEntry(displayedEntry)
+    const ctxB = goalContextForEntry(partialB)
+    const map = new Map<
+      string,
+      { value: number | null; goal: number | null }
+    >()
+    for (const kpi of visibleTileKpis(client)) {
+      map.set(
+        kpi.id,
+        combinedStandardTile(kpi, displayedEntry, partialB, ctxA, ctxB)
+      )
+    }
+    for (const custom of (client.custom_kpis ?? []).filter(
+      (c) => c.active !== false
+    )) {
+      map.set(
+        custom.id,
+        combinedCustomTile(custom, displayedEntry, partialB, ctxA, ctxB)
+      )
+    }
+    return map
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    partialB,
+    displayedEntry,
+    client,
+    budgetView,
+    weeklyBudgetView,
+    monthShares,
+    weeklyMonthShares,
+    kpiGoals,
+    weeklyKpiGoals,
+    budget,
+    weeklyBudget,
+    currentYear,
+    displayedYear,
+    enabledIds,
+  ])
+
   // activeMonth drives every cumulative-period calc (entriesInPeriod,
   // periodLabel, ytdActualsContribution, CumulativeKpiGrid).
   // (today/currentYear/currentMonth are declared earlier in the function
@@ -496,9 +596,6 @@ export function WeeklyDashboard({
     if (mode === 'weekly') {
       if (!displayedEntry) return null
       const groups = client.capacity_groups ?? []
-      const weeklyEntryStart = dateFromIso(displayedEntry.week_start_date)
-      const entryMonth = weeklyEntryStart.getMonth()
-      const entryYear = weeklyEntryStart.getFullYear()
       const capacityGroupGoalsArg = (weeklyBudget?.capacity_group_goals ??
         {}) as Record<string, CapacityGroupGoal>
       // Weekly capacity row builder — mirrors CapacityTile / LaborHoursTile
@@ -507,23 +604,45 @@ export function WeeklyDashboard({
         return reportCapacityGroups.map((g) => {
           const cv = (displayedEntry.capacity_values ?? {})[g.id]
           const cap = groupMaxCapacity(g)
+          // Full-week combine on a boundary week: non-manual methods sum
+          // their raw value across both halves; manual % is averaged.
+          const combinedRaw = partialB
+            ? aggregateCapacityValue(g, [displayedEntry, partialB])
+            : null
           // Utilization cell — value depends on method.
           let utilPct: number | null = null
           let utilValueRaw: number | null = null
           if (g.method === 'manual') {
-            const v = cv as { utilizationPct?: number } | undefined
-            utilPct = v?.utilizationPct ?? g.staticUtilPct ?? null
+            if (partialB) {
+              const vals: number[] = []
+              for (const e of [displayedEntry, partialB]) {
+                const u = (e.capacity_values ?? {})[g.id] as
+                  | { utilizationPct?: number }
+                  | undefined
+                if (
+                  typeof u?.utilizationPct === 'number' &&
+                  Number.isFinite(u.utilizationPct)
+                )
+                  vals.push(u.utilizationPct)
+              }
+              utilPct = vals.length
+                ? vals.reduce((s, v) => s + v, 0) / vals.length
+                : g.staticUtilPct ?? null
+            } else {
+              const v = cv as { utilizationPct?: number } | undefined
+              utilPct = v?.utilizationPct ?? g.staticUtilPct ?? null
+            }
           } else if (g.method === 'slots') {
             const v = cv as { slotsFilled?: number } | undefined
-            const filled = v?.slotsFilled ?? 0
+            const filled = combinedRaw ?? v?.slotsFilled ?? 0
             utilPct = cap ? (filled / cap) * 100 : null
           } else if (g.method === 'labor') {
             const v = cv as { producedHours?: number } | undefined
-            const produced = v?.producedHours ?? 0
+            const produced = combinedRaw ?? v?.producedHours ?? 0
             utilPct = cap ? (produced / cap) * 100 : null
           } else if (g.method === 'revenue') {
             const v = cv as { revenueProduced?: number } | undefined
-            const produced = v?.revenueProduced ?? 0
+            const produced = combinedRaw ?? v?.revenueProduced ?? 0
             utilValueRaw = produced
             utilPct = cap ? (produced / cap) * 100 : null
           } else if (g.method === 'headcount') {
@@ -537,7 +656,7 @@ export function WeeklyDashboard({
               (s, d) => s + (d.hoursWorked ?? 0),
               0
             )
-            const totalWorked = v?.hoursWorked ?? legacy
+            const totalWorked = combinedRaw ?? v?.hoursWorked ?? legacy
             utilPct = cap ? (totalWorked / cap) * 100 : null
           }
           const gGoal = capacityGroupGoalsArg[g.id]
@@ -555,7 +674,7 @@ export function WeeklyDashboard({
           let laborEfficiency: CapacityCell | null = null
           if (g.method === 'labor') {
             const v = cv as { producedHours?: number } | undefined
-            const produced = v?.producedHours ?? 0
+            const produced = combinedRaw ?? v?.producedHours ?? 0
             const laborHrsGoal = gGoal?.laborHoursGoal
             laborHours = {
               format: '#',
@@ -591,24 +710,82 @@ export function WeeklyDashboard({
         })
       }
 
+      // --- Full-week combine (boundary weeks) -----------------------------
+      // The rows that make up the displayed week: one for a normal week, both
+      // partials for a filled-in month/year boundary week.
+      const weekEntries: WeeklyEntry[] = partialB
+        ? [displayedEntry, partialB]
+        : [displayedEntry]
+      // Goal context (monthly goal + shares + kpi goals + annual revenue) for
+      // a partial, resolved against its OWN year: same-year halves share the
+      // displayed-year budget; a Dec/Jan week's other half draws on the
+      // current-year budget view (both are loaded during the Dec–Jan window).
+      const goalContextFor = (entry: WeeklyEntry) => {
+        const d = dateFromIso(entry.week_start_date)
+        const month = d.getMonth()
+        if (d.getFullYear() === currentYear && currentYear !== displayedYear) {
+          return {
+            monthlyGoal:
+              budgetView?.months.find((m) => m.monthIdx === month) ?? null,
+            monthShares,
+            kpiGoals,
+            annualRevenue:
+              budget?.annual_revenue != null
+                ? Number(budget.annual_revenue)
+                : undefined,
+          }
+        }
+        return {
+          monthlyGoal:
+            weeklyBudgetView?.months.find((m) => m.monthIdx === month) ?? null,
+          monthShares: weeklyMonthShares,
+          kpiGoals: weeklyKpiGoals,
+          annualRevenue:
+            weeklyBudget?.annual_revenue != null
+              ? Number(weeklyBudget.annual_revenue)
+              : undefined,
+        }
+      }
+      // Combined full-week goal: flow KPIs (aggregation 'sum') pro-rate by each
+      // half's days and add up; ratios / averages / balances carry a flat
+      // period goal (identical either side), so take one side.
+      const combinedGoal = (kpi: KpiDef): number | null => {
+        const ctxA = goalContextFor(displayedEntry)
+        const gA = weeklyGoal({
+          kpi,
+          entry: displayedEntry,
+          client,
+          monthlyGoal: ctxA.monthlyGoal,
+          monthShares: ctxA.monthShares,
+          kpiGoals: ctxA.kpiGoals,
+          enabledIds,
+          annualRevenue: ctxA.annualRevenue,
+        })
+        if (!partialB) return gA
+        const ctxB = goalContextFor(partialB)
+        const gB = weeklyGoal({
+          kpi,
+          entry: partialB,
+          client,
+          monthlyGoal: ctxB.monthlyGoal,
+          monthShares: ctxB.monthShares,
+          kpiGoals: ctxB.kpiGoals,
+          enabledIds,
+          annualRevenue: ctxB.annualRevenue,
+        })
+        if (kpi.aggregation !== 'sum') return gA ?? gB
+        if (gA == null && gB == null) return null
+        return (gA ?? 0) + (gB ?? 0)
+      }
+
       const sections = CATEGORIES.map((cat) => {
         const kpis = byCategory.get(cat) ?? []
         const customs = activeCustomKpis.filter((c) => c.category === cat)
         const standardRows = kpis.map((kpi) => {
-          const value = actualValue(kpi.id, displayedEntry, groups)
-          const goal = weeklyGoal({
-            kpi,
-            entry: displayedEntry,
-            client,
-            monthlyGoal: entryMonthlyGoal,
-            monthShares: weeklyMonthShares,
-            kpiGoals: weeklyKpiGoals,
-            enabledIds,
-            annualRevenue:
-              weeklyBudget?.annual_revenue != null
-                ? Number(weeklyBudget.annual_revenue)
-                : undefined,
-          })
+          const value = partialB
+            ? aggregateKpi(kpi, weekEntries)
+            : actualValue(kpi.id, displayedEntry, groups)
+          const goal = combinedGoal(kpi)
           return {
             label: kpi.label,
             format: kpi.format,
@@ -622,18 +799,28 @@ export function WeeklyDashboard({
         // sum/$ KPIs: $/# stored as annual + pro-rated to the week; %
         // stays flat. Mirrors CustomTile in this file.
         const customRows = customs.map((custom) => {
-          const value =
-            (displayedEntry.kpi_values ?? {})[custom.id] ?? null
+          const value = partialB
+            ? aggregateCustomKpi(custom, weekEntries)
+            : ((displayedEntry.kpi_values ?? {})[custom.id] ?? null)
           const rawGoal = weeklyKpiGoals[custom.id]
           let goal: number | null = null
           if (typeof rawGoal === 'number' && Number.isFinite(rawGoal)) {
             if (custom.format === '%') {
+              // Ratio goal is flat across the period.
               goal = rawGoal
             } else {
-              const share = weeklyMonthShares[entryMonth] ?? 1 / 12
-              const frac =
-                (displayedEntry.days ?? 7) / daysInMonth(entryYear, entryMonth)
-              goal = rawGoal * share * frac
+              // $/# custom: pro-rate by each half's days and sum both sides.
+              const sideGoal = (entry: WeeklyEntry, shares: number[]) => {
+                const d = dateFromIso(entry.week_start_date)
+                const share = shares[d.getMonth()] ?? 1 / 12
+                const frac =
+                  (entry.days ?? 7) / daysInMonth(d.getFullYear(), d.getMonth())
+                return rawGoal * share * frac
+              }
+              goal = sideGoal(displayedEntry, weeklyMonthShares)
+              if (partialB) {
+                goal += sideGoal(partialB, goalContextFor(partialB).monthShares)
+              }
             }
           }
           return {
@@ -1082,6 +1269,8 @@ export function WeeklyDashboard({
               CapacityGroupGoal
             >
           }
+          combined={combinedTiles}
+          entryB={partialB}
         />
       )}
 
@@ -1414,6 +1603,8 @@ function KpiGrid({
   enabledIds,
   annualRevenue,
   capacityGroupGoals,
+  combined,
+  entryB,
 }: {
   client: Client
   entry: WeeklyEntry
@@ -1424,6 +1615,8 @@ function KpiGrid({
   enabledIds: Set<string>
   annualRevenue: number | undefined
   capacityGroupGoals: Record<string, CapacityGroupGoal>
+  combined: CombinedTileMap
+  entryB: WeeklyEntry | null
 }) {
   const visible = visibleTileKpis(client)
   const customKpis = (client.custom_kpis ?? []).filter(
@@ -1447,6 +1640,8 @@ function KpiGrid({
           capacityGroupGoals={capacityGroupGoals}
           standardKpis={visible.filter((k) => k.category === cat)}
           customKpis={customKpis.filter((c) => c.category === cat)}
+          combined={combined}
+          entryB={entryB}
           capacityGroups={
             cat === 'Team' &&
             Number(client.kpis?.capacityUtilization) === 1
@@ -1473,6 +1668,8 @@ function CategorySection({
   standardKpis,
   customKpis,
   capacityGroups,
+  combined,
+  entryB,
 }: {
   category: KpiCategory
   client: Client
@@ -1487,6 +1684,8 @@ function CategorySection({
   standardKpis: ReturnType<typeof visibleTileKpis>
   customKpis: CustomKpi[]
   capacityGroups: CapacityGroup[]
+  combined: CombinedTileMap
+  entryB: WeeklyEntry | null
 }) {
   // Hide categories with nothing in them. Empty Overall Company never
   // renders a header.
@@ -1532,6 +1731,7 @@ function CategorySection({
       enabledIds={enabledIds}
       annualRevenue={annualRevenue}
       client={client}
+      combined={combined}
     />
   )
 
@@ -1560,6 +1760,7 @@ function CategorySection({
                       enabledIds={enabledIds}
                       annualRevenue={annualRevenue}
                       client={client}
+                      combined={combined}
                       showPacebar
                       compact
                       tall
@@ -1579,6 +1780,7 @@ function CategorySection({
                     priorEntry={priorEntry}
                     goal={kpiGoals[c.id]}
                     monthShares={monthShares}
+                    combined={combined}
                   />
                 ))}
               </TileGrid>
@@ -1607,6 +1809,7 @@ function CategorySection({
             <CapacityTile
               group={g}
               entry={entry}
+              entryB={entryB}
               goal={capacityGroupGoals[g.id]}
             />
             {g.method === 'labor' && (
@@ -1614,12 +1817,14 @@ function CategorySection({
                 <LaborHoursTile
                   group={g}
                   entry={entry}
+                  entryB={entryB}
                   goal={capacityGroupGoals[g.id]?.laborHoursGoal}
                 />
                 {!g.hideLaborEfficiency && (
                   <LaborEfficiencyTile
                     group={g}
                     entry={entry}
+                    entryB={entryB}
                     goal={capacityGroupGoals[g.id]?.laborEfficiencyGoal}
                   />
                 )}
@@ -1647,6 +1852,7 @@ function CategorySection({
                 enabledIds={enabledIds}
                 annualRevenue={annualRevenue}
                 client={client}
+                combined={combined}
               />
             ))}
           </TileGrid>
@@ -1662,6 +1868,90 @@ function TileGrid({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   )
+}
+
+// =============================================================================
+// Boundary-week combine — full-week value + goal from both partial halves
+// =============================================================================
+// A week that crosses a month (and possibly year) boundary is stored as two
+// rows. The weekly view always shows the FULL week: actuals aggregate exactly
+// as MTD does (aggregateKpi / aggregateCustomKpi), flow goals ('sum') pro-rate
+// per half and add up, and ratio / average / balance goals stay flat.
+
+/** Per-KPI combined full-week value+goal for a boundary week; null on a
+ *  normal (single-entry) week. Keyed by KPI id (standard) or custom id. */
+type CombinedTileMap =
+  | Map<string, { value: number | null; goal: number | null }>
+  | null
+
+/** Per-half goal context, resolved against that half's own year. */
+type WeeklyGoalCtx = {
+  monthlyGoal: MonthlyGoal | null
+  monthShares: number[]
+  kpiGoals: Record<string, number>
+  enabledIds: Set<string>
+  annualRevenue: number | undefined
+}
+
+/** Combined value + goal for a standard KPI across both partial halves. */
+function combinedStandardTile(
+  kpi: KpiDef,
+  entryA: WeeklyEntry,
+  entryB: WeeklyEntry,
+  ctxA: WeeklyGoalCtx,
+  ctxB: WeeklyGoalCtx
+): { value: number | null; goal: number | null } {
+  const goalFor = (entry: WeeklyEntry, ctx: WeeklyGoalCtx) =>
+    weeklyGoal({
+      kpi,
+      entry,
+      client: {} as Client,
+      monthlyGoal: ctx.monthlyGoal,
+      monthShares: ctx.monthShares,
+      kpiGoals: ctx.kpiGoals,
+      enabledIds: ctx.enabledIds,
+      annualRevenue: ctx.annualRevenue,
+    })
+  const gA = goalFor(entryA, ctxA)
+  const gB = goalFor(entryB, ctxB)
+  const goal =
+    kpi.aggregation === 'sum'
+      ? gA == null && gB == null
+        ? null
+        : (gA ?? 0) + (gB ?? 0)
+      : (gA ?? gB)
+  return { value: aggregateKpi(kpi, [entryA, entryB]), goal }
+}
+
+/** Combined value + goal for a custom KPI across both partial halves. */
+function combinedCustomTile(
+  custom: CustomKpi,
+  entryA: WeeklyEntry,
+  entryB: WeeklyEntry,
+  ctxA: WeeklyGoalCtx,
+  ctxB: WeeklyGoalCtx
+): { value: number | null; goal: number | null } {
+  const value = aggregateCustomKpi(custom, [entryA, entryB])
+  const rawA = ctxA.kpiGoals[custom.id]
+  const rawB = ctxB.kpiGoals[custom.id]
+  let goal: number | null = null
+  if (custom.format === '%') {
+    // Ratio goal is flat across the period.
+    goal = Number.isFinite(rawA) ? rawA : Number.isFinite(rawB) ? rawB : null
+  } else {
+    // $/# custom: pro-rate each half by its days and sum.
+    const side = (entry: WeeklyEntry, shares: number[], raw: number) => {
+      if (!Number.isFinite(raw)) return null
+      const d = dateFromIso(entry.week_start_date)
+      const share = shares[d.getMonth()] ?? 1 / 12
+      const frac = (entry.days ?? 7) / daysInMonth(d.getFullYear(), d.getMonth())
+      return raw * share * frac
+    }
+    const a = side(entryA, ctxA.monthShares, rawA)
+    const b = side(entryB, ctxB.monthShares, rawB)
+    goal = a == null && b == null ? null : (a ?? 0) + (b ?? 0)
+  }
+  return { value, goal }
 }
 
 // =============================================================================
@@ -1687,6 +1977,7 @@ function FinancialsRowTile({
   compact = false,
   lightBgHex,
   tall = false,
+  combined,
 }: {
   kpi: KpiDef
   entry: WeeklyEntry
@@ -1710,19 +2001,23 @@ function FinancialsRowTile({
    *  the value text gets bigger to fill the space. Used for primary
    *  KPIs that get a 1/4-page-wide but tall tile. */
   tall?: boolean
+  combined?: CombinedTileMap
 }) {
   const groups = client.capacity_groups ?? []
-  const value = actualValue(kpi.id, entry, groups)
-  const goal = weeklyGoal({
-    kpi,
-    entry,
-    client: {} as Client,
-    monthlyGoal,
-    monthShares,
-    kpiGoals,
-    enabledIds,
-    annualRevenue,
-  })
+  const override = combined?.get(kpi.id)
+  const value = override ? override.value : actualValue(kpi.id, entry, groups)
+  const goal = override
+    ? override.goal
+    : weeklyGoal({
+        kpi,
+        entry,
+        client: {} as Client,
+        monthlyGoal,
+        monthShares,
+        kpiGoals,
+        enabledIds,
+        annualRevenue,
+      })
   const direction = kpi.direction ?? 'hi'
   const range = kpi.range ?? false
   const pacebarBand = computeBand({ value, goal, direction, range })
@@ -1843,6 +2138,7 @@ function StandardTile({
   enabledIds,
   annualRevenue,
   client,
+  combined,
 }: {
   kpi: KpiDef
   entry: WeeklyEntry
@@ -1853,23 +2149,27 @@ function StandardTile({
   enabledIds: Set<string>
   annualRevenue: number | undefined
   client: Client
+  combined?: CombinedTileMap
 }) {
   if (!kpi) return null
   const groups = client.capacity_groups ?? []
-  const value = actualValue(kpi.id, entry, groups)
+  const override = combined?.get(kpi.id)
+  const value = override ? override.value : actualValue(kpi.id, entry, groups)
   const prior = priorEntry ? actualValue(kpi.id, priorEntry, groups) : null
   const delta =
     value != null && prior != null ? value - prior : null
-  const goal = weeklyGoal({
-    kpi,
-    entry,
-    client: {} as Client,
-    monthlyGoal,
-    monthShares,
-    kpiGoals,
-    enabledIds,
-    annualRevenue,
-  })
+  const goal = override
+    ? override.goal
+    : weeklyGoal({
+        kpi,
+        entry,
+        client: {} as Client,
+        monthlyGoal,
+        monthShares,
+        kpiGoals,
+        enabledIds,
+        annualRevenue,
+      })
 
   return (
     <KpiTile
@@ -1891,14 +2191,19 @@ function CustomTile({
   priorEntry,
   goal,
   monthShares,
+  combined,
 }: {
   custom: CustomKpi
   entry: WeeklyEntry
   priorEntry: WeeklyEntry | null
   goal: number | undefined
   monthShares: number[]
+  combined?: CombinedTileMap
 }) {
-  const value = (entry.kpi_values ?? {})[custom.id] ?? null
+  const override = combined?.get(custom.id)
+  const value = override
+    ? override.value
+    : ((entry.kpi_values ?? {})[custom.id] ?? null)
   const prior = priorEntry
     ? (priorEntry.kpi_values ?? {})[custom.id] ?? null
     : null
@@ -1910,7 +2215,9 @@ function CustomTile({
   // share × (7 / days in month). % goals are flat rates and stay
   // as-is across periods.
   let weeklyG: number | null = null
-  if (goal != null && goal !== 0) {
+  if (override) {
+    weeklyG = override.goal
+  } else if (goal != null && goal !== 0) {
     if (custom.format === '%') {
       weeklyG = goal
     } else {
@@ -1943,16 +2250,21 @@ function CustomTile({
 function LaborHoursTile({
   group,
   entry,
+  entryB,
   goal,
 }: {
   group: CapacityGroup
   entry: WeeklyEntry
+  entryB: WeeklyEntry | null
   goal: number | undefined
 }) {
   const cv = (entry.capacity_values ?? {})[group.id] as
     | { producedHours?: number }
     | undefined
-  const produced = cv?.producedHours ?? 0
+  // Full-week combine: sum produced hours across both boundary halves.
+  const produced = entryB
+    ? aggregateCapacityValue(group, [entry, entryB]) ?? 0
+    : cv?.producedHours ?? 0
   const value = produced > 0 ? produced : null
   const band = computeBand({
     value,
@@ -1994,16 +2306,22 @@ function LaborHoursTile({
 function LaborEfficiencyTile({
   group,
   entry,
+  entryB,
   goal,
 }: {
   group: CapacityGroup
   entry: WeeklyEntry
+  entryB: WeeklyEntry | null
   goal: number | undefined
 }) {
   const cv = (entry.capacity_values ?? {})[group.id] as
     | { producedHours?: number }
     | undefined
-  const produced = cv?.producedHours ?? 0
+  // Full-week combine: sum produced hours across both boundary halves;
+  // working hours are the group's full weekly schedule.
+  const produced = entryB
+    ? aggregateCapacityValue(group, [entry, entryB]) ?? 0
+    : cv?.producedHours ?? 0
   const working = groupWorkingHours(group)
   const pct = working > 0 ? (produced / working) * 100 : null
   const band = computeBand({
@@ -2052,15 +2370,23 @@ function LaborEfficiencyTile({
 function CapacityTile({
   group,
   entry,
+  entryB,
   goal,
 }: {
   group: CapacityGroup
   entry: WeeklyEntry
+  entryB: WeeklyEntry | null
   /** Capacity group goal from budget.capacity_group_goals[group.id]. */
   goal: CapacityGroupGoal | undefined
 }) {
   const cv = (entry.capacity_values ?? {})[group.id]
   const cap = groupMaxCapacity(group)
+  // Full-week combine: non-manual methods sum their raw value across both
+  // boundary halves (manual % is averaged in its branch below). Capacity
+  // (cap) stays the group's weekly maximum — one week, combined.
+  const combinedRaw = entryB
+    ? aggregateCapacityValue(group, [entry, entryB])
+    : null
 
   // Big number is always the utilization PERCENT (matches the KPI's
   // single name "Utilization" and the parallel Labor Efficiency tile
@@ -2072,26 +2398,44 @@ function CapacityTile({
   let rawLine = ''
 
   if (group.method === 'manual') {
-    const v = cv as { utilizationPct?: number } | undefined
-    actualPct = v?.utilizationPct ?? group.staticUtilPct ?? null
+    if (entryB) {
+      // Average the entered % across both halves (matches MTD).
+      const vals: number[] = []
+      for (const e of [entry, entryB]) {
+        const u = (e.capacity_values ?? {})[group.id] as
+          | { utilizationPct?: number }
+          | undefined
+        if (
+          typeof u?.utilizationPct === 'number' &&
+          Number.isFinite(u.utilizationPct)
+        )
+          vals.push(u.utilizationPct)
+      }
+      actualPct = vals.length
+        ? vals.reduce((s, v) => s + v, 0) / vals.length
+        : group.staticUtilPct ?? null
+    } else {
+      const v = cv as { utilizationPct?: number } | undefined
+      actualPct = v?.utilizationPct ?? group.staticUtilPct ?? null
+    }
     // Manual method has no separate raw value — the input IS the %.
   } else if (group.method === 'slots') {
     const v = cv as { slotsFilled?: number } | undefined
-    const filled = v?.slotsFilled ?? 0
+    const filled = combinedRaw ?? v?.slotsFilled ?? 0
     actualPct = cap ? (filled / cap) * 100 : null
     rawLine = cap
       ? `${Math.round(filled)} / ${Math.round(cap)} slots`
       : `${Math.round(filled)} slots`
   } else if (group.method === 'labor') {
     const v = cv as { producedHours?: number } | undefined
-    const produced = v?.producedHours ?? 0
+    const produced = combinedRaw ?? v?.producedHours ?? 0
     actualPct = cap ? (produced / cap) * 100 : null
     rawLine = cap
       ? `${Math.round(produced)} / ${Math.round(cap)} hrs`
       : `${Math.round(produced)} hrs`
   } else if (group.method === 'revenue') {
     const v = cv as { revenueProduced?: number } | undefined
-    const produced = v?.revenueProduced ?? 0
+    const produced = combinedRaw ?? v?.revenueProduced ?? 0
     actualDollars = produced
     actualPct = cap ? (produced / cap) * 100 : null
     rawLine = cap
@@ -2108,7 +2452,7 @@ function CapacityTile({
       (s, d) => s + (d.hoursWorked ?? 0),
       0
     )
-    const totalWorked = v?.hoursWorked ?? legacy
+    const totalWorked = combinedRaw ?? v?.hoursWorked ?? legacy
     actualPct = cap ? (totalWorked / cap) * 100 : null
     rawLine = cap
       ? `${Math.round(totalWorked)} / ${Math.round(cap)} hrs`
