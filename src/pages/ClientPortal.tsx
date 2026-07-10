@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useDirtyConfirm } from '../lib/dirtyGuard'
@@ -48,6 +48,24 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   const [showWelcome, setShowWelcome] = useState(
     () => !coachView && !hasSeenClientTour(clientId)
   )
+
+  // The top bar is sticky and wraps to a second row when its content does not
+  // fit (extra coach-view controls, a long company name, a narrow window). The
+  // per-page Save bars sit sticky just beneath it, so their offset has to be
+  // the header's real height, not a guess. A hardcoded value let the Save bar
+  // slide behind a wrapped header and vanish on scroll. We measure the header
+  // and publish it as --app-header-h, which the Save bars stick to.
+  const headerRef = useRef<HTMLElement>(null)
+  const [headerH, setHeaderH] = useState(48)
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const measure = () => setHeaderH(el.offsetHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   /** Guarded tab change — prompts if the current page has unsaved edits. */
   const guardedSetTab = (next: NavTab) => {
@@ -129,12 +147,15 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#dad7c5] flex flex-col">
+    <div
+      className="min-h-screen bg-[#dad7c5] flex flex-col"
+      style={{ ['--app-header-h' as string]: `${headerH}px` }}
+    >
       {/* Top bar — client name primary, brand to footer (per Doc 03 PC).
           When a force-change-password is required, the nav links are
           suppressed so the client can't navigate around the interstitial.
           Logout / Back stays available. */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
+      <header ref={headerRef} className="sticky top-0 z-30 bg-white border-b border-gray-200">
        <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-3 flex items-center flex-wrap gap-x-6 gap-y-2">
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-ink">
