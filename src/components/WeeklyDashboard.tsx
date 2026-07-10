@@ -29,6 +29,7 @@ import {
 import { groupMaxCapacity, groupWorkingHours } from '../lib/capacity'
 import {
   dateFromIso,
+  entryStartDate,
   formatWeekShort,
   isoDate,
   missedWeeksBetween,
@@ -109,6 +110,13 @@ export function WeeklyDashboard({
   const { coach } = useAuth()
   const [client, setClient] = useState<Client | null>(null)
   const [budget, setBudget] = useState<Budget | null>(null)
+  // Onboarding-year budget (earliest on file). Its ytd_thru_month sets where
+  // weekly entry begins, independent of the current year, so a second-year
+  // client's "behind" count still anchors to their real start.
+  const [onboarding, setOnboarding] = useState<{
+    year: number
+    ytdThruMonth: number | null
+  } | null>(null)
   const [entries, setEntries] = useState<WeeklyEntry[]>([])
   /** True while a PDF report is being generated — toggles the Download
    *  button to a "Preparing…" disabled state so a slow click doesn't
@@ -157,7 +165,7 @@ export function WeeklyDashboard({
     setLoading(true)
     setError(null)
     const year = new Date().getFullYear()
-    const [cRes, bRes, eRes, allDatesRes] = await Promise.all([
+    const [cRes, bRes, eRes, allDatesRes, obRes] = await Promise.all([
       supabase.from('clients_safe').select('*').eq('id', clientId).maybeSingle(),
       supabase
         .from('budgets')
@@ -175,6 +183,13 @@ export function WeeklyDashboard({
         .from('weekly_entries')
         .select('week_start_date, days')
         .eq('client_id', clientId),
+      supabase
+        .from('budgets')
+        .select('year, ytd_thru_month')
+        .eq('client_id', clientId)
+        .order('year', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
     ])
     if (cRes.error) {
       setError(cRes.error.message)
@@ -183,6 +198,8 @@ export function WeeklyDashboard({
     }
     setClient(cRes.data as Client | null)
     setBudget((bRes.data as Budget | null) ?? null)
+    const ob = obRes.data as { year: number; ytd_thru_month: number | null } | null
+    setOnboarding(ob ? { year: ob.year, ytdThruMonth: ob.ytd_thru_month } : null)
     setEntries(((eRes.data as WeeklyEntry[] | null) ?? []) as WeeklyEntry[])
     setSavedEntryRanges(
       ((allDatesRes.data ?? []) as {
@@ -211,8 +228,13 @@ export function WeeklyDashboard({
   // status pill (count + dropdown to deep-link straight into Entry).
   const missedWeeks = useMemo(() => {
     if (!client) return []
-    return missedWeeksBetween(new Date(client.created_at), savedEntryRanges)
-  }, [client, savedEntryRanges])
+    const start = entryStartDate(
+      client.created_at,
+      onboarding?.year ?? null,
+      onboarding?.ytdThruMonth ?? null
+    )
+    return missedWeeksBetween(start, savedEntryRanges)
+  }, [client, onboarding, savedEntryRanges])
 
   // Resolve which week the dashboard is showing. User pick wins;
   // otherwise default to the most-recent-completed week if entered,

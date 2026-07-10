@@ -204,6 +204,30 @@ export function missedWeeksBetween(
   return out.reverse()
 }
 
+/** The first day a client is expected to log weekly entries — the anchor the
+ *  "weeks behind" count walks forward from.
+ *
+ *  Never earlier than onboarding (created_at): a client cannot owe entries from
+ *  before they existed. Pushed later when their onboarding-year YTD actuals
+ *  cover whole months, because those months are captured as a lump on the
+ *  budget (ytdThruMonth, 0-indexed and inclusive) and are not entered weekly —
+ *  so weekly entry begins the month after. Editing YTD in Settings moves this
+ *  start, which is how the coach resets the entry expectation for a client
+ *  whose start date shifts.
+ *
+ *  Falls back to created_at when the client does not track YTD or the
+ *  onboarding budget has no ytdThruMonth. */
+export function entryStartDate(
+  createdAt: string,
+  onboardingYear: number | null,
+  ytdThruMonth: number | null
+): Date {
+  const onboarded = new Date(createdAt)
+  if (onboardingYear == null || ytdThruMonth == null) return onboarded
+  const afterYtd = new Date(onboardingYear, ytdThruMonth + 1, 1)
+  return afterYtd.getTime() > onboarded.getTime() ? afterYtd : onboarded
+}
+
 /** "Week of Sun, May 4 – Sat, May 10, 2026" */
 export function formatWeekRange(weekStart: Date): string {
   const start = weekStartSunday(weekStart)

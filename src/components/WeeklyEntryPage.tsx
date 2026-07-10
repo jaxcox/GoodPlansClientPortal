@@ -15,6 +15,7 @@ import type {
 } from '../lib/types'
 import {
   dateFromIso,
+  entryStartDate,
   formatWeekShort,
   isoDate,
   missedWeeksBetween,
@@ -185,6 +186,13 @@ function formatDerivedWeekly(
 
 export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) {
   const [client, setClient] = useState<Client | null>(null)
+  // Onboarding-year budget (earliest on file); its ytd_thru_month sets where
+  // weekly entry begins. Drives both the missed-weeks anchor and the
+  // starting-week partial rule so the two stay consistent.
+  const [onboarding, setOnboarding] = useState<{
+    year: number
+    ytdThruMonth: number | null
+  } | null>(null)
   const [capacityValues, setCapacityValues] = useState<
     Record<string, WeeklyCapacityActual>
   >({})
@@ -255,9 +263,15 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
    *  Mirrors the starting-week rule in missedWeeksBetween. */
   const startBoundaryHidesA = useMemo(() => {
     if (!boundary || !client) return false
-    const startWeek = weekStartSunday(new Date(client.created_at))
+    const startWeek = weekStartSunday(
+      entryStartDate(
+        client.created_at,
+        onboarding?.year ?? null,
+        onboarding?.ytdThruMonth ?? null
+      )
+    )
     return weekStart.getTime() === startWeek.getTime()
-  }, [boundary, client, weekStart])
+  }, [boundary, client, onboarding, weekStart])
   /** The saved entry for whichever side is selected. The form's dirty
    *  tracking, cancel-reseed, and save-vs-update branching all key off
    *  this. */
@@ -271,7 +285,7 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [clientRes, entriesRes] = await Promise.all([
+      const [clientRes, entriesRes, obRes] = await Promise.all([
         supabase
           .from('clients_safe')
           .select('*')
@@ -281,6 +295,13 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
           .from('weekly_entries')
           .select('week_start_date, days')
           .eq('client_id', clientId),
+        supabase
+          .from('budgets')
+          .select('year, ytd_thru_month')
+          .eq('client_id', clientId)
+          .order('year', { ascending: true })
+          .limit(1)
+          .maybeSingle(),
       ])
       if (cancelled) return
       if (clientRes.error || !clientRes.data) {
@@ -288,6 +309,13 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
         return
       }
       setClient(clientRes.data as Client)
+      const ob = obRes.data as {
+        year: number
+        ytd_thru_month: number | null
+      } | null
+      setOnboarding(
+        ob ? { year: ob.year, ytdThruMonth: ob.ytd_thru_month } : null
+      )
       const ranges = (
         (entriesRes.data ?? []) as { week_start_date: string; days: number }[]
       ).map((r) => ({ startIso: r.week_start_date, days: r.days ?? 7 }))
@@ -634,8 +662,13 @@ export function WeeklyEntryPage({ clientId, onLeave, initialWeekStart }: Props) 
   // other partial's days aren't covered.
   const missedWeeks = useMemo(() => {
     if (!client) return []
-    return missedWeeksBetween(new Date(client.created_at), savedEntryRanges)
-  }, [client, savedEntryRanges])
+    const start = entryStartDate(
+      client.created_at,
+      onboarding?.year ?? null,
+      onboarding?.ytdThruMonth ?? null
+    )
+    return missedWeeksBetween(start, savedEntryRanges)
+  }, [client, onboarding, savedEntryRanges])
 
   // ---- Render ------------------------------------------------------------
   if (loadError) {
