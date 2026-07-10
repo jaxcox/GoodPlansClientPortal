@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useDirtyConfirm } from '../lib/dirtyGuard'
@@ -55,16 +55,22 @@ export function ClientPortal({ clientId, coachView, onBack }: Props) {
   // the header's real height, not a guess. A hardcoded value let the Save bar
   // slide behind a wrapped header and vanish on scroll. We measure the header
   // and publish it as --app-header-h, which the Save bars stick to.
-  const headerRef = useRef<HTMLElement>(null)
+  //
+  // This is a callback ref, not useRef + a [] effect. The header renders past
+  // an early return for the loading state, so it mounts on a later render than
+  // the component. A [] effect runs once, before the header exists, measures
+  // null, and never re-runs, leaving the height stuck at its initial guess. A
+  // callback ref instead fires the moment the node actually attaches, so we
+  // measure the true height and re-measure on every wrap via ResizeObserver.
   const [headerH, setHeaderH] = useState(48)
-  useEffect(() => {
-    const el = headerRef.current
-    if (!el) return
-    const measure = () => setHeaderH(el.offsetHeight)
+  const headerObserver = useRef<ResizeObserver | null>(null)
+  const headerRef = useCallback((node: HTMLElement | null) => {
+    headerObserver.current?.disconnect()
+    if (!node) return
+    const measure = () => setHeaderH(node.offsetHeight)
     measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(el)
-    return () => observer.disconnect()
+    headerObserver.current = new ResizeObserver(measure)
+    headerObserver.current.observe(node)
   }, [])
 
   /** Guarded tab change — prompts if the current page has unsaved edits. */
