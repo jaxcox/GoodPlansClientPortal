@@ -346,36 +346,18 @@ Stored at Hover; visible on their dashboard. If anything ever goes weird with DN
 
 ---
 
-## When you add a marketing site at the apex domain
+## The marketing site (separate, already live)
 
-When the marketing site at `thegoodplansco.com` (the apex, no `portal.` prefix) is ready:
+The marketing site at the apex `thegoodplansco.com` is live. It is a separate
+Astro project in its own repo (`~/Documents/good-plans-co-website`, GitHub
+`jaxcox/GoodPlansCoWebsite`) with its own Vercel project and deploys. This portal
+is untouched by it. Anything about that site lives with that repo, including its
+own `CLAUDE.md`.
 
-### What changes
-- The **portal** stays exactly where it is at `portal.thegoodplansco.com` — no changes to it, no risk to existing data.
-- A **new Vercel project** gets created for the marketing site code (separate repo, separate deploys).
-- New DNS records at Hover point the apex (`thegoodplansco.com`) and `www.thegoodplansco.com` at the new Vercel project.
-
-### The setup workflow
-1. The marketing site code goes into its own GitHub repo (whoever builds the site sets this up).
-2. In Vercel: **Add New Project** → import that repo (same flow as the portal).
-3. In the new Vercel project: **Settings → Domains** → add `thegoodplansco.com` and `www.thegoodplansco.com`.
-4. Vercel shows the **exact DNS records** to add (usually an A record or "ALIAS" for the apex, plus a CNAME for `www`).
-5. At Hover, add those records to the DNS page (same place where you added `portal`).
-6. Wait ~10 minutes for DNS to propagate. Vercel auto-issues SSL.
-
-### Important: don't touch the existing portal CNAME
-The DNS record you added for `portal` (CNAME → Vercel) stays. Apex and subdomain records are independent. After adding the marketing site, the Hover DNS page should have:
-- A record (or ALIAS) for the apex `@`
-- CNAME for `www`
-- CNAME for `portal` (unchanged from today)
-
-### If you're building the marketing site in a no-code tool
-If the marketing site ends up being built in **Webflow / Squarespace / Carrd / etc.**, those platforms host the site themselves. In that case skip the Vercel steps above and follow their DNS instructions instead — point `thegoodplansco.com` at their servers. The portal subdomain stays untouched on Vercel either way.
-
-### What this would cost
-- Vercel: still free (their Hobby plan handles two projects fine)
-- DNS: still free (Hover doesn't charge for DNS records)
-- No new accounts needed if you use Vercel for both
+DNS coexistence at Hover: the apex `@` (A record / ALIAS) and `www` point at the
+marketing site's Vercel project; the `portal` CNAME points at this portal's
+Vercel project. Apex and subdomain records are independent — do not change the
+`portal` CNAME.
 
 ---
 
