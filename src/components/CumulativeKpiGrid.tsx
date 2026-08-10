@@ -318,6 +318,7 @@ function CategorySection({
                     group={g}
                     entries={entries}
                     goal={capacityGroupGoals[g.id]?.laborEfficiencyGoal}
+                    pace={pace}
                     weeksInPeriod={weeksInPeriod}
                   />
                 )}
@@ -615,11 +616,18 @@ function CumulativeCapacityTile({
       : aggregateCapacityValue(group, entries)
   const cap = groupMaxCapacity(group)
   const cumCap = cap * weeksInPeriod
+  // Utilization compares produced hours/slots/$ to capacity for the
+  // weeks that have actually elapsed, not the whole period — otherwise
+  // a mid-month reading divides partial production by a full month's
+  // capacity and always looks behind, even when exactly on pace. cumCap
+  // (full period) stays as-is below for the $ goal-target math, which
+  // wants the full period as its anchor before applying pace separately.
+  const elapsedCap = cumCap * pace
   const utilPct =
     group.method === 'manual'
       ? value
-      : cumCap > 0 && value != null
-        ? (value / cumCap) * 100
+      : elapsedCap > 0 && value != null
+        ? (value / elapsedCap) * 100
         : null
 
   // Big number is always the utilization PERCENT (single-name
@@ -629,8 +637,11 @@ function CumulativeCapacityTile({
   const valueText = utilPct != null ? `${Math.round(utilPct)}%` : '—'
   let subLabel: string | undefined
   if (group.method !== 'manual' && value != null) {
+    // Elapsed-capacity basis, matching utilPct above, so the "X / Y"
+    // shown here isn't a full-period denominator against a partial-
+    // period numerator.
     const cumCapLabel =
-      cumCap > 0 ? Math.round(cumCap).toLocaleString() : null
+      elapsedCap > 0 ? Math.round(elapsedCap).toLocaleString() : null
     if (group.method === 'slots') {
       subLabel = cumCapLabel
         ? `${Math.round(value).toLocaleString()} / ${cumCapLabel} slots`
@@ -773,11 +784,13 @@ function CumulativeLaborEfficiencyTile({
   group,
   entries,
   goal,
+  pace,
   weeksInPeriod,
 }: {
   group: CapacityGroup
   entries: WeeklyEntry[]
   goal: number | undefined
+  pace: number
   weeksInPeriod: number
 }) {
   // Efficiency = sum(producedHours) / (workingHours × weeksInPeriod) × 100.
@@ -798,7 +811,10 @@ function CumulativeLaborEfficiencyTile({
   }
   const working = groupWorkingHours(group)
   const cumWorking = working * weeksInPeriod
-  const pct = any && cumWorking > 0 ? (total / cumWorking) * 100 : null
+  // Same fix as Utilization: compare produced hours to working hours
+  // for the weeks elapsed so far, not the whole period.
+  const elapsedWorking = cumWorking * pace
+  const pct = any && elapsedWorking > 0 ? (total / elapsedWorking) * 100 : null
 
   return (
     <CumulativeTile
@@ -814,9 +830,9 @@ function CumulativeLaborEfficiencyTile({
       // formatValue('%') would show 1 decimal).
       valueText={pct != null ? `${Math.round(pct)}%` : '—'}
       subLabel={
-        any && cumWorking > 0
+        any && elapsedWorking > 0
           ? `${Math.round(total).toLocaleString()} / ${Math.round(
-              cumWorking
+              elapsedWorking
             ).toLocaleString()} hrs`
           : undefined
       }
